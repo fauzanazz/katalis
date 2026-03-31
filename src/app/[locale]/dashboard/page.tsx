@@ -15,9 +15,8 @@ function DashboardContent() {
   const t = useTranslations();
 
   return (
-    <main
-      role="main"
-      className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 px-4 dark:bg-black"
+    <div
+      className="flex flex-1 flex-col items-center justify-center bg-zinc-50 px-4 dark:bg-black"
     >
       <div className="text-center">
         <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
@@ -27,6 +26,6 @@ function DashboardContent() {
           {t("landing.hero.subtitle")}
         </p>
       </div>
-    </main>
+    </div>
   );
 }

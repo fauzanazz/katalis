@@ -59,5 +59,10 @@
     "en": "English",
     "id": "Bahasa Indonesia",
     "switch": "Ganti Bahasa"
+  },
+  "notFound": {
+    "title": "Halaman Tidak Ditemukan",
+    "description": "Ups! Halaman yang kamu cari tidak ada atau sudah dipindahkan.",
+    "backHome": "Kembali ke Beranda"
   }
 }

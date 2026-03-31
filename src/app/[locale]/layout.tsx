@@ -2,6 +2,10 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
+import { getSession } from "@/lib/auth";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
+import { SkipToContent } from "@/components/layout/SkipToContent";
 
 export default async function LocaleLayout({
   children,
@@ -17,10 +21,17 @@ export default async function LocaleLayout({
   }
 
   const messages = await getMessages();
+  const session = await getSession();
+  const isAuthenticated = !!session?.childId;
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      {children}
+      <SkipToContent />
+      <Header isAuthenticated={isAuthenticated} />
+      <main id="main-content" role="main" className="flex-1">
+        {children}
+      </main>
+      <Footer />
     </NextIntlClientProvider>
   );
 }

@@ -4,11 +4,7 @@ set -e
 cd /Users/enjat/Github/katalis
 
 # Install dependencies (idempotent)
-if [ ! -d "node_modules" ]; then
-  bun install
-else
-  bun install --frozen-lockfile 2>/dev/null || bun install
-fi
+bun install 2>/dev/null || bun install
 
 # Set up environment file if not exists
 if [ ! -f ".env" ]; then

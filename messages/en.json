@@ -1,0 +1,63 @@
+{
+  "common": {
+    "appName": "Katalis",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "retry": "Try Again",
+    "back": "Back",
+    "next": "Next",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "submit": "Submit",
+    "skipToContent": "Skip to content"
+  },
+  "nav": {
+    "home": "Home",
+    "discover": "Discover",
+    "quest": "Quest",
+    "gallery": "Gallery",
+    "login": "Login",
+    "logout": "Logout"
+  },
+  "landing": {
+    "hero": {
+      "title": "Discover – Act – Connect",
+      "subtitle": "A talent discovery and development platform for children",
+      "cta": "Get Started"
+    },
+    "pillars": {
+      "discover": {
+        "title": "Discover",
+        "description": "Upload drawings, photos, or record stories. Our AI discovers your unique talents and interests beyond the surface."
+      },
+      "act": {
+        "title": "Act",
+        "description": "Get a personalized 7-day quest plan based on your talents and dreams. Turn from an observer into a doer."
+      },
+      "connect": {
+        "title": "Connect",
+        "description": "Showcase your completed works on a global map. Connect with children worldwide who share your passions."
+      }
+    }
+  },
+  "auth": {
+    "title": "Enter Your Access Code",
+    "codePlaceholder": "Enter access code",
+    "submit": "Start Exploring",
+    "errors": {
+      "empty": "Please enter your access code",
+      "invalid": "Access code is not valid",
+      "expired": "This access code has expired"
+    }
+  },
+  "footer": {
+    "tagline": "Empowering children to discover, act, and connect.",
+    "copyright": "© {year} Katalis. All rights reserved."
+  },
+  "language": {
+    "en": "English",
+    "id": "Bahasa Indonesia",
+    "switch": "Switch Language"
+  }
+}

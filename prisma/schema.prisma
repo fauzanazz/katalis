@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model AccessCode {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  active    Boolean  @default(true)
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  children  Child[]
+}
+
+model Child {
+  id           String        @id @default(cuid())
+  accessCodeId String
+  locale       String        @default("id")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  accessCode   AccessCode    @relation(fields: [accessCodeId], references: [id])
+  discoveries  Discovery[]
+  quests       Quest[]
+  galleryEntries GalleryEntry[]
+}
+
+model Discovery {
+  id              String   @id @default(cuid())
+  childId         String
+  type            String   // "artifact" or "story"
+  fileUrl         String?
+  aiAnalysis      String?  // JSON stored as text for SQLite
+  detectedTalents String?  // JSON stored as text for SQLite
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  child           Child    @relation(fields: [childId], references: [id])
+  quests          Quest[]
+}
+
+model Quest {
+  id           String        @id @default(cuid())
+  childId      String
+  discoveryId  String?
+  dream        String
+  localContext String
+  status       String        @default("active") // "active", "completed", "abandoned"
+  generatedAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  child        Child         @relation(fields: [childId], references: [id])
+  discovery    Discovery?    @relation(fields: [discoveryId], references: [id])
+  missions     Mission[]
+  galleryEntry GalleryEntry?
+}
+
+model Mission {
+  id            String   @id @default(cuid())
+  questId       String
+  day           Int      // 1-7
+  title         String
+  description   String
+  instructions  String   // JSON stored as text for SQLite
+  materials     String   // JSON stored as text for SQLite
+  tips          String   // JSON stored as text for SQLite
+  status        String   @default("locked") // "locked", "available", "in_progress", "completed"
+  proofPhotoUrl String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  quest         Quest    @relation(fields: [questId], references: [id])
+
+  @@unique([questId, day])
+}
+
+model GalleryEntry {
+  id             String   @id @default(cuid())
+  childId        String
+  questId        String   @unique
+  imageUrl       String
+  talentCategory String
+  country        String?
+  coordinates    String?  // JSON stored as text for SQLite (lat/lng)
+  clusterGroup   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  child          Child    @relation(fields: [childId], references: [id])
+  quest          Quest    @relation(fields: [questId], references: [id])
+}

@@ -1,0 +1,63 @@
+{
+  "common": {
+    "appName": "Katalis",
+    "loading": "Memuat...",
+    "error": "Terjadi kesalahan",
+    "retry": "Coba Lagi",
+    "back": "Kembali",
+    "next": "Selanjutnya",
+    "save": "Simpan",
+    "cancel": "Batal",
+    "close": "Tutup",
+    "submit": "Kirim",
+    "skipToContent": "Langsung ke konten"
+  },
+  "nav": {
+    "home": "Beranda",
+    "discover": "Temukan",
+    "quest": "Misi",
+    "gallery": "Galeri",
+    "login": "Masuk",
+    "logout": "Keluar"
+  },
+  "landing": {
+    "hero": {
+      "title": "Temukan – Bertindak – Terhubung",
+      "subtitle": "Platform penemuan dan pengembangan bakat untuk anak-anak",
+      "cta": "Mulai Sekarang"
+    },
+    "pillars": {
+      "discover": {
+        "title": "Temukan",
+        "description": "Unggah gambar, foto, atau rekam cerita. AI kami menemukan bakat dan minat unikmu yang tersembunyi."
+      },
+      "act": {
+        "title": "Bertindak",
+        "description": "Dapatkan rencana misi 7 hari yang dipersonalisasi berdasarkan bakat dan impianmu. Berubah dari pengamat menjadi pelaku."
+      },
+      "connect": {
+        "title": "Terhubung",
+        "description": "Pamerkan karya-karyamu yang sudah selesai di peta dunia. Terhubung dengan anak-anak di seluruh dunia yang memiliki minat yang sama."
+      }
+    }
+  },
+  "auth": {
+    "title": "Masukkan Kode Aksesmu",
+    "codePlaceholder": "Masukkan kode akses",
+    "submit": "Mulai Menjelajah",
+    "errors": {
+      "empty": "Mohon masukkan kode aksesmu",
+      "invalid": "Kode akses tidak valid",
+      "expired": "Kode akses ini sudah kedaluwarsa"
+    }
+  },
+  "footer": {
+    "tagline": "Memberdayakan anak-anak untuk menemukan, bertindak, dan terhubung.",
+    "copyright": "© {year} Katalis. Hak cipta dilindungi."
+  },
+  "language": {
+    "en": "English",
+    "id": "Bahasa Indonesia",
+    "switch": "Ganti Bahasa"
+  }
+}

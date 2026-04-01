@@ -6,6 +6,7 @@ import { getSession } from "@/lib/auth";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { SkipToContent } from "@/components/layout/SkipToContent";
+import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 
 export default async function LocaleLayout({
   children,
@@ -28,6 +29,7 @@ export default async function LocaleLayout({
     <NextIntlClientProvider locale={locale} messages={messages}>
       <SkipToContent />
       <Header isAuthenticated={isAuthenticated} />
+      <Breadcrumbs />
       <main id="main-content" role="main" className="flex-1">
         {children}
       </main>

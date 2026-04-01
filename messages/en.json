@@ -65,6 +65,23 @@
     "description": "Oops! The page you are looking for doesn't exist or has been moved.",
     "backHome": "Go Back Home"
   },
+  "error": {
+    "title": "Something Went Wrong",
+    "description": "Oops! Something unexpected happened. Don't worry, you can try again or go back to the home page.",
+    "retry": "Try Again",
+    "backHome": "Go Back Home",
+    "backToArea": "Go Back"
+  },
+  "breadcrumb": {
+    "home": "Home",
+    "discover": "Discover",
+    "quest": "Quest",
+    "gallery": "Gallery",
+    "history": "History",
+    "results": "Results",
+    "new": "New Quest",
+    "complete": "Complete"
+  },
   "discover": {
     "title": "Discover Your Talents",
     "subtitle": "Upload a drawing, photo, or record your voice to discover your unique talents!",

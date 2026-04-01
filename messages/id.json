@@ -65,6 +65,23 @@
     "description": "Ups! Halaman yang kamu cari tidak ada atau sudah dipindahkan.",
     "backHome": "Kembali ke Beranda"
   },
+  "error": {
+    "title": "Terjadi Kesalahan",
+    "description": "Ups! Sesuatu yang tidak terduga terjadi. Jangan khawatir, kamu bisa mencoba lagi atau kembali ke beranda.",
+    "retry": "Coba Lagi",
+    "backHome": "Kembali ke Beranda",
+    "backToArea": "Kembali"
+  },
+  "breadcrumb": {
+    "home": "Beranda",
+    "discover": "Temukan",
+    "quest": "Misi",
+    "gallery": "Galeri",
+    "history": "Riwayat",
+    "results": "Hasil",
+    "new": "Misi Baru",
+    "complete": "Selesai"
+  },
   "discover": {
     "title": "Temukan Bakatmu",
     "subtitle": "Unggah gambar, foto, atau rekam suaramu untuk menemukan bakat unikmu!",

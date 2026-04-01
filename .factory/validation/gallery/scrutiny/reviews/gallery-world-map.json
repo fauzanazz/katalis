@@ -1,0 +1,57 @@
+{
+  "featureId": "gallery-world-map",
+  "reviewedAt": "2026-04-01T10:30:00.000Z",
+  "commitId": "195201f",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Solid implementation of the interactive world map gallery. The feature covers all required behaviors: GeoJSON API endpoint, react-map-gl + maplibre-gl rendering with MapTiler tiles and OSM fallback, pin clustering with count indicators, talent-category-colored pins, cluster click-to-zoom, pin popups with thumbnail/category/country linking to detail page, work detail page with full metadata and quest context, WebGL fallback grid view, mobile responsive layout with cooperative gestures (no scroll hijack), bilingual translations (EN/ID), keyboard accessibility with ARIA attributes, and map attribution. Privacy is handled correctly — childId is stripped from all public API responses, and coordinates are country-level only (from geocodeLocationText). The dynamic import with ssr:false cleanly avoids WebGL hydration mismatches. Tests are comprehensive with 34 new tests across 4 test files covering API routes, component rendering, accessibility, fallback states, and type utilities.",
+    "issues": [
+      {
+        "file": "src/components/map/GalleryMap.tsx",
+        "line": 152,
+        "severity": "non_blocking",
+        "description": "handleClusterClick uses .then() without .catch() on getClusterExpansionZoom promise. If the promise rejects (e.g., invalid cluster ID), this creates an unhandled promise rejection. Should add .catch() to silently handle the error or log it."
+      },
+      {
+        "file": "src/components/map/GalleryMap.tsx",
+        "line": 97,
+        "severity": "non_blocking",
+        "description": "buildClusterColorExpression JSDoc says 'for cluster circles based on the most common talent category in each cluster' but the expression is actually used for unclustered-point circles (line 373). Cluster circles use a fixed #6366F1 color (line 334). Misleading documentation."
+      },
+      {
+        "file": "src/components/map/GalleryMap.tsx",
+        "line": 315,
+        "severity": "non_blocking",
+        "description": "GeolocateControl is included which requests the viewer's browser geolocation. While this is standard map UX and uses browser consent dialogs, on a children's platform it may be worth considering if this should be present. This is a design consideration, not a bug."
+      },
+      {
+        "file": "src/app/api/gallery/entries/geojson/route.ts",
+        "line": 80,
+        "severity": "non_blocking",
+        "description": "safeParseJSON utility is duplicated across 5+ files (geojson/route.ts, entries/[id]/route.ts, [locale]/gallery/[id]/page.tsx, quest routes). Should be extracted to a shared utility in src/lib/. Not a bug but increases maintenance burden."
+      },
+      {
+        "file": "src/app/[locale]/gallery/page.tsx",
+        "line": 88,
+        "severity": "non_blocking",
+        "description": "Gallery page fetches all entries twice on initial load: once for the category list (line 88-100 unfiltered fetch) and once for the map data (line 82 via fetchGalleryData). The category extraction could be done from the first data load to avoid the duplicate network request."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "safeParseJSON utility is duplicated in at least 5 files across the codebase. No shared utility exists in src/lib/ for JSON field parsing from Prisma SQLite string columns. This is a recurring pattern since Prisma SQLite stores JSON as strings.",
+      "evidence": "Duplicated in: src/app/api/gallery/entries/geojson/route.ts:80, src/app/api/gallery/entries/[id]/route.ts:49, src/app/[locale]/gallery/[id]/page.tsx:9, src/app/api/quest/[id]/route.ts:95, src/app/api/quest/[id]/complete/route.ts:246, src/app/api/gallery/entries/route.ts:303"
+    },
+    {
+      "area": "conventions",
+      "observation": "Gallery routes placed outside (auth) route group at /[locale]/gallery/ (not /[locale]/(auth)/gallery/) with public access enforced via middleware publicPagePaths and publicPathPrefixes. Architecture doc section 3 shows gallery under (auth) group, but the implementation correctly makes it public since gallery browsing is read-only. The architecture doc may need updating to reflect this.",
+      "evidence": "src/app/[locale]/gallery/ is outside (auth) group. src/proxy.ts adds '/gallery' to publicPagePaths and publicPathPrefixes. Architecture doc section 3 shows gallery under (auth) route group."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "The gallery-world-map feature is well-implemented and passes review. All 20 expected behaviors from the feature spec are covered. The implementation correctly uses react-map-gl + maplibre-gl with MapTiler tiles, provides pin clustering, talent-category-colored pins, click-to-zoom clusters, popup with thumbnails, work detail page, WebGL fallback, cooperative gestures for mobile, bilingual translations, keyboard accessibility, and proper privacy handling (no childId exposed, country-level coordinates only). There are 5 non-blocking issues: an unhandled promise rejection in cluster click handler, a misleading JSDoc comment, GeolocateControl inclusion consideration, safeParseJSON utility duplication, and a duplicate network request on page load. None of these are blocking — the feature is functional, accessible, and well-tested with 34 new tests."
+}

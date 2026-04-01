@@ -71,7 +71,7 @@ katalis/
 │   │   ├── auth.ts                # Session management helpers
 │   │   ├── ai/                    # AI integration layer
 │   │   │   ├── openai.ts          # GPT-4o client
-│   │   │   ├── anthropic.ts       # Claude client
+│   │   │   ├── claude.ts           # Claude client
 │   │   │   └── mock/              # Deterministic mock responses
 │   │   └── storage/               # File storage layer
 │   │       ├── r2.ts              # Cloudflare R2 client
@@ -204,7 +204,7 @@ AI functionality is accessed through a **mock layer architecture** that allows d
 ┌──────────────────┐     USE_MOCK_AI=true      ┌──────────────────┐
 │  src/lib/ai/     │ ─────────────────────── → │  src/lib/ai/mock/ │
 │  openai.ts       │                           │  openai.ts        │
-│  anthropic.ts    │     USE_MOCK_AI=false     │  anthropic.ts     │
+│  claude.ts       │     USE_MOCK_AI=false     │  claude.ts        │
 │                  │ ─────────────────────── → │                   │
 │ (facade layer)   │                           │ (deterministic    │
 │                  │     Real SDKs             │  responses)       │
@@ -214,7 +214,7 @@ AI functionality is accessed through a **mock layer architecture** that allows d
 | Module | AI Provider | Purpose |
 |--------|-----------|---------|
 | `src/lib/ai/openai.ts` | GPT-4o (multimodal) | Artifact analysis — accepts images and text, returns detected talents with reasoning |
-| `src/lib/ai/anthropic.ts` | Claude | Quest generation — accepts talent profile + dream + context, returns 7-day mission plan |
+| `src/lib/ai/claude.ts` | Claude | Quest generation — accepts talent profile + dream + context, returns 7-day mission plan |
 | `src/lib/ai/mock/` | None (deterministic) | Returns hardcoded but realistic responses for each AI endpoint |
 
 **Toggle mechanism:**

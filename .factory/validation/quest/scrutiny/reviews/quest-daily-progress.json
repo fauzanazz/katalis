@@ -1,0 +1,39 @@
+{
+  "featureId": "quest-daily-progress",
+  "reviewedAt": "2026-04-01T08:15:00.000Z",
+  "commitId": "437bc5f",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Solid implementation covering all 15 expectedBehavior items. The PATCH /api/quest/[id]/mission/[missionId] route correctly handles start and complete actions with proper status transition enforcement. Sequential progression is implemented via a Prisma transaction that unlocks Day N+1 when Day N is completed. Quest auto-completion triggers when all 7 missions are done. The abandon flow uses a transaction to set quest status to 'abandoned' and reset all missions to 'locked'. The MissionActions component correctly reuses the existing UploadZone for proof photo uploads (preserving EXIF stripping and file validation from the discovery upload pipeline). Confirmation dialogs match the spec ('Are you sure? You cannot undo this.'). Both EN and ID translations are complete and consistent. 23 new tests comprehensively cover auth, status transitions, validation, error cases, and quest state checks. The dialog.tsx component follows standard shadcn/ui patterns.",
+    "issues": [
+      {
+        "file": "src/app/api/quest/[id]/mission/[missionId]/route.ts",
+        "line": 11,
+        "severity": "non_blocking",
+        "description": "proofPhotoUrl is validated only with z.string().url() but not sanitized with sanitizeInput(). AGENTS.md states 'Sanitize ALL user-generated text UNCONDITIONALLY.' Other quest API routes (e.g., quest/generate/route.ts:40) call sanitizeInput() on string inputs. While Zod's .url() rejects javascript: URIs, the convention is to sanitize all inputs regardless."
+      },
+      {
+        "file": "src/app/api/quest/[id]/mission/[missionId]/route.ts",
+        "line": 162,
+        "severity": "non_blocking",
+        "description": "No server-side validation that proofPhotoUrl belongs to the app's own storage domain (e.g., R2 bucket URL or localhost/api/storage). A malicious client could submit any valid URL as a proof photo. Since this is a children's platform, defense-in-depth would suggest verifying the URL origin matches the expected storage endpoint."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The mission progress API route does not call sanitizeInput() on the proofPhotoUrl, while other quest API routes (quest/generate) do sanitize user-provided strings. AGENTS.md says to sanitize ALL user-generated text UNCONDITIONALLY, but does not explicitly mention URL inputs from the upload pipeline. This creates ambiguity about whether URLs from the upload flow are considered 'user-generated text' requiring sanitization.",
+      "evidence": "src/app/api/quest/[id]/mission/[missionId]/route.ts:11 uses only z.string().url(). Compare to src/app/api/quest/generate/route.ts:40 which calls sanitizeInput(body.dream)."
+    },
+    {
+      "area": "conventions",
+      "observation": "No convention documented for validating that user-submitted URLs (like proofPhotoUrl) originate from the app's own storage domain. The upload pipeline returns URLs, but the completion endpoint accepts any valid URL. A domain-allowlist convention for storage URLs would be a useful addition to AGENTS.md.",
+      "evidence": "src/app/api/quest/[id]/mission/[missionId]/route.ts:162 stores proofPhotoUrl directly without origin validation."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Feature passes review. Implementation fully covers all expectedBehavior items: start/complete mission actions, confirmation dialogs, proof photo upload with EXIF stripping (via reused UploadZone), sequential day progression, progress persistence, quest abandonment, and i18n. Two non-blocking issues identified: (1) proofPhotoUrl not sanitized with sanitizeInput() per project conventions, (2) no origin validation on submitted proof photo URLs. Both are defense-in-depth concerns that don't affect core functionality. 23 tests comprehensively cover the API surface. Worker followed the fullstack-worker skill procedure faithfully."
+}

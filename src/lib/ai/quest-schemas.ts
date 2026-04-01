@@ -37,7 +37,6 @@ export const QuestGenerationInputSchema = z.object({
     .max(CONTEXT_MAX_LENGTH, `Local context must be at most ${CONTEXT_MAX_LENGTH} characters`),
   talents: z
     .array(TalentSummarySchema)
-    .min(1, "At least one talent is required")
     .optional(),
   discoveryId: z.string().optional(),
 });

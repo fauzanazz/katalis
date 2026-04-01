@@ -129,7 +129,10 @@ export default function QuestNewPage() {
           body: JSON.stringify({
             dream: dream.trim(),
             localContext: localContext.trim(),
-            talents: latestDiscovery?.talents,
+            talents:
+              latestDiscovery?.talents && latestDiscovery.talents.length > 0
+                ? latestDiscovery.talents
+                : undefined,
             discoveryId: latestDiscovery?.id,
           }),
         });

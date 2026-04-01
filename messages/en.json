@@ -357,6 +357,33 @@
     "title": "Global Gallery",
     "subtitle": "Explore works by talented children around the world!",
     "retry": "Try Again",
+    "filter": {
+      "label": "Filter by Talent",
+      "all": "All Categories",
+      "ariaLabel": "Filter gallery by talent category",
+      "noResults": "No works match this category yet. Try a different filter!",
+      "clearFilter": "Clear Filter",
+      "showing": "Showing {category} works"
+    },
+    "clusters": {
+      "title": "AI Clusters",
+      "subtitle": "Works grouped by talent and region",
+      "loading": "Discovering talent clusters...",
+      "error": "Could not load clusters. Please try again.",
+      "empty": "No clusters available yet. More works are needed to form groups!",
+      "viewAll": "View All Works",
+      "worksCount": "{count, plural, one {# work} other {# works}}",
+      "countriesLabel": "Countries",
+      "talentLabel": "Talent Theme",
+      "viewCluster": "View Cluster",
+      "backToClusters": "Back to Clusters",
+      "clusterDetail": "Cluster: {label}",
+      "ariaLabel": "Browse AI-generated talent clusters"
+    },
+    "views": {
+      "map": "Map View",
+      "clusters": "Cluster View"
+    },
     "map": {
       "loading": "Loading gallery map...",
       "loadingTiles": "Loading map tiles...",
@@ -378,7 +405,21 @@
       "missionsLabel": "Completed Missions",
       "createdAt": "Shared on {date}",
       "notFound": "Work Not Found",
-      "notFoundDesc": "This work could not be found. It may have been removed."
+      "notFoundDesc": "This work could not be found. It may have been removed.",
+      "aiDescription": "About This Work",
+      "flagContent": "Report Content",
+      "flagSuccess": "Thank you for reporting. Our team will review this content.",
+      "flagError": "Could not submit report. Please try again.",
+      "flagReasonLabel": "Reason",
+      "flagReasons": {
+        "inappropriate": "Inappropriate content",
+        "offensive": "Offensive content",
+        "spam": "Spam",
+        "other": "Other"
+      },
+      "flagDetailsLabel": "Additional details (optional)",
+      "flagSubmit": "Submit Report",
+      "flagCancel": "Cancel"
     }
   }
 }

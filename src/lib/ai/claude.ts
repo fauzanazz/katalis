@@ -1,5 +1,6 @@
 /**
- * Anthropic Claude client for story narrative analysis and quest generation.
+ * Anthropic Claude client for story narrative analysis, quest generation,
+ * and gallery clustering.
  *
  * Story Analysis:
  *   Analyzes children's stories (typed text or transcribed audio) to detect
@@ -13,6 +14,12 @@
  *   Input: { dream: string, localContext: string, talents?: Array<{ name, confidence, reasoning }> }
  *   Output: { missions: Array<{ day, title, description, instructions, materials, tips }> }
  *
+ * Gallery Clustering:
+ *   Groups gallery entries by talent category and geographic proximity.
+ *   Generates meaningful, child-friendly cluster labels.
+ *   Input: { entries: Array<{ id, talentCategory, country, coordinates }> }
+ *   Output: { clusters: Array<{ id, label, description, talentTheme, countries, entryIds }> }
+ *
  * Uses the mock layer when USE_MOCK_AI=true (default for development).
  */
 
@@ -25,6 +32,12 @@ import {
   type QuestGenerationOutput,
 } from "./quest-schemas";
 import { getMockQuestGeneration } from "./mock/quest-generation";
+import {
+  ClusteringOutputSchema,
+  type ClusterEntry,
+  type ClusteringOutput,
+} from "./clustering-schemas";
+import { getMockClustering } from "./mock/clustering";
 
 /** Timeout for Claude API calls (30 seconds) */
 const API_TIMEOUT_MS = 30_000;
@@ -249,6 +262,119 @@ async function callClaude(
 
     if (error instanceof DOMException && error.name === "AbortError") {
       throw new Error("Story analysis timed out. Please try again.");
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * System prompt for Claude gallery clustering.
+ * Instructs Claude to group gallery entries by talent and geography.
+ */
+const CLUSTERING_SYSTEM_PROMPT = `You are a creative education specialist who organizes children's gallery works into meaningful groups. Given gallery entries with talent categories and locations, create clusters that highlight connections between young creators around the world.
+
+CRITICAL REQUIREMENTS:
+1. Group entries by talent category first, then by geographic proximity
+2. Generate child-friendly, encouraging cluster labels (e.g., "Robot Builders from Asia", "Young Artists from South America")
+3. Each cluster should have a warm, encouraging description
+4. Every entry must belong to exactly one cluster
+5. Clusters should highlight the diversity and global reach of children's talents
+
+For each cluster include:
+- id: unique cluster identifier (e.g., "cluster-1")
+- label: short, friendly label (3-6 words)
+- description: encouraging description mentioning countries and talent
+- talentTheme: the main talent category
+- countries: list of countries represented
+- entryIds: list of entry IDs in this cluster
+
+Respond ONLY with valid JSON in this exact format:
+{
+  "clusters": [
+    {
+      "id": "cluster-1",
+      "label": "Robot Builders from Asia",
+      "description": "3 young talents from Indonesia and Japan are building amazing machines!",
+      "talentTheme": "Engineering",
+      "countries": ["Indonesia", "Japan"],
+      "entryIds": ["entry-1", "entry-2", "entry-3"]
+    }
+  ]
+}`;
+
+/**
+ * Cluster gallery entries using Claude AI.
+ *
+ * Routes to mock responses when USE_MOCK_AI=true.
+ */
+export async function clusterGalleryEntries(
+  entries: ClusterEntry[],
+): Promise<ClusteringOutput> {
+  if (process.env.USE_MOCK_AI === "true") {
+    return getMockClustering(entries);
+  }
+
+  return callClaudeForClustering(entries);
+}
+
+/**
+ * Make a real call to the Anthropic Claude API for gallery clustering.
+ */
+async function callClaudeForClustering(
+  entries: ClusterEntry[],
+): Promise<ClusteringOutput> {
+  const Anthropic = (await import("@anthropic-ai/sdk")).default;
+
+  const client = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+    timeout: API_TIMEOUT_MS,
+  });
+
+  const entrySummary = entries
+    .map(
+      (e) =>
+        `- ID: ${e.id}, Talent: ${e.talentCategory}, Country: ${e.country ?? "Unknown"}`,
+    )
+    .join("\n");
+
+  const userMessage = `Group these ${entries.length} gallery entries into meaningful clusters:
+
+${entrySummary}
+
+Create clusters that highlight talent themes and geographic connections. Make labels child-friendly and encouraging.`;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+  try {
+    const response = await client.messages.create(
+      {
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2000,
+        system: CLUSTERING_SYSTEM_PROMPT,
+        messages: [{ role: "user", content: userMessage }],
+      },
+      { signal: controller.signal },
+    );
+
+    clearTimeout(timeoutId);
+
+    const textBlock = response.content.find(
+      (block: { type: string }) => block.type === "text",
+    );
+    if (!textBlock || textBlock.type !== "text") {
+      throw new Error("Empty response from Claude");
+    }
+
+    const parsed = JSON.parse(textBlock.text);
+    const validated = ClusteringOutputSchema.parse(parsed);
+    return validated;
+  } catch (error) {
+    clearTimeout(timeoutId);
+
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("Gallery clustering timed out. Please try again.");
     }
 
     throw error;

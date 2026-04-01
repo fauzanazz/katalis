@@ -357,6 +357,33 @@
     "title": "Galeri Dunia",
     "subtitle": "Jelajahi karya anak-anak berbakat dari seluruh dunia!",
     "retry": "Coba Lagi",
+    "filter": {
+      "label": "Filter berdasarkan Bakat",
+      "all": "Semua Kategori",
+      "ariaLabel": "Filter galeri berdasarkan kategori bakat",
+      "noResults": "Belum ada karya untuk kategori ini. Coba filter lainnya!",
+      "clearFilter": "Hapus Filter",
+      "showing": "Menampilkan karya {category}"
+    },
+    "clusters": {
+      "title": "Kluster AI",
+      "subtitle": "Karya dikelompokkan berdasarkan bakat dan wilayah",
+      "loading": "Menemukan kluster bakat...",
+      "error": "Tidak dapat memuat kluster. Silakan coba lagi.",
+      "empty": "Belum ada kluster. Diperlukan lebih banyak karya untuk membentuk kelompok!",
+      "viewAll": "Lihat Semua Karya",
+      "worksCount": "{count, plural, one {# karya} other {# karya}}",
+      "countriesLabel": "Negara-negara",
+      "talentLabel": "Tema Bakat",
+      "viewCluster": "Lihat Kluster",
+      "backToClusters": "Kembali ke Kluster",
+      "clusterDetail": "Kluster: {label}",
+      "ariaLabel": "Jelajahi kluster bakat yang dihasilkan AI"
+    },
+    "views": {
+      "map": "Tampilan Peta",
+      "clusters": "Tampilan Kluster"
+    },
     "map": {
       "loading": "Memuat peta galeri...",
       "loadingTiles": "Memuat peta...",
@@ -378,7 +405,21 @@
       "missionsLabel": "Misi yang Diselesaikan",
       "createdAt": "Dibagikan pada {date}",
       "notFound": "Karya Tidak Ditemukan",
-      "notFoundDesc": "Karya ini tidak dapat ditemukan. Mungkin telah dihapus."
+      "notFoundDesc": "Karya ini tidak dapat ditemukan. Mungkin telah dihapus.",
+      "aiDescription": "Tentang Karya Ini",
+      "flagContent": "Laporkan Konten",
+      "flagSuccess": "Terima kasih atas laporanmu. Tim kami akan meninjau konten ini.",
+      "flagError": "Tidak bisa mengirim laporan. Silakan coba lagi.",
+      "flagReasonLabel": "Alasan",
+      "flagReasons": {
+        "inappropriate": "Konten tidak pantas",
+        "offensive": "Konten menyinggung",
+        "spam": "Spam",
+        "other": "Lainnya"
+      },
+      "flagDetailsLabel": "Detail tambahan (opsional)",
+      "flagSubmit": "Kirim Laporan",
+      "flagCancel": "Batal"
     }
   }
 }

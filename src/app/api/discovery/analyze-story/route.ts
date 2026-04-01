@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { sanitizeInput, containsSuspiciousPatterns } from "@/lib/sanitize";
+import { sanitizeInput } from "@/lib/sanitize";
 import { StoryAnalysisInputSchema } from "@/lib/ai/story-schemas";
 import { analyzeStory } from "@/lib/ai/claude";
 
@@ -34,12 +34,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Sanitize story text to prevent XSS
+    // Sanitize story text unconditionally to prevent XSS
     if (body.storyText && typeof body.storyText === "string") {
-      if (containsSuspiciousPatterns(body.storyText)) {
-        // Sanitize but still allow submission — XSS patterns are stripped
-        body.storyText = sanitizeInput(body.storyText);
-      }
+      body.storyText = sanitizeInput(body.storyText);
     }
 
     // Validate input with Zod

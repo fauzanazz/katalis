@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { sanitizeInput, containsSuspiciousPatterns } from "@/lib/sanitize";
+import { sanitizeInput } from "@/lib/sanitize";
+import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 import { AnalysisInputSchema } from "@/lib/ai/schemas";
 import { analyzeArtifact } from "@/lib/ai/openai";
 
@@ -33,16 +34,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Sanitize the artifact URL to prevent XSS
+    // Sanitize the artifact URL unconditionally to prevent XSS
     if (body.artifactUrl && typeof body.artifactUrl === "string") {
-      const sanitized = sanitizeInput(body.artifactUrl);
-      if (containsSuspiciousPatterns(body.artifactUrl)) {
+      body.artifactUrl = sanitizeInput(body.artifactUrl);
+
+      // Validate URL origin against allowlist (defense-in-depth)
+      if (!isAllowedStorageUrl(body.artifactUrl)) {
         return NextResponse.json(
           { error: "invalid", message: "Invalid artifact URL" },
           { status: 400 },
         );
       }
-      body.artifactUrl = sanitized;
     }
 
     // Validate input with Zod

@@ -344,6 +344,7 @@
       "loading": "Loading...",
       "notReady": "Quest Not Ready",
       "notReadyDesc": "Complete all 7 missions first to see the celebration!",
+      "dayLabel": "Day {day}",
       "dayPhoto": "Day {day}: {title}",
       "photoAlt": "Proof photo for Day {day}: {title}",
       "journeySummary": "You completed a 7-day quest to pursue your dream!",

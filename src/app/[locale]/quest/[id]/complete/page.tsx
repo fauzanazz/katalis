@@ -447,7 +447,7 @@ export default function QuestCompletePage() {
                         : "bg-black/60 text-white"
                     }`}
                   >
-                    Day {mission.day}
+                    {t("dayLabel", { day: mission.day })}
                   </div>
 
                   {/* Selection indicator */}

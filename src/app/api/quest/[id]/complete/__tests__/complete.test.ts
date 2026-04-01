@@ -236,7 +236,7 @@ describe("POST /api/quest/[id]/complete", () => {
     mockedQuestFindUnique.mockResolvedValue(quest as never);
 
     const request = makeRequest({
-      selectedPhotoUrl: "http://example.com/unknown-photo.jpg",
+      selectedPhotoUrl: "http://localhost:3100/api/storage/unknown-photo.jpg",
     });
     const response = await POST(request, {
       params: Promise.resolve({ id: "quest-1" }),
@@ -245,6 +245,23 @@ describe("POST /api/quest/[id]/complete", () => {
     expect(response.status).toBe(400);
     const data = await response.json();
     expect(data.error).toBe("invalid_photo");
+  });
+
+  it("returns 400 when selectedPhotoUrl is from untrusted origin", async () => {
+    const quest = createQuest();
+    mockedGetSession.mockResolvedValue(validSession);
+    mockedQuestFindUnique.mockResolvedValue(quest as never);
+
+    const request = makeRequest({
+      selectedPhotoUrl: "http://evil.com/malicious-photo.jpg",
+    });
+    const response = await POST(request, {
+      params: Promise.resolve({ id: "quest-1" }),
+    });
+
+    expect(response.status).toBe(400);
+    const data = await response.json();
+    expect(data.error).toBe("invalid");
   });
 
   it("returns 409 when gallery entry already exists for this quest", async () => {

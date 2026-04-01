@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { sanitizeInput } from "@/lib/sanitize";
+import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 
 /**
  * Zod schema for mission status update requests.
@@ -56,7 +58,20 @@ export async function PATCH(
       );
     }
 
-    const { action, proofPhotoUrl } = parsed.data;
+    const { action } = parsed.data;
+    let { proofPhotoUrl } = parsed.data;
+
+    // Sanitize URL input unconditionally (XSS prevention + URL origin check)
+    if (proofPhotoUrl && typeof proofPhotoUrl === "string") {
+      proofPhotoUrl = sanitizeInput(proofPhotoUrl);
+
+      if (!isAllowedStorageUrl(proofPhotoUrl)) {
+        return NextResponse.json(
+          { error: "invalid", message: "Invalid proof photo URL" },
+          { status: 400 },
+        );
+      }
+    }
 
     // Fetch the quest with all missions
     const quest = await prisma.quest.findUnique({

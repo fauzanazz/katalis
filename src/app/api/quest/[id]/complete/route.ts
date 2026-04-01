@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { sanitizeInput } from "@/lib/sanitize";
+import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 
 /**
  * Zod schema for quest completion requests.
@@ -105,6 +107,22 @@ export async function POST(
     }
 
     const data = parsed.data;
+
+    // Sanitize URL input unconditionally (XSS prevention + URL origin check)
+    if ("selectedPhotoUrl" in data && data.selectedPhotoUrl) {
+      const sanitized = sanitizeInput(data.selectedPhotoUrl);
+      if (!isAllowedStorageUrl(sanitized)) {
+        return NextResponse.json(
+          {
+            error: "invalid",
+            message: "Invalid photo URL origin",
+          },
+          { status: 400 },
+        );
+      }
+      // Replace with sanitized value
+      (data as { selectedPhotoUrl: string }).selectedPhotoUrl = sanitized;
+    }
 
     // Handle skip gallery
     if ("skipGallery" in data && data.skipGallery) {

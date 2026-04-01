@@ -344,6 +344,7 @@
       "loading": "Memuat...",
       "notReady": "Misi Belum Siap",
       "notReadyDesc": "Selesaikan semua 7 misi terlebih dahulu untuk melihat perayaan!",
+      "dayLabel": "Hari {day}",
       "dayPhoto": "Hari {day}: {title}",
       "photoAlt": "Foto bukti untuk Hari {day}: {title}",
       "journeySummary": "Kamu telah menyelesaikan misi 7 hari untuk mengejar impianmu!",

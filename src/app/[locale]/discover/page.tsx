@@ -11,6 +11,7 @@ import { AnalysisLoading } from "@/components/discovery/AnalysisLoading";
 import { AnalysisError } from "@/components/discovery/AnalysisError";
 import { StoryPrompt } from "@/components/discovery/StoryPrompt";
 import { getRandomStoryPrompts } from "@/lib/story-prompts";
+import { useRouter } from "@/i18n/navigation";
 import type { UploadResultData } from "@/types/upload";
 import type { AnalysisOutput } from "@/lib/ai/schemas";
 
@@ -18,8 +19,32 @@ type DiscoveryFlow = "selection" | "image" | "audio" | "story";
 type AnalysisState = "idle" | "analyzing" | "done" | "error";
 type ErrorType = "ai_failure" | "timeout" | "network";
 
+/**
+ * Saves discovery results to the database via API.
+ * Returns the discovery ID on success, or null on failure.
+ */
+async function saveDiscoveryResults(
+  type: "artifact" | "story",
+  talents: AnalysisOutput["talents"],
+  fileUrl?: string,
+): Promise<string | null> {
+  try {
+    const res = await fetch("/api/discovery/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type, fileUrl, talents }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export default function DiscoverPage() {
   const t = useTranslations("discover");
+  const router = useRouter();
 
   const [flow, setFlow] = useState<DiscoveryFlow>("selection");
   const [analysisState, setAnalysisState] = useState<AnalysisState>("idle");
@@ -56,13 +81,26 @@ export default function DiscoverPage() {
       }
 
       const data: AnalysisOutput = await response.json();
+
+      // Save to DB and redirect to results page
+      const discoveryId = await saveDiscoveryResults(
+        "artifact",
+        data.talents,
+        upload.url,
+      );
+      if (discoveryId) {
+        router.push(`/discover/results/${discoveryId}`);
+        return;
+      }
+
+      // Fallback: show inline results if save fails
       setAnalysisResults(data);
       setAnalysisState("done");
     } catch {
       setErrorType("network");
       setAnalysisState("error");
     }
-  }, []);
+  }, [router]);
 
   const handleUploadComplete = useCallback(
     (result: UploadResultData) => {
@@ -103,10 +141,18 @@ export default function DiscoverPage() {
   // Story flow callbacks
   const handleStoryAnalysisComplete = useCallback(
     (results: AnalysisOutput) => {
-      setAnalysisResults(results);
-      setAnalysisState("done");
+      // Save story analysis results to DB and redirect
+      saveDiscoveryResults("story", results.talents).then((discoveryId) => {
+        if (discoveryId) {
+          router.push(`/discover/results/${discoveryId}`);
+          return;
+        }
+        // Fallback: show inline if save fails
+        setAnalysisResults(results);
+        setAnalysisState("done");
+      });
     },
-    [],
+    [router],
   );
 
   const handleStoryAnalysisStart = useCallback(() => {

@@ -1,16 +1,17 @@
 /**
- * Anthropic Claude client for story narrative analysis.
+ * Anthropic Claude client for story narrative analysis and quest generation.
  *
- * Analyzes children's stories (typed text or transcribed audio) to detect
- * talents through narrative patterns. Claude examines:
- * - Story structure (beginning, middle, end)
- * - Vocabulary and language use
- * - Creative elements (imagination, world-building)
- * - Emotional content (empathy, character depth)
- * - Logical reasoning (cause-and-effect, problem-solving)
+ * Story Analysis:
+ *   Analyzes children's stories (typed text or transcribed audio) to detect
+ *   talents through narrative patterns.
+ *   Input: { storyText: string, imageIds: string[], submissionType: "text" | "audio" }
+ *   Output: { talents: Array<{ name: string, confidence: number, reasoning: string }> }
  *
- * Input: { storyText: string, imageIds: string[], submissionType: "text" | "audio" }
- * Output: { talents: Array<{ name: string, confidence: number, reasoning: string }> }
+ * Quest Generation:
+ *   Generates a personalized 7-day mission plan based on the child's detected
+ *   talents, their dream, and local context (environment/resources).
+ *   Input: { dream: string, localContext: string, talents?: Array<{ name, confidence, reasoning }> }
+ *   Output: { missions: Array<{ day, title, description, instructions, materials, tips }> }
  *
  * Uses the mock layer when USE_MOCK_AI=true (default for development).
  */
@@ -18,6 +19,12 @@
 import { AnalysisOutputSchema } from "./schemas";
 import type { StoryAnalysisInput, StoryAnalysisOutput } from "./story-schemas";
 import { getMockStoryAnalysis } from "./mock/story-analysis";
+import {
+  QuestGenerationOutputSchema,
+  type QuestGenerationInput,
+  type QuestGenerationOutput,
+} from "./quest-schemas";
+import { getMockQuestGeneration } from "./mock/quest-generation";
 
 /** Timeout for Claude API calls (30 seconds) */
 const API_TIMEOUT_MS = 30_000;
@@ -69,7 +76,129 @@ export async function analyzeStory(
 }
 
 /**
- * Make a real call to the Anthropic Claude API.
+ * System prompt for Claude quest generation.
+ * Instructs Claude to create a personalized 7-day mission plan.
+ */
+const QUEST_SYSTEM_PROMPT = `You are a creative education specialist who designs personalized 7-day learning quests for children. Each quest transforms a child's dream into practical daily missions using locally available resources.
+
+CRITICAL REQUIREMENTS:
+1. Generate EXACTLY 7 daily missions (day 1 through day 7)
+2. Missions must progress in complexity — Day 1 is simple/observational, Day 7 is a showcase
+3. Adapt ALL materials to the child's local context (use what's available nearby)
+4. Keep instructions clear and age-appropriate (8-14 years old)
+5. Each mission should build on the previous day's learning
+6. Materials should be free or very cheap — things found at home or in nature
+7. Tips should be encouraging and help the child succeed
+
+For each mission include:
+- day: number (1-7)
+- title: short, action-oriented title (3-5 words)
+- description: 1-3 sentences explaining today's goal
+- instructions: step-by-step numbered list (4-6 steps)
+- materials: list of needed items (adapted to local context)
+- tips: 2-4 helpful hints
+
+Respond ONLY with valid JSON in this exact format:
+{
+  "missions": [
+    {
+      "day": 1,
+      "title": "Mission Title",
+      "description": "What the child will do today...",
+      "instructions": ["Step 1...", "Step 2...", "Step 3..."],
+      "materials": ["Item 1", "Item 2"],
+      "tips": ["Tip 1", "Tip 2"]
+    }
+  ]
+}`;
+
+/**
+ * Generate a personalized 7-day quest using Claude.
+ *
+ * Routes to mock responses when USE_MOCK_AI=true.
+ */
+export async function generateQuest(
+  input: QuestGenerationInput,
+): Promise<QuestGenerationOutput> {
+  if (process.env.USE_MOCK_AI === "true") {
+    return getMockQuestGeneration(input.dream);
+  }
+
+  return callClaudeForQuest(input);
+}
+
+/**
+ * Make a real call to the Anthropic Claude API for quest generation.
+ */
+async function callClaudeForQuest(
+  input: QuestGenerationInput,
+): Promise<QuestGenerationOutput> {
+  const Anthropic = (await import("@anthropic-ai/sdk")).default;
+
+  const client = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+    timeout: API_TIMEOUT_MS,
+  });
+
+  const talentSummary = input.talents
+    ? input.talents
+        .map(
+          (t) =>
+            `- ${t.name} (confidence: ${Math.round(t.confidence * 100)}%): ${t.reasoning}`,
+        )
+        .join("\n")
+    : "No specific talents detected yet.";
+
+  const userMessage = `Create a 7-day quest for a child with these details:
+
+**Dream:** "${input.dream}"
+
+**Local Context:** "${input.localContext}"
+
+**Detected Talents:**
+${talentSummary}
+
+Design missions that connect their dream with their talents, using materials available in their local environment. Make it practical, fun, and progressively challenging.`;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+  try {
+    const response = await client.messages.create(
+      {
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4000,
+        system: QUEST_SYSTEM_PROMPT,
+        messages: [{ role: "user", content: userMessage }],
+      },
+      { signal: controller.signal },
+    );
+
+    clearTimeout(timeoutId);
+
+    const textBlock = response.content.find(
+      (block: { type: string }) => block.type === "text",
+    );
+    if (!textBlock || textBlock.type !== "text") {
+      throw new Error("Empty response from Claude");
+    }
+
+    const parsed = JSON.parse(textBlock.text);
+    const validated = QuestGenerationOutputSchema.parse(parsed);
+    return validated;
+  } catch (error) {
+    clearTimeout(timeoutId);
+
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("Quest generation timed out. Please try again.");
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * Make a real call to the Anthropic Claude API for story analysis.
  *
  * Uses dynamic import to avoid loading the SDK when mocking.
  */

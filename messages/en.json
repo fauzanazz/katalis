@@ -208,5 +208,40 @@
         "tooLong": "Your story is too long! Maximum {max} characters."
       }
     }
+  },
+  "quest": {
+    "new": {
+      "title": "Create Your Quest",
+      "subtitle": "Tell us about your dream and where you live, and we'll create a personalized 7-day mission plan just for you!",
+      "talentSummary": "Your Detected Talents",
+      "noTalents": "Complete a discovery first to detect your talents!",
+      "dreamLabel": "What's Your Dream?",
+      "dreamPlaceholder": "I want to build robots that help people...",
+      "dreamHelp": "Tell us what you dream of doing or becoming. Be specific!",
+      "contextLabel": "Tell Us About Where You Live",
+      "contextPlaceholder": "I live in a village near a river. We have farms and a small market...",
+      "contextHelp": "This helps us suggest activities and materials available near you.",
+      "charCount": "{count}/{max}",
+      "charMin": "minimum {min} characters",
+      "generateButton": "Create My Quest!",
+      "generating": "Creating your quest...",
+      "generatingSubtext": "Our AI is designing 7 amazing days of adventure just for you!",
+      "validation": {
+        "dreamEmpty": "Please tell us your dream!",
+        "dreamTooShort": "Your dream needs at least {min} characters. Tell us more!",
+        "dreamTooLong": "Your dream is too long! Maximum {max} characters.",
+        "contextEmpty": "Please tell us about where you live!",
+        "contextTooShort": "Your description needs at least {min} characters. Tell us more!",
+        "contextTooLong": "Your description is too long! Maximum {max} characters."
+      },
+      "error": {
+        "general": "Oops! We couldn't create your quest right now.",
+        "timeout": "Quest creation is taking a bit too long. Let's try again!",
+        "network": "It seems you're not connected. Please check your internet and try again.",
+        "hint": "Don't worry, your dream and context are saved. Just tap the button to try again!",
+        "retry": "Try Again"
+      },
+      "success": "Quest created! Let's begin your adventure!"
+    }
   }
 }

@@ -208,5 +208,40 @@
         "tooLong": "Ceritamu terlalu panjang! Maksimal {max} karakter."
       }
     }
+  },
+  "quest": {
+    "new": {
+      "title": "Buat Misimu",
+      "subtitle": "Ceritakan tentang impianmu dan tempat tinggalmu, dan kami akan membuat rencana misi 7 hari khusus untukmu!",
+      "talentSummary": "Bakat yang Terdeteksi",
+      "noTalents": "Selesaikan penemuan terlebih dahulu untuk mendeteksi bakatmu!",
+      "dreamLabel": "Apa Impianmu?",
+      "dreamPlaceholder": "Aku ingin membuat robot yang membantu orang...",
+      "dreamHelp": "Ceritakan apa yang kamu impikan untuk dilakukan atau menjadi. Sespesifik mungkin!",
+      "contextLabel": "Ceritakan Tentang Tempat Tinggalmu",
+      "contextPlaceholder": "Aku tinggal di desa dekat sungai. Ada ladang dan pasar kecil...",
+      "contextHelp": "Ini membantu kami menyarankan aktivitas dan bahan yang tersedia di dekatmu.",
+      "charCount": "{count}/{max}",
+      "charMin": "minimal {min} karakter",
+      "generateButton": "Buat Misiku!",
+      "generating": "Membuat misimu...",
+      "generatingSubtext": "AI kami sedang merancang 7 hari petualangan seru khusus untukmu!",
+      "validation": {
+        "dreamEmpty": "Mohon ceritakan impianmu!",
+        "dreamTooShort": "Impianmu perlu minimal {min} karakter. Ceritakan lebih banyak!",
+        "dreamTooLong": "Impianmu terlalu panjang! Maksimal {max} karakter.",
+        "contextEmpty": "Mohon ceritakan tentang tempat tinggalmu!",
+        "contextTooShort": "Deskripsimu perlu minimal {min} karakter. Ceritakan lebih banyak!",
+        "contextTooLong": "Deskripsimu terlalu panjang! Maksimal {max} karakter."
+      },
+      "error": {
+        "general": "Ups! Kami belum bisa membuat misimu saat ini.",
+        "timeout": "Pembuatan misi memakan waktu terlalu lama. Ayo coba lagi!",
+        "network": "Sepertinya kamu tidak terhubung ke internet. Periksa koneksimu dan coba lagi.",
+        "hint": "Jangan khawatir, impian dan konteksmu tersimpan. Cukup ketuk tombol untuk mencoba lagi!",
+        "retry": "Coba Lagi"
+      },
+      "success": "Misi berhasil dibuat! Ayo mulai petualanganmu!"
+    }
   }
 }

@@ -192,10 +192,11 @@ export async function POST(
       ? JSON.stringify(geoResult.coordinates)
       : null;
 
-    // Build quest context metadata
+    // Build quest context metadata (includes localContext for gallery display)
     const questContext = JSON.stringify({
       questTitle: quest.dream,
       dream: quest.dream,
+      localContext: quest.localContext,
       missionSummaries: quest.missions.map((m) => m.title),
     });
 

@@ -258,7 +258,10 @@
         "hint": "Jangan khawatir, impian dan konteksmu tersimpan. Cukup ketuk tombol untuk mencoba lagi!",
         "retry": "Coba Lagi"
       },
-      "success": "Misi berhasil dibuat! Ayo mulai petualanganmu!"
+      "success": "Misi berhasil dibuat! Ayo mulai petualanganmu!",
+      "noDiscovery": "Temukan Bakatmu Dulu!",
+      "noDiscoveryDesc": "Sebelum membuat misi, kamu perlu menemukan bakatmu terlebih dahulu. Unggah gambar, rekam suaramu, atau ceritakan sebuah kisah!",
+      "goToDiscovery": "Mulai Menemukan"
     },
     "list": {
       "title": "Misi-Misimu",
@@ -419,6 +422,7 @@
       "countryLabel": "Negara",
       "questContextLabel": "Perjalanan Misi",
       "dreamLabel": "Impian",
+      "localContextLabel": "Lingkungan Lokal",
       "missionsLabel": "Misi yang Diselesaikan",
       "createdAt": "Dibagikan pada {date}",
       "notFound": "Karya Tidak Ditemukan",

@@ -245,10 +245,11 @@ export async function POST(request: NextRequest | Request) {
       ? JSON.stringify(geoResult.coordinates)
       : null;
 
-    // Build quest context
+    // Build quest context (includes localContext for gallery display)
     const questContext = JSON.stringify({
       questTitle: quest.dream,
       dream: quest.dream,
+      localContext: quest.localContext,
       missionSummaries: quest.missions.map((m) => m.title),
     });
 

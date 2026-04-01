@@ -12,7 +12,7 @@ import {
   CONTEXT_MAX_LENGTH,
 } from "@/lib/ai/quest-schemas";
 
-type PageState = "form" | "generating" | "error";
+type PageState = "loading" | "no-discovery" | "form" | "generating" | "error";
 type ErrorType = "ai_failure" | "timeout" | "network";
 
 interface TalentSummary {
@@ -30,7 +30,7 @@ export default function QuestNewPage() {
   const t = useTranslations("quest.new");
   const router = useRouter();
 
-  const [pageState, setPageState] = useState<PageState>("form");
+  const [pageState, setPageState] = useState<PageState>("loading");
   const [errorType, setErrorType] = useState<ErrorType>("ai_failure");
 
   const [dream, setDream] = useState("");
@@ -41,26 +41,32 @@ export default function QuestNewPage() {
   const [latestDiscovery, setLatestDiscovery] =
     useState<LatestDiscovery | null>(null);
 
-  // Fetch latest discovery talents on mount
+  // Fetch latest discovery talents on mount — redirect if none found
   useEffect(() => {
     async function fetchLatestDiscovery() {
       try {
         const res = await fetch("/api/discovery/history?limit=1");
-        if (!res.ok) return;
+        if (!res.ok) {
+          setPageState("no-discovery");
+          return;
+        }
         const data = await res.json();
         if (data.discoveries && data.discoveries.length > 0) {
           const disc = data.discoveries[0];
-          const talents =
-            typeof disc.detectedTalents === "string"
-              ? JSON.parse(disc.detectedTalents)
-              : disc.detectedTalents;
+          // The history API returns "talents" (already parsed array)
+          const talents = Array.isArray(disc.talents) ? disc.talents : [];
           setLatestDiscovery({
             id: disc.id,
-            talents: Array.isArray(talents) ? talents : [],
+            talents,
           });
+          setPageState("form");
+        } else {
+          // No discoveries — block quest creation
+          setPageState("no-discovery");
         }
       } catch {
-        // Non-critical — continue without talent summary
+        // Can't determine discovery status — show no-discovery state
+        setPageState("no-discovery");
       }
     }
     fetchLatestDiscovery();
@@ -164,7 +170,57 @@ export default function QuestNewPage() {
     setPageState("form");
   }, []);
 
-  // Loading state
+  // Initial loading state (checking for discovery)
+  if (pageState === "loading") {
+    return (
+      <div className="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-16 sm:py-24">
+        <div className="flex flex-col items-center gap-6 text-center">
+          <div className="flex size-20 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
+            <Loader2
+              className="size-10 animate-spin text-purple-600 dark:text-purple-400"
+              aria-hidden="true"
+            />
+          </div>
+          <p className="text-zinc-600 dark:text-zinc-400">
+            {t("title")}...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // No discovery found — guide user to discover first
+  if (pageState === "no-discovery") {
+    return (
+      <div className="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-16 sm:py-24">
+        <div className="flex flex-col items-center gap-6 text-center">
+          <div className="flex size-20 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+            <Sparkles
+              className="size-10 text-amber-600 dark:text-amber-400"
+              aria-hidden="true"
+            />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+              {t("noDiscovery")}
+            </h2>
+            <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+              {t("noDiscoveryDesc")}
+            </p>
+          </div>
+          <Button
+            size="lg"
+            onClick={() => router.push("/discover")}
+          >
+            <Sparkles className="mr-2 size-5" />
+            {t("goToDiscovery")}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Quest generation loading state
   if (pageState === "generating") {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-16 sm:py-24">

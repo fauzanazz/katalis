@@ -16,6 +16,9 @@ vi.mock("@/lib/db", () => ({
     quest: {
       create: vi.fn(),
     },
+    discovery: {
+      count: vi.fn(),
+    },
   },
 }));
 
@@ -78,9 +81,13 @@ function createRequest(body: unknown) {
   }) as unknown as Parameters<typeof POST>[0];
 }
 
+const mockedDiscoveryCount = vi.mocked(prisma.discovery.count);
+
 describe("POST /api/quest/generate", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: child has at least one discovery
+    mockedDiscoveryCount.mockResolvedValue(1);
   });
 
   it("returns 401 when not authenticated", async () => {

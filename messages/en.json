@@ -258,7 +258,10 @@
         "hint": "Don't worry, your dream and context are saved. Just tap the button to try again!",
         "retry": "Try Again"
       },
-      "success": "Quest created! Let's begin your adventure!"
+      "success": "Quest created! Let's begin your adventure!",
+      "noDiscovery": "Discover Your Talents First!",
+      "noDiscoveryDesc": "Before creating a quest, you need to discover your talents. Upload a drawing, record your voice, or tell a story!",
+      "goToDiscovery": "Start Discovering"
     },
     "list": {
       "title": "Your Quests",
@@ -419,6 +422,7 @@
       "countryLabel": "Country",
       "questContextLabel": "Quest Journey",
       "dreamLabel": "Dream",
+      "localContextLabel": "Local Environment",
       "missionsLabel": "Completed Missions",
       "createdAt": "Shared on {date}",
       "notFound": "Work Not Found",

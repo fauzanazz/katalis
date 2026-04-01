@@ -56,6 +56,22 @@ export async function POST(request: NextRequest) {
 
     const { dream, localContext, talents, discoveryId } = parsed.data;
 
+    // Verify child has at least one discovery (no quest without discovery)
+    const discoveryCount = await prisma.discovery.count({
+      where: { childId: session.childId },
+    });
+
+    if (discoveryCount === 0) {
+      return NextResponse.json(
+        {
+          error: "no_discovery",
+          message:
+            "You need to complete a talent discovery before creating a quest.",
+        },
+        { status: 400 },
+      );
+    }
+
     // Generate quest via Claude AI
     const result = await generateQuest({
       dream,

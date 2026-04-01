@@ -14,6 +14,7 @@ interface GalleryDetailEntry {
   questContext: {
     questTitle?: string;
     dream?: string;
+    localContext?: string;
     missionSummaries?: string[];
   } | null;
   createdAt: string;
@@ -164,6 +165,15 @@ export function GalleryDetailClient({ entry }: GalleryDetailClientProps) {
                     {t("detail.dreamLabel")}
                   </p>
                   <p className="text-sm">{entry.questContext.dream}</p>
+                </div>
+              )}
+
+              {entry.questContext.localContext && (
+                <div className="mb-2">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    {t("detail.localContextLabel")}
+                  </p>
+                  <p className="text-sm">{entry.questContext.localContext}</p>
                 </div>
               )}
 

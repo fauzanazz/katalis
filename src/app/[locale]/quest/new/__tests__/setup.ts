@@ -47,6 +47,10 @@ vi.mock("next-intl", () => {
     "quest.new.error.retry": "Try Again",
     "quest.new.success":
       "Quest created! Let's begin your adventure!",
+    "quest.new.noDiscovery": "Discover Your Talents First!",
+    "quest.new.noDiscoveryDesc":
+      "Before creating a quest, you need to discover your talents. Upload a drawing, record your voice, or tell a story!",
+    "quest.new.goToDiscovery": "Start Discovering",
   };
 
   return {

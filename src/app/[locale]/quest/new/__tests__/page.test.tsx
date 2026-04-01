@@ -13,43 +13,82 @@ global.fetch = mockFetch;
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // Default: no discovery history
+  // Default: provide a discovery so the form is shown (no-discovery state blocks the form)
   mockFetch.mockResolvedValue({
     ok: true,
-    json: async () => ({ discoveries: [] }),
+    json: async () => ({
+      discoveries: [
+        {
+          id: "disc-default",
+          talents: [
+            { name: "Creative", confidence: 0.8, reasoning: "Shows creativity" },
+          ],
+        },
+      ],
+    }),
   });
 });
 
 describe("QuestNewPage", () => {
-  it("renders page title", () => {
+  it("renders page title", async () => {
     render(<QuestNewPage />);
-    expect(screen.getByText("Create Your Quest")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Create Your Quest")).toBeInTheDocument();
+    });
   });
 
-  it("renders dream input with label", () => {
+  it("renders dream input with label", async () => {
     render(<QuestNewPage />);
-    expect(screen.getByText("What's Your Dream?")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("What's Your Dream?")).toBeInTheDocument();
+    });
     expect(screen.getByPlaceholderText(/I want to build robots/)).toBeInTheDocument();
   });
 
-  it("renders local context input with label", () => {
+  it("renders local context input with label", async () => {
     render(<QuestNewPage />);
-    expect(
-      screen.getByText("Tell Us About Where You Live"),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.getByText("Tell Us About Where You Live"),
+      ).toBeInTheDocument();
+    });
     expect(
       screen.getByPlaceholderText(/I live in a village/),
     ).toBeInTheDocument();
   });
 
-  it("renders generate button", () => {
+  it("renders generate button", async () => {
     render(<QuestNewPage />);
-    expect(screen.getByText("Create My Quest!")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Create My Quest!")).toBeInTheDocument();
+    });
+  });
+
+  it("shows no-discovery state when no discoveries exist", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ discoveries: [] }),
+    });
+
+    render(<QuestNewPage />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Discover Your Talents First!"),
+      ).toBeInTheDocument();
+    });
+    expect(
+      screen.getByText("Start Discovering"),
+    ).toBeInTheDocument();
   });
 
   it("shows dream empty validation error on submit", async () => {
     const user = userEvent.setup();
     render(<QuestNewPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Create My Quest!")).toBeInTheDocument();
+    });
 
     // Fill only context, leave dream empty
     const contextInput = screen.getByPlaceholderText(/I live in a village/);
@@ -64,6 +103,10 @@ describe("QuestNewPage", () => {
   it("shows context empty validation error on submit", async () => {
     const user = userEvent.setup();
     render(<QuestNewPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Create My Quest!")).toBeInTheDocument();
+    });
 
     // Fill only dream, leave context empty
     const dreamInput = screen.getByPlaceholderText(/I want to build robots/);
@@ -80,6 +123,10 @@ describe("QuestNewPage", () => {
   it("shows dream too short validation error", async () => {
     const user = userEvent.setup();
     render(<QuestNewPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Create My Quest!")).toBeInTheDocument();
+    });
 
     const dreamInput = screen.getByPlaceholderText(/I want to build robots/);
     await user.type(dreamInput, "short");
@@ -99,6 +146,10 @@ describe("QuestNewPage", () => {
     const user = userEvent.setup();
     render(<QuestNewPage />);
 
+    await waitFor(() => {
+      expect(screen.getByText("Create My Quest!")).toBeInTheDocument();
+    });
+
     const dreamInput = screen.getByPlaceholderText(/I want to build robots/);
     await user.type(dreamInput, "I want to build amazing robots");
 
@@ -117,6 +168,10 @@ describe("QuestNewPage", () => {
     const user = userEvent.setup();
     render(<QuestNewPage />);
 
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/I want to build robots/)).toBeInTheDocument();
+    });
+
     const dreamInput = screen.getByPlaceholderText(/I want to build robots/);
     await user.type(dreamInput, "Hello");
 
@@ -127,6 +182,10 @@ describe("QuestNewPage", () => {
     const user = userEvent.setup();
     render(<QuestNewPage />);
 
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/I live in a village/)).toBeInTheDocument();
+    });
+
     const contextInput = screen.getByPlaceholderText(/I live in a village/);
     await user.type(contextInput, "Test");
 
@@ -135,17 +194,23 @@ describe("QuestNewPage", () => {
 
   it("shows loading state during quest generation", async () => {
     const user = userEvent.setup();
-    // Make fetch hang for generation
+    // First fetch returns discovery, second one hangs for generation
     mockFetch
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ discoveries: [] }),
+        json: async () => ({
+          discoveries: [{ id: "d1", talents: [{ name: "Creative", confidence: 0.8, reasoning: "test" }] }],
+        }),
       })
       .mockImplementationOnce(
         () => new Promise(() => {}), // Never resolves
       );
 
     render(<QuestNewPage />);
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/I want to build robots/)).toBeInTheDocument();
+    });
 
     const dreamInput = screen.getByPlaceholderText(/I want to build robots/);
     await user.type(dreamInput, "I want to build amazing robots");
@@ -166,7 +231,9 @@ describe("QuestNewPage", () => {
     mockFetch
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ discoveries: [] }),
+        json: async () => ({
+          discoveries: [{ id: "d1", talents: [{ name: "Creative", confidence: 0.8, reasoning: "test" }] }],
+        }),
       })
       .mockResolvedValueOnce({
         ok: false,
@@ -175,6 +242,10 @@ describe("QuestNewPage", () => {
       });
 
     render(<QuestNewPage />);
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/I want to build robots/)).toBeInTheDocument();
+    });
 
     const dreamInput = screen.getByPlaceholderText(/I want to build robots/);
     await user.type(dreamInput, "I want to build amazing robots");
@@ -201,7 +272,9 @@ describe("QuestNewPage", () => {
     mockFetch
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ discoveries: [] }),
+        json: async () => ({
+          discoveries: [{ id: "d1", talents: [{ name: "Creative", confidence: 0.8, reasoning: "test" }] }],
+        }),
       })
       .mockResolvedValueOnce({
         ok: false,
@@ -210,6 +283,10 @@ describe("QuestNewPage", () => {
       });
 
     render(<QuestNewPage />);
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/I want to build robots/)).toBeInTheDocument();
+    });
 
     const dreamInput = screen.getByPlaceholderText(/I want to build robots/);
     await user.type(dreamInput, "I want to build amazing robots");
@@ -240,8 +317,12 @@ describe("QuestNewPage", () => {
     );
   });
 
-  it("has proper aria attributes on form fields", () => {
+  it("has proper aria attributes on form fields", async () => {
     render(<QuestNewPage />);
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/I want to build robots/)).toBeInTheDocument();
+    });
 
     const dreamInput = screen.getByPlaceholderText(/I want to build robots/);
     expect(dreamInput).toHaveAttribute("id", "dream-input");
@@ -259,13 +340,13 @@ describe("QuestNewPage", () => {
         discoveries: [
           {
             id: "disc-1",
-            detectedTalents: JSON.stringify([
+            talents: [
               {
                 name: "Engineering & Mechanics",
                 confidence: 0.92,
                 reasoning: "Shows attention to mechanical details.",
               },
-            ]),
+            ],
           },
         ],
       }),

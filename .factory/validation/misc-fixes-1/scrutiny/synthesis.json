@@ -1,0 +1,39 @@
+{
+  "milestone": "misc-fixes-1",
+  "round": 1,
+  "status": "pass",
+  "validatorsRun": {
+    "test": { "passed": true, "command": "bun run test", "exitCode": 0 },
+    "typecheck": { "passed": true, "command": "bun run typecheck", "exitCode": 0 },
+    "lint": { "passed": true, "command": "bun run lint", "exitCode": 0 }
+  },
+  "reviewsSummary": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "failedFeatures": []
+  },
+  "blockingIssues": [],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Add convention: API routes accepting storage URLs (e.g., imageUrl, proofPhotoUrl) must validate the URL origin using isAllowedStorageUrl() from src/lib/url-allowlist.ts. This is defense-in-depth against SSRF and open redirect via user-supplied URLs pointing to untrusted origins.",
+      "evidence": "Feature fix-unconditional-xss-sanitization introduced isAllowedStorageUrl() utility and applied it in quest mission/complete routes, but the convention is not yet documented. Future gallery and other routes accepting URLs should follow the same pattern.",
+      "isSystemic": true
+    },
+    {
+      "target": "skills",
+      "suggestion": "The fullstack-worker skill's TDD procedure ('Write Tests First - Red Phase') should distinguish between new feature work and fix/refactor work. For fix features that modify existing code with existing test coverage, it's more efficient to modify code first and verify existing + new tests pass, rather than writing failing tests before the fix.",
+      "evidence": "Worker on fix-unconditional-xss-sanitization noted this deviation in handoff skillFeedback: 'for this fix-focused feature modifying existing code, it was more efficient to modify the code first and verify existing + new tests pass.'",
+      "isSystemic": false
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "AGENTS.md now documents the unconditional sanitization rule. This convention was added as part of prior scrutiny iterations.",
+      "reason": "already-documented"
+    }
+  ],
+  "previousRound": null
+}

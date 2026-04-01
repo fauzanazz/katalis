@@ -1,0 +1,44 @@
+{
+  "featureId": "fix-unconditional-xss-sanitization",
+  "reviewedAt": "2026-04-01T09:00:00.000Z",
+  "commitId": "8024513",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "All 5 fixes are correctly implemented. (1) containsSuspiciousPatterns() gating removed from both discovery API routes — sanitizeInput() now called unconditionally. (2) sanitizeInput() + isAllowedStorageUrl() added on URL inputs in quest mission and quest complete routes. (3) useRouter import in quest/[id]/page.tsx correctly changed from next/navigation to @/i18n/navigation while useParams correctly remains from next/navigation. (4) Hardcoded 'Day {n}' replaced with t('dayLabel', { day: mission.day }) in quest completion page, with dayLabel key added to both en.json and id.json. (5) New url-allowlist.ts utility validates URL origins against NEXT_PUBLIC_APP_URL, R2_PUBLIC_URL, and localhost:3100, applied in all relevant routes. Tests are comprehensive: 7 new unit tests for url-allowlist plus updated quest complete test with untrusted origin case. No blocking issues found.",
+    "issues": [
+      {
+        "file": "src/lib/url-allowlist.ts",
+        "line": 35,
+        "severity": "non_blocking",
+        "description": "Hardcoded 'http://localhost:3100' is always included in the allowlist regardless of environment. In production, if NEXT_PUBLIC_APP_URL is correctly set to the production domain, this fallback means localhost:3100 is still an allowed origin. While this is harmless in practice (production would not have a service on localhost:3100 accessible from external requests), it could be cleaner to only include localhost when NODE_ENV !== 'production'."
+      },
+      {
+        "file": "src/app/api/discovery/analyze/route.ts",
+        "line": 37,
+        "severity": "non_blocking",
+        "description": "The analyze route applies isAllowedStorageUrl() to artifactUrl, which is good defense-in-depth. However, the analyze-story route does not apply URL origin validation on storyText (which is plain text, not a URL) — this is correct behavior, just noting the asymmetry is intentional since storyText is narrative text, not a URL."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "AGENTS.md now documents the unconditional sanitization rule ('Always call sanitizeInput() — do NOT gate sanitization behind containsSuspiciousPatterns() checks'). This convention was added as part of prior scrutiny iterations and is well-documented.",
+      "evidence": "AGENTS.md Security section explicitly states: 'Always call sanitizeInput() — do NOT gate sanitization behind containsSuspiciousPatterns() checks. The sanitization must happen regardless of whether the input looks suspicious.'"
+    },
+    {
+      "area": "conventions",
+      "observation": "The URL origin allowlist pattern (isAllowedStorageUrl) is a new defense-in-depth measure not yet documented in AGENTS.md or architecture.md. Future API routes accepting storage URLs should also use this validation, but there is no documented convention requiring it.",
+      "evidence": "src/lib/url-allowlist.ts is a new utility. Neither AGENTS.md nor architecture.md mention URL origin validation for storage URLs. Only the XSS sanitization convention is documented."
+    },
+    {
+      "area": "skills",
+      "observation": "Worker noted that for fix/refactor features, modifying code first then verifying tests was more efficient than strict TDD (write failing tests first). The skill's procedure says 'Write Tests First (TDD - Red Phase)' without distinguishing between new features and fix features. This is a reasonable deviation.",
+      "evidence": "Handoff skillFeedback.suggestedChanges: 'The skill says to write tests first (TDD red phase), but for this fix-focused feature modifying existing code, it was more efficient to modify the code first and verify existing + new tests pass.'"
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "All 5 security and i18n fixes are correctly implemented. XSS sanitization is now unconditional in discovery routes (containsSuspiciousPatterns gating removed). URL inputs in quest routes have sanitizeInput() + isAllowedStorageUrl() applied. useRouter import fixed for locale-aware routing. Hardcoded English text replaced with next-intl translation key. New url-allowlist utility is well-tested (7 unit tests) and applied consistently. All existing tests pass (368 tests), typecheck and lint clean. No blocking issues found."
+}

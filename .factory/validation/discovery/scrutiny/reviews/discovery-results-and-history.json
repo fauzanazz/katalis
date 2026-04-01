@@ -1,0 +1,56 @@
+{
+  "featureId": "discovery-results-and-history",
+  "reviewedAt": "2026-04-01T07:15:00.000Z",
+  "commitId": "91ba154",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "Solid implementation of discovery results and history feature. All 3 API routes (save, get by id, history) are well-structured with Zod validation, auth checks, ownership enforcement, and proper error handling. The results page renders talent cards with confidence bars, ARIA progressbar roles, and screen reader labels. The history page has pagination, empty state with encouraging CTA, and clickable cards linking to results. Both pages use next-intl translations for EN/ID. Share functionality uses native share API with clipboard fallback. Two non-blocking issues found: (1) the 'export'/'Save as Image' translation key exists but no export button is rendered — the feature description says 'Share/export option for results', so export is unimplemented; (2) the 'reasoning' label translation key ('Why we think so:') is unused. Neither is blocking since share functionality covers the primary intent and the reasoning text itself is still displayed.",
+    "issues": [
+      {
+        "file": "src/app/[locale]/discover/results/[id]/page.tsx",
+        "line": null,
+        "severity": "non_blocking",
+        "description": "The 'export' / 'Save as Image' feature mentioned in the feature description ('Share/export option for results') is not implemented. The translation keys 'discover.results.export' exist in both en.json and id.json but no export button is rendered. Share functionality is working (native share + clipboard fallback), but the export portion is missing."
+      },
+      {
+        "file": "messages/en.json",
+        "line": 170,
+        "severity": "non_blocking",
+        "description": "Translation key 'discover.results.reasoning' ('Why we think so:') is defined in both en.json and id.json but is never referenced in the results page component. The talent card renders talent.reasoning directly without the label. Dead translation key."
+      },
+      {
+        "file": "src/app/[locale]/discover/results/[id]/page.tsx",
+        "line": 46,
+        "severity": "non_blocking",
+        "description": "Deep-linkable results page requires authentication (API returns 401) and checks child ownership (403). This means sharing a URL with a parent who doesn't have the child's active session will fail to load. The feature description says 'deep-linkable for showing parents' — while the URL is technically stable and unique, the access control prevents unauthenticated parents from viewing. This is an inherent tension with the auth-first architecture and may be acceptable, but worth acknowledging."
+      },
+      {
+        "file": "src/app/[locale]/discover/page.tsx",
+        "line": 141,
+        "severity": "non_blocking",
+        "description": "In handleStoryAnalysisComplete, the Promise chain uses .then() without .catch(). While saveDiscoveryResults has internal try/catch, any error thrown inside the .then() callback (e.g., if router.push throws) would result in an unhandled promise rejection. Consider wrapping in async/await with try/catch, matching the pattern used in runAnalysis."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "The architecture.md document refers to the API directory as 'src/app/api/discover/' but the actual implementation uses 'src/app/api/discovery/'. This pre-existing naming inconsistency was not introduced by this feature, but workers building on this area may be confused.",
+      "evidence": ".factory/library/architecture.md:62 says 'discover/' but actual path is src/app/api/discovery/"
+    },
+    {
+      "area": "conventions",
+      "observation": "Translation keys use 'discover.results.*' and 'discover.history.*' namespacing. The pattern of nesting new feature translations under the existing 'discover' namespace is reasonable and consistent, but AGENTS.md doesn't document the i18n key namespacing conventions beyond 'use nested keys'.",
+      "evidence": "messages/en.json — new keys follow discover.results.* and discover.history.* pattern, matching existing discover.upload.* and discover.story.* patterns"
+    },
+    {
+      "area": "knowledge",
+      "observation": "The deep-linking requirement conflicts with the auth-required architecture. Future features expecting public/unauthenticated access to discovery results would need an alternative pattern (e.g., a public sharing token or read-only public route). This architectural tension should be documented.",
+      "evidence": "Feature description says 'deep-linkable for showing parents', but GET /api/discovery/[id] requires session authentication (src/app/api/discovery/[id]/route.ts:22-27)"
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Feature passes review. The implementation comprehensively covers talent results page, history page, API routes, DB storage, i18n, accessibility, pagination, and sharing. All expectedBehavior items are met: talent cards with name/confidence/reasoning, DB-linked storage, chronological history, re-do discovery buttons, deep-linkable URLs, share option, empty state, child-friendly language, and screen reader accessibility. 30 well-structured tests cover API auth/validation/error cases and UI rendering/interaction. Two non-blocking issues: (1) export/save-as-image mentioned in feature description is not implemented (only share is), (2) one unused translation key. The deep-linking access control tension is noted but acceptable within the current architecture. Code quality is clean with proper Zod validation, Prisma queries, and consistent patterns."
+}

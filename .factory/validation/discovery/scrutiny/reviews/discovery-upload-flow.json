@@ -1,0 +1,62 @@
+{
+  "featureId": "discovery-upload-flow",
+  "reviewedAt": "2026-04-01T14:00:00.000Z",
+  "commitId": "133a3e9",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The discovery upload flow is well-implemented with comprehensive test coverage (134 tests across 5 test files), proper bilingual i18n (EN/ID), clean TypeScript, and thorough validation. The implementation covers all major expected behaviors: drag-and-drop image upload with thumbnail preview, audio recording with MediaRecorder API, file validation (type + size), presigned URL security, keyboard accessibility, mobile responsiveness, camera capture, and session recovery. A few non-blocking issues were identified around session recovery scope, error message granularity for audio network failures, and dead translation keys.",
+    "issues": [
+      {
+        "file": "src/components/upload/AudioRecorder.tsx",
+        "line": 254,
+        "severity": "non_blocking",
+        "description": "Network errors (TypeError from fetch) during audio upload show 'Recording failed. Please try again.' instead of a network-specific error message. UploadZone correctly differentiates with a 'networkError' key, but AudioRecorder does not have an equivalent, making it harder for users on flaky connections to diagnose the problem."
+      },
+      {
+        "file": "src/components/upload/AudioRecorder.tsx",
+        "line": 450,
+        "severity": "non_blocking",
+        "description": "The audio error display does not include a retry button for upload failures (unlike UploadZone which has a 'Retry upload' button in error state). Users must click 'Record Again' which discards the recording entirely rather than retrying just the failed upload."
+      },
+      {
+        "file": "src/components/upload/UploadZone.tsx",
+        "line": 47,
+        "severity": "non_blocking",
+        "description": "Session recovery only saves to sessionStorage after a completed upload (line 177) and restores completed uploads on mount (line 47-58). Mid-upload interruptions (e.g. browser crash during upload) cannot be recovered since the file data is not persisted. The feature requirement 'Session recovery if upload interrupted' is only partially addressed — it recovers completed uploads across page reloads but not truly interrupted uploads."
+      },
+      {
+        "file": "messages/en.json",
+        "line": 138,
+        "severity": "non_blocking",
+        "description": "The 'discover.sessionRecovery' translation keys (title, message, resume, startOver) are defined in both en.json and id.json but never referenced in any component. This suggests a planned session recovery prompt UI that was not implemented. Dead translations are harmless but indicate incomplete intent."
+      },
+      {
+        "file": "src/app/api/storage/upload/[...key]/route.ts",
+        "line": 13,
+        "severity": "non_blocking",
+        "description": "The mock storage PUT handler has no authentication check. While presigned URLs in production are inherently scoped, the mock endpoint accepts uploads from anyone who knows the URL pattern. This is acceptable for local development but should be documented as a mock-only simplification."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "conventions",
+      "observation": "Architecture doc (section 10, Key Invariants #6) states audio size limit is 50 MB, but the actual implementation (and feature description) uses 5 MB. The architecture doc and validation code are inconsistent. AGENTS.md should clarify the canonical audio size limit.",
+      "evidence": "architecture.md section 10 invariant 6: 'audio: 50 MB' vs src/lib/storage/validation.ts:36: 'MAX_AUDIO_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB'. The feature description also says 5 MB."
+    },
+    {
+      "area": "conventions",
+      "observation": "Architecture doc (section 7 and section 10 invariant 3) states EXIF metadata should be stripped client-side before upload, but the actual implementation strips server-side in the storage layer (both mock.ts and r2.ts). The architecture doc should be updated to reflect the actual pattern (server-side stripping in the storage layer).",
+      "evidence": "architecture.md section 7: 'EXIF metadata is stripped from images before upload (client-side)' vs src/lib/storage/mock.ts:73-76 and src/app/api/storage/upload/[...key]/route.ts:44-47 which both strip server-side."
+    },
+    {
+      "area": "conventions",
+      "observation": "The discover page is placed at src/app/[locale]/discover/ instead of src/app/[locale]/(auth)/discover/ as the architecture doc's project structure suggests for auth-protected pages. Auth protection still works via middleware-level checking in proxy.ts, so security is not compromised, but the file system layout convention differs from the documented convention.",
+      "evidence": "architecture.md section 3 shows discover under (auth) route group, but actual file is at src/app/[locale]/discover/page.tsx. Auth still enforced by src/proxy.ts middleware checking session cookie."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "The discovery-upload-flow feature passes review. The implementation is comprehensive, well-tested (134 tests), type-safe, and bilingual. It correctly implements image drag-and-drop upload, audio recording via MediaRecorder, file validation, presigned URL security, EXIF stripping, keyboard accessibility, and mobile responsiveness. Non-blocking issues include: (1) incomplete session recovery for mid-upload interruptions (only recovers completed uploads), (2) audio component lacks network-specific error messages and retry button for upload failures, (3) dead sessionRecovery translation keys, and (4) unauthenticated mock storage handler. Three architecture documentation discrepancies were noted as shared state observations."
+}

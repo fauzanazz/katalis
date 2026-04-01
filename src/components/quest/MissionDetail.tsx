@@ -7,7 +7,9 @@ import {
   Package,
   Lightbulb,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
+import { MissionActions } from "@/components/quest/MissionActions";
 
 export interface MissionData {
   id: string;
@@ -23,12 +25,21 @@ export interface MissionData {
 
 interface MissionDetailProps {
   mission: MissionData;
+  questId?: string;
+  onStatusChange?: () => void;
+  readOnly?: boolean;
 }
 
-export function MissionDetail({ mission }: MissionDetailProps) {
+export function MissionDetail({
+  mission,
+  questId,
+  onStatusChange,
+  readOnly = false,
+}: MissionDetailProps) {
   const t = useTranslations("quest.overview");
 
   const isCompleted = mission.status === "completed";
+  const isInProgress = mission.status === "in_progress";
 
   return (
     <div className="flex flex-col gap-6">
@@ -42,6 +53,12 @@ export function MissionDetail({ mission }: MissionDetailProps) {
             <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
               <CheckCircle2 className="size-3" aria-hidden="true" />
               {t("statusCompleted")}
+            </span>
+          )}
+          {isInProgress && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+              <Loader2 className="size-3" aria-hidden="true" />
+              {t("statusInProgress")}
             </span>
           )}
         </div>
@@ -150,21 +167,37 @@ export function MissionDetail({ mission }: MissionDetailProps) {
         )}
       </section>
 
-      {/* Proof photo (if completed) */}
-      {isCompleted && mission.proofPhotoUrl && (
+      {/* Mission actions (start, complete, proof upload) */}
+      {!readOnly && questId && onStatusChange && (
+        <MissionActions
+          questId={questId}
+          missionId={mission.id}
+          missionDay={mission.day}
+          missionTitle={mission.title}
+          status={mission.status}
+          proofPhotoUrl={mission.proofPhotoUrl}
+          onStatusChange={onStatusChange}
+        />
+      )}
+
+      {/* Read-only proof photo for completed missions without actions */}
+      {readOnly && isCompleted && mission.proofPhotoUrl && (
         <section aria-labelledby="mission-proof">
           <h3
             id="mission-proof"
             className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300"
           >
             <CheckCircle2 className="size-4" aria-hidden="true" />
-            Proof Photo
+            {t("proofPhoto")}
           </h3>
           <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={mission.proofPhotoUrl}
-              alt={`Proof photo for Day ${mission.day}: ${mission.title}`}
+              alt={t("proofPhotoAlt", {
+                day: mission.day,
+                title: mission.title,
+              })}
               className="h-auto w-full object-cover"
             />
           </div>

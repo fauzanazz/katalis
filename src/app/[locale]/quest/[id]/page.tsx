@@ -2,14 +2,24 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Sparkles,
   Trophy,
   MapPin,
+  XCircle,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Link } from "@/i18n/navigation";
 import {
   QuestTimeline,
@@ -35,6 +45,7 @@ interface QuestData {
 export default function QuestOverviewPage() {
   const t = useTranslations("quest.overview");
   const params = useParams();
+  const router = useRouter();
   const questId = params.id as string;
 
   const [quest, setQuest] = useState<QuestData | null>(null);
@@ -42,37 +53,66 @@ export default function QuestOverviewPage() {
   const [error, setError] = useState(false);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [lockedToast, setLockedToast] = useState(false);
+  const [showAbandonDialog, setShowAbandonDialog] = useState(false);
+  const [abandonLoading, setAbandonLoading] = useState(false);
+  const [abandonError, setAbandonError] = useState<string | null>(null);
+
+  const fetchQuest = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/quest/${questId}`);
+      if (!res.ok) {
+        setError(true);
+        return;
+      }
+      const data = await res.json();
+      setQuest(data);
+
+      // Auto-select the first available or in-progress mission
+      const activeMission = data.missions.find(
+        (m: MissionData) =>
+          m.status === "available" || m.status === "in_progress",
+      );
+      if (activeMission) {
+        setSelectedDay(activeMission.day);
+      } else if (data.missions.length > 0) {
+        // If all completed or all locked, select Day 1
+        setSelectedDay(1);
+      }
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [questId]);
 
   useEffect(() => {
-    async function fetchQuest() {
-      try {
-        const res = await fetch(`/api/quest/${questId}`);
-        if (!res.ok) {
-          setError(true);
-          return;
-        }
-        const data = await res.json();
-        setQuest(data);
-
-        // Auto-select the first available or in-progress mission
-        const activeMission = data.missions.find(
-          (m: MissionData) =>
-            m.status === "available" || m.status === "in_progress",
-        );
-        if (activeMission) {
-          setSelectedDay(activeMission.day);
-        } else if (data.missions.length > 0) {
-          // If all completed or all locked, select Day 1
-          setSelectedDay(1);
-        }
-      } catch {
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchQuest();
-  }, [questId]);
+  }, [fetchQuest]);
+
+  const handleStatusChange = useCallback(() => {
+    // Refetch quest data to update all statuses
+    fetchQuest();
+  }, [fetchQuest]);
+
+  const handleAbandonQuest = useCallback(async () => {
+    setAbandonLoading(true);
+    setAbandonError(null);
+    try {
+      const res = await fetch(`/api/quest/${questId}/abandon`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        throw new Error("Failed to abandon quest");
+      }
+      setShowAbandonDialog(false);
+      // Navigate to quest list
+      router.push("/quest");
+    } catch {
+      setAbandonError(t("abandonError"));
+    } finally {
+      setAbandonLoading(false);
+    }
+  }, [questId, t, router]);
 
   const handleSelectDay = useCallback(
     (day: number) => {
@@ -198,6 +238,65 @@ export default function QuestOverviewPage() {
         </div>
       )}
 
+      {/* Abandon quest button (only for active quests) */}
+      {quest.status === "active" && (
+        <div className="mb-4 flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAbandonDialog(true)}
+            className="text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/20 dark:hover:text-red-300"
+          >
+            <XCircle className="mr-1 size-4" aria-hidden="true" />
+            {t("abandonQuest")}
+          </Button>
+        </div>
+      )}
+
+      {/* Abandon confirmation dialog */}
+      <Dialog open={showAbandonDialog} onOpenChange={setShowAbandonDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("confirmAbandon")}</DialogTitle>
+            <DialogDescription>
+              {t("confirmAbandonDesc")}
+            </DialogDescription>
+          </DialogHeader>
+          {abandonError && (
+            <div
+              role="alert"
+              className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/20 dark:text-red-400"
+            >
+              {abandonError}
+            </div>
+          )}
+          <DialogFooter className="flex gap-2 sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setShowAbandonDialog(false)}
+              disabled={abandonLoading}
+            >
+              {t("cancelButton")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleAbandonQuest}
+              disabled={abandonLoading}
+            >
+              {abandonLoading ? (
+                <Loader2
+                  className="mr-2 size-4 animate-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <XCircle className="mr-2 size-4" aria-hidden="true" />
+              )}
+              {t("confirmAbandonButton")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Locked toast notification */}
       {lockedToast && (
         <div
@@ -228,7 +327,12 @@ export default function QuestOverviewPage() {
           <h2 className="sr-only">{t("missionDetail")}</h2>
           {selectedMission ? (
             <div className="overflow-y-auto rounded-xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6 dark:border-zinc-700 dark:bg-zinc-900">
-              <MissionDetail mission={selectedMission} />
+              <MissionDetail
+                mission={selectedMission}
+                questId={questId}
+                onStatusChange={handleStatusChange}
+                readOnly={isCompleted}
+              />
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50 px-6 py-16 text-center dark:border-zinc-700 dark:bg-zinc-900/50">

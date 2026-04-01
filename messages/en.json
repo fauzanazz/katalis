@@ -352,5 +352,33 @@
       "galleryEntryPreview": "Gallery entry preview",
       "celebrationAnnouncement": "Congratulations! You have completed your quest!"
     }
+  },
+  "gallery": {
+    "title": "Global Gallery",
+    "subtitle": "Explore works by talented children around the world!",
+    "retry": "Try Again",
+    "map": {
+      "loading": "Loading gallery map...",
+      "loadingTiles": "Loading map tiles...",
+      "ariaLabel": "Interactive world map showing gallery entries from children around the world",
+      "error": "The map could not be loaded. Please try refreshing the page.",
+      "noEntries": "No works yet — complete a quest to showcase your talent on the world map!",
+      "webglFallback": "Your browser doesn't support interactive maps. Here are the gallery works in a grid view instead.",
+      "viewDetail": "View Details",
+      "pinImageAlt": "{category} work from {country}",
+      "legendLabel": "Talent categories",
+      "entryCount": "{count, plural, one {# work} other {# works}} on the map"
+    },
+    "detail": {
+      "backToGallery": "Back to Gallery",
+      "imageAlt": "{category} work from {country}",
+      "countryLabel": "Country",
+      "questContextLabel": "Quest Journey",
+      "dreamLabel": "Dream",
+      "missionsLabel": "Completed Missions",
+      "createdAt": "Shared on {date}",
+      "notFound": "Work Not Found",
+      "notFoundDesc": "This work could not be found. It may have been removed."
+    }
   }
 }

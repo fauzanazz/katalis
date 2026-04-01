@@ -352,5 +352,33 @@
       "galleryEntryPreview": "Pratinjau entri galeri",
       "celebrationAnnouncement": "Selamat! Kamu telah menyelesaikan misimu!"
     }
+  },
+  "gallery": {
+    "title": "Galeri Dunia",
+    "subtitle": "Jelajahi karya anak-anak berbakat dari seluruh dunia!",
+    "retry": "Coba Lagi",
+    "map": {
+      "loading": "Memuat peta galeri...",
+      "loadingTiles": "Memuat peta...",
+      "ariaLabel": "Peta dunia interaktif yang menampilkan karya galeri dari anak-anak di seluruh dunia",
+      "error": "Peta tidak dapat dimuat. Silakan coba muat ulang halaman.",
+      "noEntries": "Belum ada karya — selesaikan misi untuk memamerkan bakatmu di peta dunia!",
+      "webglFallback": "Browsermu tidak mendukung peta interaktif. Berikut karya galeri dalam tampilan grid.",
+      "viewDetail": "Lihat Detail",
+      "pinImageAlt": "Karya {category} dari {country}",
+      "legendLabel": "Kategori bakat",
+      "entryCount": "{count, plural, one {# karya} other {# karya}} di peta"
+    },
+    "detail": {
+      "backToGallery": "Kembali ke Galeri",
+      "imageAlt": "Karya {category} dari {country}",
+      "countryLabel": "Negara",
+      "questContextLabel": "Perjalanan Misi",
+      "dreamLabel": "Impian",
+      "missionsLabel": "Misi yang Diselesaikan",
+      "createdAt": "Dibagikan pada {date}",
+      "notFound": "Karya Tidak Ditemukan",
+      "notFoundDesc": "Karya ini tidak dapat ditemukan. Mungkin telah dihapus."
+    }
   }
 }

@@ -317,7 +317,39 @@
       "abandonError": "Could not cancel the quest. Please try again.",
       "abandonSuccess": "Quest cancelled. You can start a new discovery!",
       "proofPhotoAlt": "Proof photo for Day {day}: {title}",
-      "viewCompletedProof": "View your submitted proof"
+      "viewCompletedProof": "View your submitted proof",
+      "viewCompletion": "View Celebration"
+    },
+    "complete": {
+      "title": "Quest Complete!",
+      "congratulations": "Congratulations! You did it!",
+      "summary": "Your 7-Day Journey",
+      "missionsCompleted": "{count} missions completed",
+      "photosUploaded": "{count} photos uploaded",
+      "dreamLabel": "Your Dream",
+      "selectBestWork": "Select Your Best Work",
+      "selectBestWorkDesc": "Choose your favorite proof photo to showcase in the gallery!",
+      "selectedPhoto": "Selected: Day {day}",
+      "previewTitle": "Gallery Preview",
+      "previewDesc": "This is how your work will appear in the gallery.",
+      "talentLabel": "Talent",
+      "locationLabel": "Location",
+      "submitToGallery": "Submit to Gallery",
+      "skipGallery": "Skip for Now",
+      "submitting": "Submitting...",
+      "submitSuccess": "Your work has been added to the gallery!",
+      "submitError": "Could not submit to gallery. Please try again.",
+      "viewGallery": "View Gallery",
+      "backToQuest": "Back to Quest",
+      "loading": "Loading...",
+      "notReady": "Quest Not Ready",
+      "notReadyDesc": "Complete all 7 missions first to see the celebration!",
+      "dayPhoto": "Day {day}: {title}",
+      "photoAlt": "Proof photo for Day {day}: {title}",
+      "journeySummary": "You completed a 7-day quest to pursue your dream!",
+      "encouragement": "You showed amazing dedication and creativity. Keep dreaming big!",
+      "galleryEntryPreview": "Gallery entry preview",
+      "celebrationAnnouncement": "Congratulations! You have completed your quest!"
     }
   }
 }

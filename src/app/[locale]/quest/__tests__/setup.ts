@@ -54,6 +54,7 @@ vi.mock("next-intl", () => {
       "This quest has been completed. You can review your missions below.",
     "quest.overview.noMaterials": "No special materials needed",
     "quest.overview.noTips": "No additional tips",
+    "quest.overview.viewCompletion": "View Celebration",
   };
 
   return {

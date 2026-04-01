@@ -219,21 +219,32 @@ export default function QuestOverviewPage() {
           className="mb-6 rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20"
           role="status"
         >
-          <div className="flex items-center gap-3">
-            <Trophy
-              className="size-8 text-green-600 dark:text-green-400"
-              aria-hidden="true"
-            />
-            <div>
-              <h2 className="font-bold text-green-800 dark:text-green-300">
-                {t("questCompleted")}
-              </h2>
-              <p className="text-sm text-green-700 dark:text-green-400">
-                {isCompleted
-                  ? t("readOnlyBanner")
-                  : t("questCompletedDesc")}
-              </p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <Trophy
+                className="size-8 text-green-600 dark:text-green-400"
+                aria-hidden="true"
+              />
+              <div>
+                <h2 className="font-bold text-green-800 dark:text-green-300">
+                  {t("questCompleted")}
+                </h2>
+                <p className="text-sm text-green-700 dark:text-green-400">
+                  {isCompleted
+                    ? t("readOnlyBanner")
+                    : t("questCompletedDesc")}
+                </p>
+              </div>
             </div>
+            <Link href={`/quest/${questId}/complete`}>
+              <Button
+                size="sm"
+                className="shrink-0 bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600"
+              >
+                <Trophy className="mr-1 size-4" aria-hidden="true" />
+                {t("viewCompletion")}
+              </Button>
+            </Link>
           </div>
         </div>
       )}

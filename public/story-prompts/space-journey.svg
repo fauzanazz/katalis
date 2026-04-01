@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <rect width="400" height="300" fill="#1a237e"/>
+  <circle cx="50" cy="40" r="2" fill="white"/>
+  <circle cx="120" cy="80" r="1.5" fill="white"/>
+  <circle cx="200" cy="30" r="2" fill="white"/>
+  <circle cx="280" cy="60" r="1" fill="white"/>
+  <circle cx="350" cy="40" r="2.5" fill="white"/>
+  <circle cx="370" cy="120" r="1.5" fill="white"/>
+  <circle cx="30" cy="130" r="1" fill="white"/>
+  <circle cx="160" cy="100" r="2" fill="white"/>
+  <circle cx="320" cy="280" r="1.5" fill="white"/>
+  <circle cx="80" cy="260" r="2" fill="white"/>
+  <ellipse cx="300" cy="200" rx="40" ry="40" fill="#ff8f00"/>
+  <ellipse cx="300" cy="200" rx="55" ry="12" fill="#ff8f00" opacity="0.5" transform="rotate(-20 300 200)"/>
+  <polygon points="150,250 170,150 190,250" fill="#bdbdbd"/>
+  <rect x="145" y="240" width="50" height="20" fill="#ef5350" rx="5"/>
+  <circle cx="80" cy="180" r="25" fill="#e0e0e0"/>
+  <circle cx="72" cy="175" r="8" fill="#bdbdbd"/>
+  <circle cx="90" cy="188" r="5" fill="#bdbdbd"/>
+  <path d="M150 195 L140 170 M190 195 L200 170" stroke="#ff7043" stroke-width="3"/>
+</svg>

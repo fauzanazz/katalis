@@ -74,6 +74,8 @@
       "uploadArtifactDesc": "Share a drawing, painting, photo, or any creative work",
       "recordAudio": "Record Your Voice",
       "recordAudioDesc": "Tell us about your interests, sing, or share a story",
+      "storyMode": "Story Mode",
+      "storyModeDesc": "See pictures and create an amazing story about them",
       "back": "Back to choices"
     },
     "upload": {
@@ -153,6 +155,22 @@
       "errorNetwork": "It seems you're not connected. Please check your internet and try again.",
       "errorHint": "Don't worry, your upload is safe. Just tap the button to try again!",
       "retry": "Try Again"
+    },
+    "story": {
+      "imagePromptTitle": "Look at these pictures!",
+      "imagePromptSubtitle": "Create a story inspired by what you see",
+      "imageGroupLabel": "Story prompt images",
+      "writeStory": "Write a Story",
+      "recordStory": "Record a Story",
+      "textLabel": "Your Story",
+      "textPlaceholder": "Once upon a time, there was a...",
+      "charCount": "{count}/{max} characters (minimum {min})",
+      "submitStory": "Discover My Talents",
+      "audioInstructions": "Record yourself telling a story about what you see in the pictures above!",
+      "validation": {
+        "tooShort": "Your story needs at least {min} characters. Keep going, you're doing great!",
+        "tooLong": "Your story is too long! Maximum {max} characters."
+      }
     }
   }
 }

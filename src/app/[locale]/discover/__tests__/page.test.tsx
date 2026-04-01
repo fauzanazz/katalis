@@ -3,6 +3,16 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import DiscoverPage from "../page";
 
+// Mock next/image
+vi.mock("next/image", () => {
+  return {
+    default: function MockImage(props: Record<string, unknown>) {
+      // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+      return <img {...props} />;
+    },
+  };
+});
+
 // Mock sessionStorage
 const sessionStorageMock = (() => {
   let store: Record<string, string> = {};
@@ -34,11 +44,12 @@ describe("DiscoverPage", () => {
     expect(screen.getByText("Discover Your Talents")).toBeTruthy();
   });
 
-  it("renders flow selection with image and audio options", () => {
+  it("renders flow selection with image, audio, and story options", () => {
     render(<DiscoverPage />);
     expect(screen.getByText("How would you like to share?")).toBeTruthy();
     expect(screen.getByText("Upload an Image")).toBeTruthy();
     expect(screen.getByText("Record Your Voice")).toBeTruthy();
+    expect(screen.getByText("Story Mode")).toBeTruthy();
   });
 
   it("shows image upload zone when image option is selected", () => {
@@ -57,6 +68,26 @@ describe("DiscoverPage", () => {
     expect(screen.getByText("Back to choices")).toBeTruthy();
   });
 
+  it("shows story prompt when story mode is selected", () => {
+    render(<DiscoverPage />);
+    const storyBtn = screen.getByText("Story Mode");
+    fireEvent.click(storyBtn);
+    expect(screen.getByText("Look at these pictures!")).toBeTruthy();
+    expect(screen.getByText("Back to choices")).toBeTruthy();
+  });
+
+  it("can navigate back to flow selection from story mode", () => {
+    render(<DiscoverPage />);
+
+    // Go to story flow
+    fireEvent.click(screen.getByText("Story Mode"));
+    expect(screen.getByText("Look at these pictures!")).toBeTruthy();
+
+    // Go back
+    fireEvent.click(screen.getByText("Back to choices"));
+    expect(screen.getByText("How would you like to share?")).toBeTruthy();
+  });
+
   it("can navigate back to flow selection", () => {
     render(<DiscoverPage />);
 
@@ -73,7 +104,9 @@ describe("DiscoverPage", () => {
     render(<DiscoverPage />);
     const imageBtn = screen.getByText("Upload an Image").closest("button");
     const audioBtn = screen.getByText("Record Your Voice").closest("button");
+    const storyBtn = screen.getByText("Story Mode").closest("button");
     expect(imageBtn).toBeTruthy();
     expect(audioBtn).toBeTruthy();
+    expect(storyBtn).toBeTruthy();
   });
 });

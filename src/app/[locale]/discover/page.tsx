@@ -1,18 +1,20 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { ImageIcon, Mic, ArrowLeft, Sparkles } from "lucide-react";
+import { ImageIcon, Mic, ArrowLeft, Sparkles, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UploadZone } from "@/components/upload/UploadZone";
 import { AudioRecorder } from "@/components/upload/AudioRecorder";
 import { AnalysisResults } from "@/components/discovery/AnalysisResults";
 import { AnalysisLoading } from "@/components/discovery/AnalysisLoading";
 import { AnalysisError } from "@/components/discovery/AnalysisError";
+import { StoryPrompt } from "@/components/discovery/StoryPrompt";
+import { getRandomStoryPrompts } from "@/lib/story-prompts";
 import type { UploadResultData } from "@/types/upload";
 import type { AnalysisOutput } from "@/lib/ai/schemas";
 
-type DiscoveryFlow = "selection" | "image" | "audio";
+type DiscoveryFlow = "selection" | "image" | "audio" | "story";
 type AnalysisState = "idle" | "analyzing" | "done" | "error";
 type ErrorType = "ai_failure" | "timeout" | "network";
 
@@ -24,6 +26,9 @@ export default function DiscoverPage() {
   const [analysisResults, setAnalysisResults] = useState<AnalysisOutput | null>(null);
   const [errorType, setErrorType] = useState<ErrorType>("ai_failure");
   const [currentUpload, setCurrentUpload] = useState<UploadResultData | null>(null);
+
+  // Generate random story prompt images once per story flow entry
+  const storyImages = useMemo(() => getRandomStoryPrompts(3), []);
 
   const runAnalysis = useCallback(async (upload: UploadResultData) => {
     setAnalysisState("analyzing");
@@ -75,6 +80,9 @@ export default function DiscoverPage() {
   const handleRetry = useCallback(() => {
     if (currentUpload) {
       runAnalysis(currentUpload);
+    } else {
+      // For story flow retry, go back to idle so user can resubmit
+      setAnalysisState("idle");
     }
   }, [currentUpload, runAnalysis]);
 
@@ -91,6 +99,28 @@ export default function DiscoverPage() {
     setAnalysisResults(null);
     setCurrentUpload(null);
   }, []);
+
+  // Story flow callbacks
+  const handleStoryAnalysisComplete = useCallback(
+    (results: AnalysisOutput) => {
+      setAnalysisResults(results);
+      setAnalysisState("done");
+    },
+    [],
+  );
+
+  const handleStoryAnalysisStart = useCallback(() => {
+    setAnalysisState("analyzing");
+    setAnalysisResults(null);
+  }, []);
+
+  const handleStoryError = useCallback(
+    (type: ErrorType) => {
+      setErrorType(type);
+      setAnalysisState("error");
+    },
+    [],
+  );
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12">
@@ -129,7 +159,7 @@ export default function DiscoverPage() {
           <h2 className="text-center text-lg font-semibold text-zinc-800 dark:text-zinc-200">
             {t("flowSelection.title")}
           </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-3">
             {/* Image upload option */}
             <button
               type="button"
@@ -161,6 +191,23 @@ export default function DiscoverPage() {
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400">
                 {t("flowSelection.recordAudioDesc")}
+              </p>
+            </button>
+
+            {/* Story mode option */}
+            <button
+              type="button"
+              onClick={() => setFlow("story")}
+              className="flex flex-col items-center gap-3 rounded-xl border-2 border-zinc-200 bg-white p-6 transition-all hover:border-purple-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-purple-500"
+            >
+              <div className="flex size-14 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
+                <BookOpen className="size-7 text-purple-600 dark:text-purple-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+                {t("flowSelection.storyMode")}
+              </h3>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                {t("flowSelection.storyModeDesc")}
               </p>
             </button>
           </div>
@@ -220,6 +267,28 @@ export default function DiscoverPage() {
               {t("analysis.analyzeButton")}
             </Button>
           )}
+        </div>
+      )}
+
+      {/* Story prompting flow */}
+      {analysisState === "idle" && flow === "story" && (
+        <div className="flex flex-col gap-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBack}
+            type="button"
+            className="self-start"
+          >
+            <ArrowLeft className="mr-1 size-4" />
+            {t("flowSelection.back")}
+          </Button>
+          <StoryPrompt
+            images={storyImages}
+            onAnalysisComplete={handleStoryAnalysisComplete}
+            onAnalysisStart={handleStoryAnalysisStart}
+            onError={handleStoryError}
+          />
         </div>
       )}
     </div>

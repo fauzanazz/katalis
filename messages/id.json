@@ -74,6 +74,8 @@
       "uploadArtifactDesc": "Bagikan gambar, lukisan, foto, atau karya kreatif apa pun",
       "recordAudio": "Rekam Suaramu",
       "recordAudioDesc": "Ceritakan minatmu, bernyanyi, atau berbagi cerita",
+      "storyMode": "Mode Cerita",
+      "storyModeDesc": "Lihat gambar dan buat cerita menarik tentangnya",
       "back": "Kembali ke pilihan"
     },
     "upload": {
@@ -153,6 +155,22 @@
       "errorNetwork": "Sepertinya kamu tidak terhubung ke internet. Periksa koneksimu dan coba lagi.",
       "errorHint": "Jangan khawatir, unggahanmu aman. Cukup ketuk tombol untuk mencoba lagi!",
       "retry": "Coba Lagi"
+    },
+    "story": {
+      "imagePromptTitle": "Lihat gambar-gambar ini!",
+      "imagePromptSubtitle": "Buat cerita yang terinspirasi dari apa yang kamu lihat",
+      "imageGroupLabel": "Gambar untuk cerita",
+      "writeStory": "Tulis Cerita",
+      "recordStory": "Rekam Cerita",
+      "textLabel": "Ceritamu",
+      "textPlaceholder": "Pada suatu hari, ada...",
+      "charCount": "{count}/{max} karakter (minimum {min})",
+      "submitStory": "Temukan Bakatku",
+      "audioInstructions": "Rekam dirimu bercerita tentang apa yang kamu lihat di gambar-gambar di atas!",
+      "validation": {
+        "tooShort": "Ceritamu perlu minimal {min} karakter. Terus menulis, kamu hebat!",
+        "tooLong": "Ceritamu terlalu panjang! Maksimal {max} karakter."
+      }
     }
   }
 }

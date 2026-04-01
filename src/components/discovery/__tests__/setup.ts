@@ -25,7 +25,22 @@ vi.mock("next-intl", () => {
     "discover.flowSelection.uploadArtifactDesc": "Share a drawing, painting, photo, or any creative work",
     "discover.flowSelection.recordAudio": "Record Your Voice",
     "discover.flowSelection.recordAudioDesc": "Tell us about your interests, sing, or share a story",
+    "discover.flowSelection.storyMode": "Story Mode",
+    "discover.flowSelection.storyModeDesc": "See pictures and create an amazing story about them",
     "discover.flowSelection.back": "Back to choices",
+    // discover.story.*
+    "discover.story.imagePromptTitle": "Look at these pictures!",
+    "discover.story.imagePromptSubtitle": "Create a story inspired by what you see",
+    "discover.story.imageGroupLabel": "Story prompt images",
+    "discover.story.writeStory": "Write a Story",
+    "discover.story.recordStory": "Record a Story",
+    "discover.story.textLabel": "Your Story",
+    "discover.story.textPlaceholder": "Once upon a time, there was a...",
+    "discover.story.charCount": "{count}/{max} characters (minimum {min})",
+    "discover.story.submitStory": "Discover My Talents",
+    "discover.story.audioInstructions": "Record yourself telling a story about what you see in the pictures above!",
+    "discover.story.validation.tooShort": "Your story needs at least {min} characters. Keep going, you're doing great!",
+    "discover.story.validation.tooLong": "Your story is too long! Maximum {max} characters.",
   };
 
   return {

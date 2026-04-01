@@ -1,9 +1,24 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { GalleryMap } from "@/components/map/GalleryMap";
 import type { GalleryEntryFeatureCollection } from "@/types/gallery";
+
+// Dynamic import with SSR disabled to avoid WebGL hydration mismatch
+const GalleryMap = dynamic(
+  () => import("@/components/map/GalleryMap").then((mod) => mod.GalleryMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[500px] w-full items-center justify-center rounded-lg bg-muted/50 lg:h-[600px]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        </div>
+      </div>
+    ),
+  },
+);
 
 export default function GalleryPage() {
   const t = useTranslations("gallery");

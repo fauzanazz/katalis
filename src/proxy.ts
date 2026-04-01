@@ -7,14 +7,24 @@ import { decrypt, SESSION_COOKIE_NAME } from "@/lib/auth";
 const intlMiddleware = createMiddleware(routing);
 
 /** Routes that do NOT require authentication (locale-prefixed paths without the locale) */
-const publicPagePaths = ["/login", ""];
+const publicPagePaths = ["/login", "", "/gallery"];
+
+/** Path prefixes that are public (matched with startsWith) */
+const publicPathPrefixes = ["/gallery"];
 
 /** Check if a locale-stripped path is public */
 function isPublicPage(pathnameWithoutLocale: string): boolean {
-  return publicPagePaths.some(
+  // Exact match or trailing slash match
+  const exactMatch = publicPagePaths.some(
     (path) =>
       pathnameWithoutLocale === path ||
       pathnameWithoutLocale === path + "/",
+  );
+  if (exactMatch) return true;
+
+  // Prefix match (e.g., /gallery/[id])
+  return publicPathPrefixes.some((prefix) =>
+    pathnameWithoutLocale.startsWith(prefix),
   );
 }
 

@@ -118,9 +118,8 @@ export function GalleryMap({ data, isLoading }: GalleryMapProps) {
     [data],
   );
 
-  // Check WebGL support (computed once, no setState in effect)
+  // Check WebGL support synchronously — this is a client component only
   const webGLSupported = useMemo(() => {
-    if (typeof document === "undefined") return true;
     try {
       const canvas = document.createElement("canvas");
       const gl =

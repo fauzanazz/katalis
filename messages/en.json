@@ -64,5 +64,80 @@
     "title": "Page Not Found",
     "description": "Oops! The page you are looking for doesn't exist or has been moved.",
     "backHome": "Go Back Home"
+  },
+  "discover": {
+    "title": "Discover Your Talents",
+    "subtitle": "Upload a drawing, photo, or record your voice to discover your unique talents!",
+    "flowSelection": {
+      "title": "How would you like to share?",
+      "uploadArtifact": "Upload an Image",
+      "uploadArtifactDesc": "Share a drawing, painting, photo, or any creative work",
+      "recordAudio": "Record Your Voice",
+      "recordAudioDesc": "Tell us about your interests, sing, or share a story",
+      "back": "Back to choices"
+    },
+    "upload": {
+      "dropzone": "Drag and drop your image here",
+      "dropzoneActive": "Drop your image here!",
+      "tapToUpload": "Tap to upload",
+      "clickToUpload": "or click to select a file",
+      "cameraCapture": "Take a Photo",
+      "acceptedFormats": "Accepted: JPEG, PNG, WebP (max 10 MB)",
+      "uploading": "Uploading your file...",
+      "uploadComplete": "Upload complete!",
+      "uploadFailed": "Upload failed. Please try again.",
+      "networkError": "Upload failed. Please check your connection and try again.",
+      "removeFile": "Remove file",
+      "replaceFile": "Replace file",
+      "cancelUpload": "Cancel upload",
+      "retryUpload": "Retry upload",
+      "altPreview": "Preview of uploaded image",
+      "errors": {
+        "invalidType": "Unsupported file type. Accepted formats: JPEG, PNG, WebP",
+        "tooLarge": "File too large. Maximum size: 10 MB",
+        "multipleFiles": "Please upload one file at a time",
+        "uploadFailed": "Upload failed. Please try again."
+      }
+    },
+    "audio": {
+      "title": "Record Your Voice",
+      "startRecording": "Start Recording",
+      "stopRecording": "Stop Recording",
+      "restartRecording": "Record Again",
+      "recording": "Recording...",
+      "recordingComplete": "Recording complete!",
+      "playback": "Listen to your recording",
+      "uploading": "Uploading your recording...",
+      "uploadComplete": "Recording uploaded!",
+      "acceptedFormats": "Accepted: MP3, WAV, M4A (max 5 MB)",
+      "uploadFile": "Or upload an audio file",
+      "errors": {
+        "permissionDenied": "Microphone access is needed to record. Please allow microphone access in your browser settings and try again.",
+        "unsupported": "Audio recording is not supported in your browser. Please try uploading an audio file instead.",
+        "invalidType": "Unsupported audio format. Accepted formats: MP3, WAV, M4A",
+        "tooLarge": "Audio file too large. Maximum size: 5 MB",
+        "recordingFailed": "Recording failed. Please try again."
+      }
+    },
+    "progress": {
+      "label": "Upload progress",
+      "percent": "{percent}%"
+    },
+    "history": {
+      "title": "Your Discoveries",
+      "empty": "You haven't made any discoveries yet. Start your first one!",
+      "startFirst": "Start Discovering",
+      "viewAll": "View All",
+      "loadMore": "Load More",
+      "artifact": "Image Discovery",
+      "story": "Story Discovery",
+      "audio": "Voice Discovery"
+    },
+    "sessionRecovery": {
+      "title": "Resume Upload?",
+      "message": "You have an unfinished upload. Would you like to continue?",
+      "resume": "Resume",
+      "startOver": "Start Over"
+    }
   }
 }

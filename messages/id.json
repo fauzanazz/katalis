@@ -64,5 +64,80 @@
     "title": "Halaman Tidak Ditemukan",
     "description": "Ups! Halaman yang kamu cari tidak ada atau sudah dipindahkan.",
     "backHome": "Kembali ke Beranda"
+  },
+  "discover": {
+    "title": "Temukan Bakatmu",
+    "subtitle": "Unggah gambar, foto, atau rekam suaramu untuk menemukan bakat unikmu!",
+    "flowSelection": {
+      "title": "Bagaimana kamu ingin berbagi?",
+      "uploadArtifact": "Unggah Gambar",
+      "uploadArtifactDesc": "Bagikan gambar, lukisan, foto, atau karya kreatif apa pun",
+      "recordAudio": "Rekam Suaramu",
+      "recordAudioDesc": "Ceritakan minatmu, bernyanyi, atau berbagi cerita",
+      "back": "Kembali ke pilihan"
+    },
+    "upload": {
+      "dropzone": "Seret dan lepas gambar di sini",
+      "dropzoneActive": "Lepaskan gambar di sini!",
+      "tapToUpload": "Ketuk untuk mengunggah",
+      "clickToUpload": "atau klik untuk memilih file",
+      "cameraCapture": "Ambil Foto",
+      "acceptedFormats": "Diterima: JPEG, PNG, WebP (maks 10 MB)",
+      "uploading": "Mengunggah file...",
+      "uploadComplete": "Unggahan selesai!",
+      "uploadFailed": "Unggahan gagal. Silakan coba lagi.",
+      "networkError": "Unggahan gagal. Periksa koneksimu dan coba lagi.",
+      "removeFile": "Hapus file",
+      "replaceFile": "Ganti file",
+      "cancelUpload": "Batalkan unggahan",
+      "retryUpload": "Coba unggah lagi",
+      "altPreview": "Pratinjau gambar yang diunggah",
+      "errors": {
+        "invalidType": "Jenis file tidak didukung. Format yang diterima: JPEG, PNG, WebP",
+        "tooLarge": "File terlalu besar. Ukuran maksimal: 10 MB",
+        "multipleFiles": "Silakan unggah satu file saja",
+        "uploadFailed": "Unggahan gagal. Silakan coba lagi."
+      }
+    },
+    "audio": {
+      "title": "Rekam Suaramu",
+      "startRecording": "Mulai Merekam",
+      "stopRecording": "Berhenti Merekam",
+      "restartRecording": "Rekam Ulang",
+      "recording": "Merekam...",
+      "recordingComplete": "Rekaman selesai!",
+      "playback": "Dengarkan rekamanmu",
+      "uploading": "Mengunggah rekamanmu...",
+      "uploadComplete": "Rekaman berhasil diunggah!",
+      "acceptedFormats": "Diterima: MP3, WAV, M4A (maks 5 MB)",
+      "uploadFile": "Atau unggah file audio",
+      "errors": {
+        "permissionDenied": "Akses mikrofon diperlukan untuk merekam. Izinkan akses mikrofon di pengaturan browser dan coba lagi.",
+        "unsupported": "Perekaman audio tidak didukung di browsermu. Silakan coba unggah file audio.",
+        "invalidType": "Format audio tidak didukung. Format yang diterima: MP3, WAV, M4A",
+        "tooLarge": "File audio terlalu besar. Ukuran maksimal: 5 MB",
+        "recordingFailed": "Perekaman gagal. Silakan coba lagi."
+      }
+    },
+    "progress": {
+      "label": "Progres unggahan",
+      "percent": "{percent}%"
+    },
+    "history": {
+      "title": "Penemuanmu",
+      "empty": "Kamu belum membuat penemuan apa pun. Mulai yang pertama!",
+      "startFirst": "Mulai Menemukan",
+      "viewAll": "Lihat Semua",
+      "loadMore": "Muat Lebih Banyak",
+      "artifact": "Penemuan Gambar",
+      "story": "Penemuan Cerita",
+      "audio": "Penemuan Suara"
+    },
+    "sessionRecovery": {
+      "title": "Lanjutkan Unggahan?",
+      "message": "Kamu memiliki unggahan yang belum selesai. Ingin melanjutkan?",
+      "resume": "Lanjutkan",
+      "startOver": "Mulai Baru"
+    }
   }
 }

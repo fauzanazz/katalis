@@ -2,27 +2,94 @@
 
 import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import { ImageIcon, Mic, ArrowLeft } from "lucide-react";
+import { ImageIcon, Mic, ArrowLeft, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UploadZone } from "@/components/upload/UploadZone";
 import { AudioRecorder } from "@/components/upload/AudioRecorder";
+import { AnalysisResults } from "@/components/discovery/AnalysisResults";
+import { AnalysisLoading } from "@/components/discovery/AnalysisLoading";
+import { AnalysisError } from "@/components/discovery/AnalysisError";
 import type { UploadResultData } from "@/types/upload";
+import type { AnalysisOutput } from "@/lib/ai/schemas";
 
 type DiscoveryFlow = "selection" | "image" | "audio";
+type AnalysisState = "idle" | "analyzing" | "done" | "error";
+type ErrorType = "ai_failure" | "timeout" | "network";
 
 export default function DiscoverPage() {
   const t = useTranslations("discover");
 
   const [flow, setFlow] = useState<DiscoveryFlow>("selection");
+  const [analysisState, setAnalysisState] = useState<AnalysisState>("idle");
+  const [analysisResults, setAnalysisResults] = useState<AnalysisOutput | null>(null);
+  const [errorType, setErrorType] = useState<ErrorType>("ai_failure");
+  const [currentUpload, setCurrentUpload] = useState<UploadResultData | null>(null);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleUploadComplete = useCallback((_result: UploadResultData) => {
-    // Upload result stored by child components via session storage.
-    // The discovery-ai-analysis feature will use this for analysis.
+  const runAnalysis = useCallback(async (upload: UploadResultData) => {
+    setAnalysisState("analyzing");
+    setAnalysisResults(null);
+
+    try {
+      const response = await fetch("/api/discovery/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          artifactUrl: upload.url,
+          artifactType: upload.category,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        if (response.status === 504 || data.error === "timeout") {
+          setErrorType("timeout");
+        } else {
+          setErrorType("ai_failure");
+        }
+        setAnalysisState("error");
+        return;
+      }
+
+      const data: AnalysisOutput = await response.json();
+      setAnalysisResults(data);
+      setAnalysisState("done");
+    } catch {
+      setErrorType("network");
+      setAnalysisState("error");
+    }
   }, []);
+
+  const handleUploadComplete = useCallback(
+    (result: UploadResultData) => {
+      setCurrentUpload(result);
+    },
+    [],
+  );
+
+  const handleAnalyze = useCallback(() => {
+    if (currentUpload) {
+      runAnalysis(currentUpload);
+    }
+  }, [currentUpload, runAnalysis]);
+
+  const handleRetry = useCallback(() => {
+    if (currentUpload) {
+      runAnalysis(currentUpload);
+    }
+  }, [currentUpload, runAnalysis]);
 
   const handleBack = useCallback(() => {
     setFlow("selection");
+    setAnalysisState("idle");
+    setAnalysisResults(null);
+    setCurrentUpload(null);
+  }, []);
+
+  const handleNewDiscovery = useCallback(() => {
+    setFlow("selection");
+    setAnalysisState("idle");
+    setAnalysisResults(null);
+    setCurrentUpload(null);
   }, []);
 
   return (
@@ -36,7 +103,28 @@ export default function DiscoverPage() {
         </p>
       </div>
 
-      {flow === "selection" && (
+      {/* Results display */}
+      {analysisState === "done" && analysisResults && (
+        <div className="flex flex-col gap-6">
+          <AnalysisResults results={analysisResults} />
+          <div className="flex justify-center">
+            <Button onClick={handleNewDiscovery} variant="outline">
+              {t("analysis.discoverAgain")}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Loading state */}
+      {analysisState === "analyzing" && <AnalysisLoading />}
+
+      {/* Error state */}
+      {analysisState === "error" && (
+        <AnalysisError errorType={errorType} onRetry={handleRetry} />
+      )}
+
+      {/* Flow selection */}
+      {analysisState === "idle" && flow === "selection" && (
         <div className="flex flex-col gap-4">
           <h2 className="text-center text-lg font-semibold text-zinc-800 dark:text-zinc-200">
             {t("flowSelection.title")}
@@ -79,7 +167,8 @@ export default function DiscoverPage() {
         </div>
       )}
 
-      {flow === "image" && (
+      {/* Image upload flow */}
+      {analysisState === "idle" && flow === "image" && (
         <div className="flex flex-col gap-6">
           <Button
             variant="ghost"
@@ -92,10 +181,22 @@ export default function DiscoverPage() {
             {t("flowSelection.back")}
           </Button>
           <UploadZone onUploadComplete={handleUploadComplete} />
+          {currentUpload && (
+            <Button
+              onClick={handleAnalyze}
+              disabled={analysisState !== "idle"}
+              className="w-full"
+              size="lg"
+            >
+              <Sparkles className="mr-2 size-5" />
+              {t("analysis.analyzeButton")}
+            </Button>
+          )}
         </div>
       )}
 
-      {flow === "audio" && (
+      {/* Audio recording flow */}
+      {analysisState === "idle" && flow === "audio" && (
         <div className="flex flex-col gap-6">
           <Button
             variant="ghost"
@@ -108,6 +209,17 @@ export default function DiscoverPage() {
             {t("flowSelection.back")}
           </Button>
           <AudioRecorder onUploadComplete={handleUploadComplete} />
+          {currentUpload && (
+            <Button
+              onClick={handleAnalyze}
+              disabled={analysisState !== "idle"}
+              className="w-full"
+              size="lg"
+            >
+              <Sparkles className="mr-2 size-5" />
+              {t("analysis.analyzeButton")}
+            </Button>
+          )}
         </div>
       )}
     </div>

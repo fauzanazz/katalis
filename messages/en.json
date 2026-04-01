@@ -138,6 +138,21 @@
       "message": "You have an unfinished upload. Would you like to continue?",
       "resume": "Resume",
       "startOver": "Start Over"
+    },
+    "analysis": {
+      "analyzeButton": "Discover My Talents",
+      "loading": "Analyzing your creation...",
+      "loadingSubtext": "Our AI is looking for your unique talents and interests!",
+      "resultsTitle": "Your Talents Discovered!",
+      "resultsSubtitle": "Here's what makes you special:",
+      "talentCardLabel": "Talent: {name}",
+      "confidenceLabel": "{name} confidence: {percent}%",
+      "discoverAgain": "Discover More Talents",
+      "errorGeneral": "Oops! We couldn't analyze your creation right now.",
+      "errorTimeout": "The analysis is taking a bit too long. Let's try again!",
+      "errorNetwork": "It seems you're not connected. Please check your internet and try again.",
+      "errorHint": "Don't worry, your upload is safe. Just tap the button to try again!",
+      "retry": "Try Again"
     }
   }
 }

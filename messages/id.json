@@ -138,6 +138,21 @@
       "message": "Kamu memiliki unggahan yang belum selesai. Ingin melanjutkan?",
       "resume": "Lanjutkan",
       "startOver": "Mulai Baru"
+    },
+    "analysis": {
+      "analyzeButton": "Temukan Bakatku",
+      "loading": "Menganalisis karyamu...",
+      "loadingSubtext": "AI kami sedang mencari bakat dan minat unikmu!",
+      "resultsTitle": "Bakatmu Ditemukan!",
+      "resultsSubtitle": "Inilah yang membuatmu spesial:",
+      "talentCardLabel": "Bakat: {name}",
+      "confidenceLabel": "Keyakinan {name}: {percent}%",
+      "discoverAgain": "Temukan Lebih Banyak Bakat",
+      "errorGeneral": "Ups! Kami belum bisa menganalisis karyamu saat ini.",
+      "errorTimeout": "Analisis memakan waktu terlalu lama. Ayo coba lagi!",
+      "errorNetwork": "Sepertinya kamu tidak terhubung ke internet. Periksa koneksimu dan coba lagi.",
+      "errorHint": "Jangan khawatir, unggahanmu aman. Cukup ketuk tombol untuk mencoba lagi!",
+      "retry": "Coba Lagi"
     }
   }
 }

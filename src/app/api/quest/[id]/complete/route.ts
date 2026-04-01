@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { sanitizeInput } from "@/lib/sanitize";
 import { isAllowedStorageUrl } from "@/lib/url-allowlist";
+import { geocodeLocationText } from "@/lib/geocoding";
 
 /**
  * Zod schema for quest completion requests.
@@ -184,8 +185,19 @@ export async function POST(
     );
     const talentCategory = sortedTalents[0]?.name ?? "Creative";
 
-    // Extract location from local context
-    const country = quest.localContext || null;
+    // Geocode location from local context
+    const geoResult = geocodeLocationText(quest.localContext);
+    const country = geoResult?.country ?? null;
+    const coordinates = geoResult?.coordinates
+      ? JSON.stringify(geoResult.coordinates)
+      : null;
+
+    // Build quest context metadata
+    const questContext = JSON.stringify({
+      questTitle: quest.dream,
+      dream: quest.dream,
+      missionSummaries: quest.missions.map((m) => m.title),
+    });
 
     // Create gallery entry in a transaction
     const galleryEntry = await prisma.$transaction(async (tx) => {
@@ -196,6 +208,8 @@ export async function POST(
           imageUrl: selectedPhotoUrl!,
           talentCategory,
           country,
+          coordinates,
+          questContext,
         },
       });
 
@@ -215,6 +229,8 @@ export async function POST(
         imageUrl: galleryEntry.imageUrl,
         talentCategory: galleryEntry.talentCategory,
         country: galleryEntry.country,
+        coordinates: safeParseJSON(galleryEntry.coordinates, null),
+        questContext: safeParseJSON(galleryEntry.questContext, null),
       },
     });
   } catch (error) {

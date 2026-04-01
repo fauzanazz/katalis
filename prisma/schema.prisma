@@ -84,6 +84,7 @@ model GalleryEntry {
   talentCategory String
   country        String?
   coordinates    String?  // JSON stored as text for SQLite (lat/lng)
+  questContext   String?  // JSON stored as text for SQLite (quest title, dream, mission summaries)
   clusterGroup   String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

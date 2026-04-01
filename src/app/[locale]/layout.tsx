@@ -27,13 +27,15 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      <SkipToContent />
-      <Header isAuthenticated={isAuthenticated} />
-      <Breadcrumbs />
-      <main id="main-content" role="main" className="flex-1">
-        {children}
-      </main>
-      <Footer />
+      <div className="flex min-h-screen flex-col">
+        <SkipToContent />
+        <Header isAuthenticated={isAuthenticated} />
+        <Breadcrumbs />
+        <main id="main-content" role="main" className="flex-1">
+          {children}
+        </main>
+        <Footer />
+      </div>
     </NextIntlClientProvider>
   );
 }

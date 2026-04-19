@@ -1,5 +1,5 @@
 /** Supported locales */
-export type Locale = "en" | "id";
+export type Locale = "en" | "id" | "zh";
 
 /** Discovery type enum */
 export type DiscoveryType = "artifact" | "story";

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { createSession } from "@/lib/auth";
 import { isRateLimited } from "@/lib/rate-limit";
 import { sanitizeInput, isValidAccessCodeFormat } from "@/lib/sanitize";
+import { routing } from "@/i18n/routing";
 
 const LoginSchema = z.object({
   code: z.string().min(1, "Access code is required"),
@@ -90,7 +91,7 @@ export async function POST(request: NextRequest) {
       child = await prisma.child.create({
         data: {
           accessCodeId: accessCode.id,
-          locale: "id",
+          locale: routing.defaultLocale,
         },
       });
     }

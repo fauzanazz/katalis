@@ -1,0 +1,447 @@
+{
+  "common": {
+    "appName": "Katalis",
+    "loading": "加载中...",
+    "error": "出了点问题",
+    "retry": "重试",
+    "back": "返回",
+    "next": "下一步",
+    "save": "保存",
+    "cancel": "取消",
+    "close": "关闭",
+    "submit": "提交",
+    "skipToContent": "跳到内容"
+  },
+  "nav": {
+    "home": "首页",
+    "discover": "发现",
+    "quest": "任务",
+    "gallery": "画廊",
+    "login": "登录",
+    "logout": "退出"
+  },
+  "landing": {
+    "hero": {
+      "title": "发现 - 行动 - 连接",
+      "subtitle": "儿童天赋发现与发展平台",
+      "cta": "开始体验"
+    },
+    "pillars": {
+      "discover": {
+        "title": "发现",
+        "description": "上传画作、照片或录制故事。我们的 AI 能发现你独特的天赋与兴趣，不止于表面。"
+      },
+      "act": {
+        "title": "行动",
+        "description": "根据你的天赋与梦想，获得专属 7 天任务计划。从旁观者变成行动者。"
+      },
+      "connect": {
+        "title": "连接",
+        "description": "在全球地图展示你完成的作品。与世界各地有共同热情的孩子建立联系。"
+      }
+    }
+  },
+  "auth": {
+    "title": "输入您的访问码",
+    "codePlaceholder": "输入访问码",
+    "submit": "开始探索",
+    "errors": {
+      "empty": "请输入您的访问码",
+      "invalid": "访问码无效",
+      "expired": "此访问码已过期"
+    }
+  },
+  "footer": {
+    "tagline": "赋能孩子发现、行动、连接。",
+    "copyright": "© {year} Katalis. 保留所有权利。"
+  },
+  "language": {
+    "en": "English",
+    "id": "Bahasa Indonesia",
+    "zh": "中文",
+    "switch": "切换语言"
+  },
+  "notFound": {
+    "title": "页面未找到",
+    "description": "哎呀！您要查找的页面不存在或已被移动。",
+    "backHome": "返回首页"
+  },
+  "error": {
+    "title": "出了点问题",
+    "description": "哎呀！发生了意外情况。别担心，您可以重试或返回首页。",
+    "retry": "重试",
+    "backHome": "返回首页",
+    "backToArea": "返回"
+  },
+  "breadcrumb": {
+    "home": "首页",
+    "discover": "发现",
+    "quest": "任务",
+    "gallery": "画廊",
+    "history": "历史",
+    "results": "结果",
+    "new": "新任务",
+    "complete": "完成"
+  },
+  "discover": {
+    "title": "发现你的天赋",
+    "subtitle": "上传画作、照片，或录制你的声音，来发现你独特的天赋！",
+    "flowSelection": {
+      "title": "你想如何分享？",
+      "uploadArtifact": "上传图片",
+      "uploadArtifactDesc": "分享画作、照片或任何创意作品",
+      "recordAudio": "录制你的声音",
+      "recordAudioDesc": "讲述你的兴趣、唱歌或分享故事",
+      "storyMode": "故事模式",
+      "storyModeDesc": "看图片并创作精彩故事",
+      "back": "返回选择"
+    },
+    "upload": {
+      "dropzone": "拖放图片到这里",
+      "dropzoneActive": "将图片放在这里！",
+      "tapToUpload": "点击上传",
+      "clickToUpload": "或点击选择文件",
+      "cameraCapture": "拍照",
+      "acceptedFormats": "支持格式：JPEG、PNG、WebP（最大10 MB）",
+      "uploading": "正在上传文件...",
+      "uploadComplete": "上传完成！",
+      "uploadFailed": "上传失败，请重试。",
+      "networkError": "上传失败，请检查网络连接后重试。",
+      "removeFile": "删除文件",
+      "replaceFile": "替换文件",
+      "cancelUpload": "取消上传",
+      "retryUpload": "重新上传",
+      "altPreview": "已上传图片预览",
+      "errors": {
+        "invalidType": "不支持的文件类型。支持格式：JPEG、PNG、WebP",
+        "tooLarge": "文件太大。最大大小：10 MB",
+        "multipleFiles": "请一次只上传一个文件",
+        "uploadFailed": "上传失败，请重试。"
+      }
+    },
+    "audio": {
+      "title": "录制你的声音",
+      "startRecording": "开始录制",
+      "stopRecording": "停止录制",
+      "restartRecording": "重新录制",
+      "recording": "录制中...",
+      "recordingComplete": "录制完成！",
+      "playback": "收听你的录音",
+      "uploading": "正在上传录音...",
+      "uploadComplete": "录音上传成功！",
+      "acceptedFormats": "支持格式：MP3、WAV、M4A（最大5 MB）",
+      "uploadFile": "或上传音频文件",
+      "errors": {
+        "permissionDenied": "需要麦克风权限才能录制。请在浏览器设置中允许麦克风访问后重试。",
+        "unsupported": "您的浏览器不支持录音功能。请尝试上传音频文件。",
+        "invalidType": "不支持的音频格式。支持格式：MP3、WAV、M4A",
+        "tooLarge": "音频文件太大。最大大小：5 MB",
+        "recordingFailed": "录制失败，请重试。"
+      }
+    },
+    "progress": {
+      "label": "上传进度",
+      "percent": "{percent}%"
+    },
+    "history": {
+      "title": "你的发现",
+      "empty": "你还没有任何发现。开始第一次发现吧！",
+      "startFirst": "开始发现",
+      "viewAll": "查看全部",
+      "loadMore": "加载更多",
+      "artifact": "图片发现",
+      "story": "故事发现",
+      "audio": "语音发现"
+    },
+    "sessionRecovery": {
+      "title": "继续上传？",
+      "message": "你有一个未完成的上传。要继续吗？",
+      "resume": "继续",
+      "startOver": "重新开始"
+    },
+    "analysis": {
+      "analyzeButton": "发现我的天赋",
+      "loading": "正在分析你的作品...",
+      "loadingSubtext": "我们的AI正在寻找你的独特天赋和兴趣！",
+      "resultsTitle": "你的天赋被发现！",
+      "resultsSubtitle": "这就是你的特别之处：",
+      "talentCardLabel": "天赋：{name}",
+      "confidenceLabel": "{name} 置信度：{percent}%",
+      "discoverAgain": "发现更多天赋",
+      "errorGeneral": "哎呀！现在无法分析你的作品。",
+      "errorTimeout": "分析时间有点长，我们重试一下！",
+      "errorNetwork": "你似乎没有连接网络。请检查网络后重试。",
+      "errorHint": "别担心，你的上传是安全的。点击按钮重试！",
+      "retry": "重试"
+    },
+    "results": {
+      "pageTitle": "你的天赋被发现！",
+      "pageSubtitle": "这就是你的非凡之处：",
+      "talentCardLabel": "天赋：{name}",
+      "confidenceLabel": "{name} 置信度：{percent}%",
+      "reasoning": "为什么我们这么认为：",
+      "discoverAgain": "发现更多天赋",
+      "viewHistory": "查看所有发现",
+      "share": "分享结果",
+      "shareTitle": "我的天赋发现结果",
+      "shareCopied": "链接已复制！分享给爸爸妈妈吧。",
+      "shareError": "无法复制链接。你可以从地址栏复制URL。",
+      "export": "保存为图片",
+      "backToDiscover": "返回发现",
+      "loading": "正在加载结果...",
+      "notFound": "未找到发现",
+      "notFoundDesc": "我们找不到这个发现。它可能已被删除。",
+      "artifactType": "图片发现",
+      "storyType": "故事发现",
+      "audioType": "语音发现",
+      "dateLabel": "发现于 {date}"
+    },
+    "history": {
+      "title": "你的发现",
+      "subtitle": "看看你发现的所有惊人天赋！",
+      "empty": "还没有发现！",
+      "emptyDesc": "开始第一次发现，揭开你惊人的天赋。上传画作、录制声音或讲述故事！",
+      "startFirst": "开始发现",
+      "loadMore": "加载更多",
+      "talentSummary": "发现 {count} 个天赋",
+      "artifact": "图片发现",
+      "story": "故事发现",
+      "audio": "语音发现",
+      "viewDetails": "查看详情",
+      "totalDiscoveries": "目前已完成 {count} 次发现"
+    },
+    "story": {
+      "imagePromptTitle": "看这些图片！",
+      "imagePromptSubtitle": "根据你看到的创作一个故事",
+      "imageGroupLabel": "故事提示图片",
+      "writeStory": "写故事",
+      "recordStory": "录制故事",
+      "textLabel": "你的故事",
+      "textPlaceholder": "从前，有一个...",
+      "charCount": "{count}/{max} 字符（最少 {min}）",
+      "submitStory": "发现我的天赋",
+      "audioInstructions": "录制你讲述上方图片中故事的声音！",
+      "validation": {
+        "tooShort": "你的故事至少需要 {min} 个字符。继续写，你做得很好！",
+        "tooLong": "你的故事太长了！最多 {max} 个字符。"
+      }
+    }
+  },
+  "quest": {
+    "new": {
+      "title": "创建你的任务",
+      "subtitle": "告诉我们你的梦想和居住地，我们会为你量身定制7天任务计划！",
+      "talentSummary": "检测到的天赋",
+      "noTalents": "先完成天赋发现来检测你的天赋！",
+      "dreamLabel": "你的梦想是什么？",
+      "dreamPlaceholder": "我想建造帮助别人的机器人...",
+      "dreamHelp": "告诉我们你梦想做什么或成为什么。越具体越好！",
+      "contextLabel": "告诉我们你的居住环境",
+      "contextPlaceholder": "我住在河边的小村庄。这里有农田和一个小市场...",
+      "contextHelp": "这有助于我们推荐你附近可用的活动和材料。",
+      "charCount": "{count}/{max}",
+      "charMin": "最少 {min} 个字符",
+      "generateButton": "创建我的任务！",
+      "generating": "正在创建你的任务...",
+      "generatingSubtext": "我们的AI正在为你设计7天精彩冒险！",
+      "validation": {
+        "dreamEmpty": "请告诉我们你的梦想！",
+        "dreamTooShort": "你的梦想至少需要 {min} 个字符。多说一点！",
+        "dreamTooLong": "你的梦想太长了！最多 {max} 个字符。",
+        "contextEmpty": "请告诉我们你的居住环境！",
+        "contextTooShort": "你的描述至少需要 {min} 个字符。多说一点！",
+        "contextTooLong": "你的描述太长了！最多 {max} 个字符。"
+      },
+      "error": {
+        "general": "哎呀！现在无法创建你的任务。",
+        "timeout": "任务创建时间太长了，我们重试一下！",
+        "network": "你似乎没有连接网络。请检查网络后重试。",
+        "hint": "别担心，你的梦想和背景信息已保存。点击按钮重试！",
+        "retry": "重试"
+      },
+      "success": "任务创建成功！开始你的冒险吧！",
+      "noDiscovery": "先发现你的天赋！",
+      "noDiscoveryDesc": "在创建任务之前，你需要先发现你的天赋。上传画作、录制声音或讲述故事！",
+      "goToDiscovery": "开始发现"
+    },
+    "list": {
+      "title": "你的任务",
+      "subtitle": "追踪你的7天冒险任务！",
+      "empty": "还没有任务！",
+      "emptyDesc": "先完成天赋发现，然后创建你的第一个7天冒险任务！",
+      "startFirst": "发现你的天赋",
+      "noDiscovery": "先完成天赋发现",
+      "noDiscoveryDesc": "在开始任务之前，你需要发现你的天赋。上传画作、录制声音或讲述故事！",
+      "goToDiscovery": "开始发现",
+      "activeQuest": "进行中的任务",
+      "completedQuest": "已完成的任务",
+      "abandonedQuest": "已放弃的任务",
+      "progress": "已完成 {completed}/{total} 天",
+      "viewQuest": "查看任务",
+      "startNewQuest": "开始新任务",
+      "createQuest": "创建任务"
+    },
+    "overview": {
+      "title": "你的任务",
+      "subtitle": "你的7天任务计划",
+      "dreamLabel": "你的梦想",
+      "progressLabel": "任务进度",
+      "progressValue": "已完成 {completed}/{total} 天",
+      "progressPercent": "{percent}% 完成",
+      "dayLabel": "第 {day} 天",
+      "statusLocked": "未解锁",
+      "statusAvailable": "可开始",
+      "statusInProgress": "进行中",
+      "statusCompleted": "已完成",
+      "lockedMessage": "先完成前一天的挑战才能解锁这个任务！",
+      "clickToView": "点击查看任务详情",
+      "timeline": "任务时间线",
+      "missionDetail": "任务详情",
+      "selectMission": "从时间线选择一天来查看任务详情",
+      "description": "描述",
+      "instructions": "说明",
+      "materials": "所需材料",
+      "tips": "实用提示",
+      "stepNumber": "步骤 {number}",
+      "backToQuests": "返回任务列表",
+      "loading": "正在加载你的任务...",
+      "notFound": "未找到任务",
+      "notFoundDesc": "我们找不到这个任务。它可能已被删除。",
+      "questCompleted": "任务完成！",
+      "questCompletedDesc": "太棒了！你已完成所有7天的任务！",
+      "readOnlyBanner": "这个任务已经完成了。你可以在下方回顾你的任务。",
+      "noMaterials": "无需特殊材料",
+      "noTips": "无额外提示",
+      "startMission": "开始任务",
+      "startMissionDesc": "准备好了吗？点击开始这个任务！",
+      "completeMission": "完成任务",
+      "completeMissionDesc": "完成了？上传你的证明照片来完成任务！",
+      "missionInProgress": "任务进行中！完成后即可提交。",
+      "proofPhoto": "证明照片",
+      "proofPhotoRequired": "上传你的作品照片来完成任务",
+      "uploadProof": "上传证明照片",
+      "changePhoto": "更换照片",
+      "confirmComplete": "你确定吗？",
+      "confirmCompleteDesc": "确定要完成这个任务吗？此操作不可撤销。",
+      "confirmCompleteButton": "是的，完成任务",
+      "cancelButton": "取消",
+      "missionStarted": "任务已开始！加油！",
+      "missionCompleted": "任务完成！干得好！",
+      "nextDayUnlocked": "第 {day} 天已解锁！",
+      "allDaysComplete": "所有任务完成！太棒了！",
+      "startError": "无法开始任务，请重试。",
+      "completeError": "无法完成任务，请重试。",
+      "abandonQuest": "取消任务",
+      "confirmAbandon": "取消这个任务？",
+      "confirmAbandonDesc": "确定要取消这个任务吗？你的进度将丢失，你可以开始新的发现。",
+      "confirmAbandonButton": "是的，取消任务",
+      "abandonError": "无法取消任务，请重试。",
+      "abandonSuccess": "任务已取消。你可以开始新的发现！",
+      "proofPhotoAlt": "第 {day} 天的证明照片：{title}",
+      "viewCompletedProof": "查看已提交的证明",
+      "viewCompletion": "查看庆祝"
+    },
+    "complete": {
+      "title": "任务完成！",
+      "congratulations": "恭喜你！你做到了！",
+      "summary": "你的7天旅程",
+      "missionsCompleted": "已完成 {count} 个任务",
+      "photosUploaded": "已上传 {count} 张照片",
+      "dreamLabel": "你的梦想",
+      "selectBestWork": "选择你最好的作品",
+      "selectBestWorkDesc": "选择你最喜欢的证明照片在画廊中展示！",
+      "selectedPhoto": "已选择：第 {day} 天",
+      "previewTitle": "画廊预览",
+      "previewDesc": "这是你的作品在画廊中的展示效果。",
+      "talentLabel": "天赋",
+      "locationLabel": "地点",
+      "submitToGallery": "提交到画廊",
+      "skipGallery": "暂时跳过",
+      "submitting": "提交中...",
+      "submitSuccess": "你的作品已添加到画廊！",
+      "submitError": "无法提交到画廊，请重试。",
+      "viewGallery": "查看画廊",
+      "backToQuest": "返回任务",
+      "loading": "加载中...",
+      "notReady": "任务尚未完成",
+      "notReadyDesc": "先完成所有7个任务才能查看庆祝！",
+      "dayLabel": "第 {day} 天",
+      "dayPhoto": "第 {day} 天：{title}",
+      "photoAlt": "第 {day} 天的证明照片：{title}",
+      "journeySummary": "你完成了一个7天任务，追逐你的梦想！",
+      "encouragement": "你展现了惊人的毅力和创造力。继续追逐梦想！",
+      "galleryEntryPreview": "画廊作品预览",
+      "celebrationAnnouncement": "恭喜！你已完成你的任务！"
+    }
+  },
+  "gallery": {
+    "title": "全球画廊",
+    "subtitle": "探索世界各地有天赋的孩子们的作品！",
+    "retry": "重试",
+    "filter": {
+      "label": "按天赋筛选",
+      "all": "所有类别",
+      "ariaLabel": "按天赋类别筛选画廊",
+      "noResults": "该类别暂无作品。试试其他筛选项！",
+      "clearFilter": "清除筛选",
+      "showing": "显示 {category} 作品"
+    },
+    "clusters": {
+      "title": "AI群组",
+      "subtitle": "按天赋和地区分组的作品",
+      "loading": "正在发现天赋群组...",
+      "error": "无法加载群组，请重试。",
+      "empty": "暂无群组。需要更多作品才能形成群组！",
+      "viewAll": "查看所有作品",
+      "worksCount": "{count, plural, one {# 件作品} other {# 件作品}}",
+      "countriesLabel": "国家",
+      "talentLabel": "天赋主题",
+      "viewCluster": "查看群组",
+      "backToClusters": "返回群组",
+      "clusterDetail": "群组：{label}",
+      "ariaLabel": "浏览AI生成的天赋群组"
+    },
+    "views": {
+      "map": "地图视图",
+      "clusters": "群组视图"
+    },
+    "map": {
+      "loading": "正在加载画廊地图...",
+      "loadingTiles": "正在加载地图...",
+      "ariaLabel": "交互式世界地图，显示来自世界各地儿童的画廊作品",
+      "error": "地图无法加载。请刷新页面重试。",
+      "noEntries": "暂无作品——完成任务，在世界地图上展示你的天赋！",
+      "webglFallback": "您的浏览器不支持交互式地图。以下是画廊作品的网格视图。",
+      "viewDetail": "查看详情",
+      "pinImageAlt": "来自{country}的{category}作品",
+      "legendLabel": "天赋类别",
+      "entryCount": "地图上 {count, plural, one {# 件作品} other {# 件作品}}"
+    },
+    "detail": {
+      "backToGallery": "返回画廊",
+      "imageAlt": "来自{country}的{category}作品",
+      "countryLabel": "国家",
+      "questContextLabel": "任务旅程",
+      "dreamLabel": "梦想",
+      "localContextLabel": "当地环境",
+      "missionsLabel": "已完成的任务",
+      "createdAt": "分享于 {date}",
+      "notFound": "未找到作品",
+      "notFoundDesc": "无法找到此作品。它可能已被删除。",
+      "aiDescription": "关于此作品",
+      "flagContent": "举报内容",
+      "flagSuccess": "感谢您的举报。我们的团队将审查此内容。",
+      "flagError": "无法提交举报，请重试。",
+      "flagReasonLabel": "原因",
+      "flagReasons": {
+        "inappropriate": "不当内容",
+        "offensive": "冒犯性内容",
+        "spam": "垃圾信息",
+        "other": "其他"
+      },
+      "flagDetailsLabel": "补充详情（可选）",
+      "flagSubmit": "提交举报",
+      "flagCancel": "取消"
+    }
+  }
+}

@@ -41,18 +41,21 @@ const mockImages: StoryPromptImage[] = [
     src: "/story-prompts/forest-adventure.svg",
     altEn: "A colorful forest",
     altId: "Hutan berwarna-warni",
+    altZh: "色彩斑斓的森林",
   },
   {
     id: "ocean-discovery",
     src: "/story-prompts/ocean-discovery.svg",
     altEn: "An ocean scene",
     altId: "Pemandangan laut",
+    altZh: "海洋场景",
   },
   {
     id: "space-journey",
     src: "/story-prompts/space-journey.svg",
     altEn: "A space scene",
     altId: "Pemandangan luar angkasa",
+    altZh: "太空场景",
   },
 ];
 

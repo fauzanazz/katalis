@@ -53,8 +53,9 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   // Run intl middleware first to handle locale routing
   const intlResponse = intlMiddleware(request);
 
-  // Extract locale from URL
-  const localeMatch = pathname.match(/^\/(en|id)(\/|$)/);
+  // Build locale regex dynamically from routing config
+  const localePattern = new RegExp(`^/(${routing.locales.join("|")})(/|$)`);
+  const localeMatch = pathname.match(localePattern);
   const locale = localeMatch ? localeMatch[1] : null;
 
   // If no locale in path, the intl middleware will redirect — let it
@@ -63,7 +64,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   }
 
   // Get the path without the locale prefix
-  const pathnameWithoutLocale = pathname.replace(/^\/(en|id)/, "") || "";
+  const pathnameWithoutLocale = pathname.replace(new RegExp(`^/(${routing.locales.join("|")})`), "") || "/";
 
   // Check session
   const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;

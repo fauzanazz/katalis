@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
+import { routing } from "@/i18n/routing";
 import { Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -11,7 +12,13 @@ export function LanguageSwitcher() {
   const pathname = usePathname();
   const router = useRouter();
 
-  const targetLocale = locale === "en" ? "id" : "en";
+  const currentLocale = routing.locales.includes(locale as (typeof routing.locales)[number])
+    ? (locale as (typeof routing.locales)[number])
+    : routing.defaultLocale;
+  const localeIndex = routing.locales.indexOf(currentLocale);
+  const targetLocale =
+    routing.locales[(localeIndex + 1) % routing.locales.length] ??
+    routing.defaultLocale;
 
   function handleSwitch() {
     router.replace(

@@ -168,7 +168,7 @@ export function StoryPrompt({
               ) : (
                 <Image
                   src={image.src}
-                  alt={locale === "id" ? image.altId : image.altEn}
+                  alt={locale === "zh" ? image.altZh : locale === "id" ? image.altId : image.altEn}
                   width={400}
                   height={300}
                   className="size-full object-cover"

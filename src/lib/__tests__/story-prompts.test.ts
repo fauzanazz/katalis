@@ -15,6 +15,7 @@ describe("Story Prompt Images", () => {
       expect(image.src).toBeTruthy();
       expect(image.altEn).toBeTruthy();
       expect(image.altId).toBeTruthy();
+      expect(image.altZh).toBeTruthy();
       expect(image.src).toMatch(/^\/story-prompts\//);
     });
   });
@@ -28,8 +29,10 @@ describe("Story Prompt Images", () => {
     STORY_PROMPT_IMAGES.forEach((image) => {
       expect(image.altEn.length).toBeGreaterThan(10);
       expect(image.altId.length).toBeGreaterThan(10);
+      expect(image.altZh.length).toBeGreaterThan(10);
       expect(image.altEn.toLowerCase()).not.toBe("image");
       expect(image.altId.toLowerCase()).not.toBe("image");
+      expect(image.altZh.toLowerCase()).not.toBe("image");
     });
   });
 });
@@ -57,6 +60,7 @@ describe("getRandomStoryPrompts", () => {
       expect(image.src).toBeTruthy();
       expect(image.altEn).toBeTruthy();
       expect(image.altId).toBeTruthy();
+      expect(image.altZh).toBeTruthy();
     });
   });
 

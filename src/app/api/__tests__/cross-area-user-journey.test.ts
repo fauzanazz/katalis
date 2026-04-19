@@ -159,10 +159,11 @@ describe("VAL-CROSS-047: EXIF metadata stripped consistently", () => {
 // VAL-CROSS-036: URL-Based Locale Routing Consistency
 // =============================================================================
 describe("VAL-CROSS-036: URL-based locale routing consistency", () => {
-  it("routing configuration includes both en and id locales", async () => {
+  it("routing configuration includes en, id, and zh locales", async () => {
     const { routing } = await import("@/i18n/routing");
     expect(routing.locales).toContain("en");
     expect(routing.locales).toContain("id");
+    expect(routing.locales).toContain("zh");
   });
 
   it("default locale is set to id (Indonesian)", async () => {
@@ -178,19 +179,23 @@ describe("VAL-CROSS-036: URL-based locale routing consistency", () => {
 // VAL-CROSS-035: AI-generated content language for story prompting
 // =============================================================================
 describe("VAL-CROSS-030/033/034/035: Language and locale consistency", () => {
-  it("translation files exist for both en and id", async () => {
+  it("translation files exist for en, id, and zh", async () => {
     const fs = await import("fs");
     expect(fs.existsSync("messages/en.json")).toBe(true);
     expect(fs.existsSync("messages/id.json")).toBe(true);
+    expect(fs.existsSync("messages/zh.json")).toBe(true);
   });
 
-  it("both translation files have all required top-level keys", async () => {
+  it("all translation files have all required top-level keys", async () => {
     const fs = await import("fs");
     const enMessages = JSON.parse(
       fs.readFileSync("messages/en.json", "utf-8"),
     );
     const idMessages = JSON.parse(
       fs.readFileSync("messages/id.json", "utf-8"),
+    );
+    const zhMessages = JSON.parse(
+      fs.readFileSync("messages/zh.json", "utf-8"),
     );
 
     const requiredKeys = [
@@ -208,6 +213,7 @@ describe("VAL-CROSS-030/033/034/035: Language and locale consistency", () => {
     for (const key of requiredKeys) {
       expect(enMessages).toHaveProperty(key);
       expect(idMessages).toHaveProperty(key);
+      expect(zhMessages).toHaveProperty(key);
     }
   });
 

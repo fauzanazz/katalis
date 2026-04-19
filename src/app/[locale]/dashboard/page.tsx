@@ -2,10 +2,15 @@ import { useTranslations } from "next-intl";
 import { getSession } from "@/lib/auth";
 import { redirect } from "@/i18n/navigation";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const session = await getSession();
   if (!session) {
-    redirect({ href: "/login", locale: "en" });
+    redirect({ href: "/login", locale });
   }
 
   return <DashboardContent />;

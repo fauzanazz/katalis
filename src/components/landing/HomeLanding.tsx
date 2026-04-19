@@ -402,7 +402,7 @@ export function HomeLanding() {
 
         {/* Journey — Figma 3084:12817 (ungu gede): #FCF9EF, Vector 5 + Groups 307–309, step frames 355–359 */}
         <section
-          className="relative w-full overflow-hidden bg-[#fcf9ef] py-12 sm:py-14"
+          className="relative w-full overflow-hidden bg-[linear-gradient(180deg,#fffdf7_0%,#fff8df_48%,#fff0b8_100%)] py-12 sm:py-14"
           aria-labelledby="journey-heading"
         >
           <JourneyFigmaDecor />
@@ -602,39 +602,11 @@ export function HomeLanding() {
 /** Journey band — full-bleed atmosphere + scaled blurs (not clip 430px; desktop fills width). */
 function JourneyFigmaDecor() {
   return (
-    <div
-      className="pointer-events-none absolute inset-0 overflow-hidden motion-reduce:hidden"
-      aria-hidden
-    >
-      {/* Atmosfer full-bleed (section sudah bg #fcf9ef) */}
-      <div className="absolute inset-y-0 left-0 w-[min(70%,520px)] bg-gradient-to-r from-[rgba(165,160,202,0.14)] via-[rgba(165,160,202,0.06)] to-transparent lg:w-[42%] lg:from-[rgba(165,160,202,0.12)]" />
-      <div className="absolute inset-y-0 right-0 w-[min(75%,560px)] bg-gradient-to-l from-[rgba(255,188,140,0.35)] via-[rgba(255,214,190,0.14)] to-transparent lg:w-[48%]" />
-
-      {/* Vector atas — melebar di lg/xl */}
-      <div className="absolute inset-x-4 top-[-10%] flex justify-center sm:inset-x-8 lg:inset-x-16 lg:top-[-14%]">
-        <div className="h-[min(380px,62vh)] w-full max-w-[430px] rounded-[42%] bg-[rgb(165,160,202)] blur-[88px] sm:h-[min(420px,58vh)] sm:max-w-[min(560px,90vw)] sm:blur-[140px] md:blur-[180px] lg:h-[min(460px,48vh)] lg:max-w-[min(960px,82vw)] lg:blur-[220px] xl:max-w-[min(1100px,78vw)]" />
-      </div>
-
-      {/* Group 309 — kiri bawah */}
-      <div className="absolute bottom-[-10%] left-[-6%] sm:bottom-[-8%] sm:left-[2%] md:left-[6%] lg:bottom-[-6%] lg:left-[max(1.5rem,calc((100%-72rem)/2-1rem))]">
-        <div className="h-[240px] w-[140px] rounded-full bg-[rgba(136,183,168,0.5)] blur-3xl sm:h-[282px] sm:w-[171px] lg:h-[320px] lg:w-[200px]" />
-        <div className="absolute left-[10px] top-[48px] h-[200px] w-[110px] rounded-full bg-[rgba(255,188,40,0.45)] blur-2xl sm:left-0 sm:top-[51px] sm:h-[231px] sm:w-[120px] lg:h-[260px] lg:w-[140px]" />
-        <div className="absolute left-[24px] top-[96px] h-[170px] w-[68px] rounded-full bg-[rgba(255,188,40,0.42)] blur-xl sm:left-0 sm:top-[99px] sm:h-[183px] sm:w-[73px]" />
-      </div>
-
-      {/* Group 307 — kanan */}
-      <div className="absolute right-[-4%] top-[3%] sm:right-[4%] md:right-[8%] lg:right-[max(1.5rem,calc((100%-72rem)/2+1rem))] xl:right-[max(3rem,calc((100%-80rem)/2))]">
-        <div className="h-[300px] w-[100px] rounded-full bg-[rgba(165,160,202,0.2)] blur-3xl sm:h-[336px] sm:w-[118px] lg:h-[380px] lg:w-[140px]" />
-        <div className="absolute right-[18px] top-[20px] h-[260px] w-[62px] rounded-full bg-[rgba(165,160,202,0.18)] blur-2xl sm:right-[22px] sm:top-0 sm:h-[289px] sm:w-[70px]" />
-        <div className="absolute right-[44px] top-[40px] h-[220px] w-[22px] rounded-full bg-[rgba(165,160,202,0.18)] blur-xl sm:right-[48px] sm:top-0 sm:h-[241px] sm:w-[23px]" />
-      </div>
-
-      {/* Group 308 — kanan tengah */}
-      <div className="absolute right-[-2%] top-[12%] sm:right-[6%] md:right-[10%] lg:right-[max(2rem,calc((100%-72rem)/2+3rem))]">
-        <div className="h-[300px] w-[92px] rounded-full bg-[rgba(136,183,168,0.5)] blur-3xl sm:h-[338px] sm:w-[100px] lg:h-[380px] lg:w-[120px]" />
-        <div className="absolute right-[22px] top-[28px] h-[260px] w-[48px] rounded-full bg-[rgba(243,113,53,0.45)] blur-2xl sm:right-[26px] sm:top-[26px] sm:h-[290px] sm:w-[53px]" />
-        <div className="absolute right-[46px] top-[52px] h-[230px] w-[6px] rounded-full bg-[rgba(243,113,53,0.42)] blur-lg opacity-90 sm:right-[52px] sm:top-[53px] sm:h-[242px] sm:w-[5px]" />
-      </div>
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.96)_0%,rgba(255,255,255,0.74)_28%,transparent_60%)]" />
+      <div className="absolute inset-x-0 bottom-0 h-[58%] bg-[radial-gradient(circle_at_bottom,rgba(246,169,38,0.2)_0%,rgba(247,206,79,0.12)_32%,transparent_72%)]" />
+      <div className="absolute left-[-8%] top-[24%] h-48 w-48 rounded-full bg-white/55 blur-3xl sm:h-64 sm:w-64" />
+      <div className="absolute bottom-[-10%] right-[-6%] h-56 w-56 rounded-full bg-[#f7ce4f]/20 blur-3xl sm:h-72 sm:w-72" />
     </div>
   );
 }
@@ -647,42 +619,42 @@ function HeroFigmaDecor() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
       {/* Base wash — always on */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#eef2ff] via-[#fafbff] to-[#e8f3fc]" />
-      <div className="absolute inset-y-0 left-0 w-[min(74%,560px)] bg-gradient-to-r from-[rgba(165,160,202,0.28)] via-[rgba(175,168,210,0.12)] to-transparent lg:w-[52%]" />
-      <div className="absolute inset-y-0 right-0 w-[min(82%,640px)] bg-gradient-to-l from-[rgba(112,165,245,0.22)] via-[rgba(198,222,255,0.14)] to-transparent lg:w-[58%]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_90%_60%_at_50%_-8%,rgba(165,160,202,0.32),transparent_58%)] opacity-90" />
-      <div className="absolute inset-x-0 bottom-0 h-[min(52%,440px)] bg-gradient-to-t from-[rgba(252,249,239,0.55)] to-transparent" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,#ffffff_0%,#f4faff_38%,#dcefff_100%)]" />
+      <div className="absolute inset-y-0 left-0 w-[min(74%,560px)] bg-gradient-to-r from-[rgba(134,181,255,0.2)] via-[rgba(179,211,255,0.1)] to-transparent lg:w-[52%]" />
+      <div className="absolute inset-y-0 right-0 w-[min(82%,640px)] bg-gradient-to-l from-[rgba(92,158,245,0.22)] via-[rgba(196,226,255,0.12)] to-transparent lg:w-[58%]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_88%_58%_at_50%_-8%,rgba(164,204,255,0.3),transparent_58%)] opacity-90" />
+      <div className="absolute inset-x-0 bottom-0 h-[min(52%,440px)] bg-gradient-to-t from-[rgba(255,255,255,0.72)] to-transparent" />
 
       {/* Soft sun-warm accent behind illustration side (desktop) */}
-      <div className="absolute bottom-[-20%] right-[-10%] h-[min(380px,48vh)] w-[min(420px,55vw)] rounded-full bg-[rgba(255,188,140,0.22)] blur-3xl sm:right-0 lg:bottom-[-12%] lg:right-[2%] lg:h-[min(440px,52vh)] lg:w-[min(520px,42vw)]" />
+      <div className="absolute bottom-[-20%] right-[-10%] h-[min(380px,48vh)] w-[min(420px,55vw)] rounded-full bg-[rgba(134,181,255,0.18)] blur-3xl sm:right-0 lg:bottom-[-12%] lg:right-[2%] lg:h-[min(440px,52vh)] lg:w-[min(520px,42vw)]" />
 
       {/* Blur ornaments: centered ~430 on small screens; full section width on lg+ */}
       <div className="absolute inset-y-0 left-1/2 w-full max-w-[430px] -translate-x-1/2 overflow-hidden sm:max-w-[min(480px,94vw)] lg:left-0 lg:max-w-none lg:translate-x-0">
         <div className="absolute inset-0 overflow-hidden motion-reduce:hidden">
           {/* Vector 5 — widens with viewport on lg */}
           <div className="absolute inset-x-0 top-[-18%] flex justify-center lg:inset-x-[6%] lg:top-[-15%]">
-            <div className="h-[min(524px,78vh)] w-full max-w-[min(430px,92vw)] rounded-[42%] bg-[rgb(165,160,202)] blur-[100px] sm:blur-[160px] md:blur-[200px] lg:max-w-[min(1040px,88vw)] lg:blur-[220px]" />
+            <div className="h-[min(524px,78vh)] w-full max-w-[min(430px,92vw)] rounded-[42%] bg-[rgb(171,210,255)] blur-[100px] sm:blur-[160px] md:blur-[200px] lg:max-w-[min(1040px,88vw)] lg:blur-[220px]" />
           </div>
 
           {/* Group 309 — kiri bawah */}
           <div className="absolute bottom-[-10%] left-[-14%] sm:left-[-8%] md:left-0 lg:left-[max(0.5rem,calc((100%-72rem)/2-2rem))]">
-            <div className="absolute left-0 top-0 h-[312px] w-[171px] rounded-full bg-[rgba(136,183,168,0.55)] blur-3xl lg:h-[340px] lg:w-[200px]" />
-            <div className="absolute left-0 top-[52px] h-[261px] w-[120px] rounded-full bg-[rgba(145,194,179,0.9)] blur-2xl lg:h-[288px] lg:w-[140px]" />
-            <div className="absolute left-0 top-[99px] h-[213px] w-[73px] rounded-full bg-[rgba(145,194,179,0.9)] blur-xl opacity-95 lg:h-[236px] lg:w-[86px]" />
+            <div className="absolute left-0 top-0 h-[312px] w-[171px] rounded-full bg-[rgba(192,225,255,0.55)] blur-3xl lg:h-[340px] lg:w-[200px]" />
+            <div className="absolute left-0 top-[52px] h-[261px] w-[120px] rounded-full bg-[rgba(164,210,255,0.82)] blur-2xl lg:h-[288px] lg:w-[140px]" />
+            <div className="absolute left-0 top-[99px] h-[213px] w-[73px] rounded-full bg-[rgba(164,210,255,0.82)] blur-xl opacity-95 lg:h-[236px] lg:w-[86px]" />
           </div>
 
           {/* Group 307 — kanan atas */}
           <div className="absolute right-[-8%] top-[5%] sm:right-0 md:right-[2%] lg:right-[max(0.5rem,calc((100%-72rem)/2-0.5rem))]">
-            <div className="absolute right-0 top-0 h-[336px] w-[118px] rounded-full bg-[rgba(165,160,202,0.22)] blur-3xl lg:h-[380px] lg:w-[140px]" />
-            <div className="absolute right-[22px] top-[24px] h-[289px] w-[70px] rounded-full bg-[rgba(165,160,202,0.2)] blur-2xl" />
-            <div className="absolute right-[48px] top-[48px] h-[241px] w-[23px] rounded-full bg-[rgba(165,160,202,0.2)] blur-xl" />
+            <div className="absolute right-0 top-0 h-[336px] w-[118px] rounded-full bg-[rgba(174,214,255,0.24)] blur-3xl lg:h-[380px] lg:w-[140px]" />
+            <div className="absolute right-[22px] top-[24px] h-[289px] w-[70px] rounded-full bg-[rgba(174,214,255,0.22)] blur-2xl" />
+            <div className="absolute right-[48px] top-[48px] h-[241px] w-[23px] rounded-full bg-[rgba(174,214,255,0.22)] blur-xl" />
           </div>
 
           {/* Group 308 — kanan tengah */}
           <div className="absolute right-[-6%] top-[12%] sm:right-[2%] md:right-[4%] lg:right-[max(1rem,calc((100%-72rem)/2+1rem))]">
-            <div className="absolute right-0 top-0 h-[338px] w-[100px] rounded-full bg-[rgba(136,183,168,0.55)] blur-3xl lg:h-[380px] lg:w-[120px]" />
-            <div className="absolute right-[26px] top-[26px] h-[290px] w-[53px] rounded-full bg-[rgba(145,194,179,0.9)] blur-2xl" />
-            <div className="absolute right-[52px] top-[52px] h-[242px] w-[5px] rounded-full bg-[rgba(145,194,179,0.9)] blur-lg opacity-90" />
+            <div className="absolute right-0 top-0 h-[338px] w-[100px] rounded-full bg-[rgba(196,230,255,0.5)] blur-3xl lg:h-[380px] lg:w-[120px]" />
+            <div className="absolute right-[26px] top-[26px] h-[290px] w-[53px] rounded-full bg-[rgba(115,182,255,0.36)] blur-2xl" />
+            <div className="absolute right-[52px] top-[52px] h-[242px] w-[5px] rounded-full bg-[rgba(115,182,255,0.38)] blur-lg opacity-90" />
           </div>
         </div>
       </div>

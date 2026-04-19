@@ -7,14 +7,13 @@ import { decrypt, SESSION_COOKIE_NAME } from "@/lib/auth";
 const intlMiddleware = createMiddleware(routing);
 
 /** Routes that do NOT require authentication (locale-prefixed paths without the locale) */
-const publicPagePaths = ["/login", "", "/gallery"];
+const publicPagePaths = ["/login", "/register", "", "/gallery"];
 
 /** Path prefixes that are public (matched with startsWith) */
 const publicPathPrefixes = ["/gallery"];
 
 /** Check if a locale-stripped path is public */
 function isPublicPage(pathnameWithoutLocale: string): boolean {
-  // Exact match or trailing slash match
   const exactMatch = publicPagePaths.some(
     (path) =>
       pathnameWithoutLocale === path ||
@@ -22,7 +21,6 @@ function isPublicPage(pathnameWithoutLocale: string): boolean {
   );
   if (exactMatch) return true;
 
-  // Prefix match (e.g., /gallery/[id])
   return publicPathPrefixes.some((prefix) =>
     pathnameWithoutLocale.startsWith(prefix),
   );
@@ -71,10 +69,10 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   const session = await decrypt(sessionCookie);
 
   const isPublic = isPublicPage(pathnameWithoutLocale);
-  const isAuthenticated = !!session?.childId;
+  const isAuthenticated = !!(session?.childId || session?.userId);
 
-  // Redirect authenticated users away from login page to dashboard
-  if (isAuthenticated && pathnameWithoutLocale === "/login") {
+  // Redirect authenticated users away from login/register pages to dashboard
+  if (isAuthenticated && (pathnameWithoutLocale === "/login" || pathnameWithoutLocale === "/register")) {
     return NextResponse.redirect(
       new URL(`/${locale}/dashboard`, request.url),
     );

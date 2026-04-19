@@ -18,7 +18,8 @@
     "quest": "Quest",
     "gallery": "Gallery",
     "login": "Login",
-    "logout": "Logout"
+    "logout": "Logout",
+    "register": "Sign Up"
   },
   "landing": {
     "brandName": "Katalis AI",
@@ -119,13 +120,45 @@
     }
   },
   "auth": {
-    "title": "Enter Your Access Code",
+    "title": "Welcome Back",
     "codePlaceholder": "Enter access code",
     "submit": "Start Exploring",
+    "orDivider": "or",
     "errors": {
       "empty": "Please enter your access code",
       "invalid": "Access code is not valid",
       "expired": "This access code has expired"
+    },
+    "emailLogin": {
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "submit": "Sign In",
+      "errors": {
+        "required": "Please enter your email and password",
+        "invalid": "Invalid email or password"
+      }
+    },
+    "register": {
+      "title": "Create Account",
+      "nameLabel": "Name",
+      "namePlaceholder": "Your name",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Min. 8 characters",
+      "submit": "Create Account",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Sign up",
+      "hasAccount": "Already have an account?",
+      "loginLink": "Sign in",
+      "errors": {
+        "required": "Please fill in all fields",
+        "passwordTooShort": "Password must be at least 8 characters",
+        "emailExists": "An account with this email already exists",
+        "general": "Something went wrong. Please try again."
+      }
     }
   },
   "footer": {

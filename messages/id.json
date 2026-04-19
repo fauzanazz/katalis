@@ -18,7 +18,8 @@
     "quest": "Misi",
     "gallery": "Galeri",
     "login": "Masuk",
-    "logout": "Keluar"
+    "logout": "Keluar",
+    "register": "Daftar"
   },
   "landing": {
     "brandName": "Katalis AI",
@@ -119,13 +120,45 @@
     }
   },
   "auth": {
-    "title": "Masukkan Kode Aksesmu",
+    "title": "Selamat Datang",
     "codePlaceholder": "Masukkan kode akses",
     "submit": "Mulai Menjelajah",
+    "orDivider": "atau",
     "errors": {
       "empty": "Mohon masukkan kode aksesmu",
       "invalid": "Kode akses tidak valid",
       "expired": "Kode akses ini sudah kedaluwarsa"
+    },
+    "emailLogin": {
+      "emailLabel": "Email",
+      "emailPlaceholder": "kamu@contoh.com",
+      "passwordLabel": "Kata Sandi",
+      "passwordPlaceholder": "Masukkan kata sandi",
+      "submit": "Masuk",
+      "errors": {
+        "required": "Mohon masukkan email dan kata sandi",
+        "invalid": "Email atau kata sandi salah"
+      }
+    },
+    "register": {
+      "title": "Buat Akun",
+      "nameLabel": "Nama",
+      "namePlaceholder": "Nama kamu",
+      "emailLabel": "Email",
+      "emailPlaceholder": "kamu@contoh.com",
+      "passwordLabel": "Kata Sandi",
+      "passwordPlaceholder": "Min. 8 karakter",
+      "submit": "Buat Akun",
+      "noAccount": "Belum punya akun?",
+      "registerLink": "Daftar",
+      "hasAccount": "Sudah punya akun?",
+      "loginLink": "Masuk",
+      "errors": {
+        "required": "Mohon isi semua kolom",
+        "passwordTooShort": "Kata sandi minimal 8 karakter",
+        "emailExists": "Akun dengan email ini sudah ada",
+        "general": "Terjadi kesalahan. Silakan coba lagi."
+      }
     }
   },
   "footer": {

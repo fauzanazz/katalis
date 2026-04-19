@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getSession } from "@/lib/auth";
+import { getChildSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { sanitizeInput } from "@/lib/sanitize";
 import { isAllowedStorageUrl } from "@/lib/url-allowlist";
@@ -102,8 +102,8 @@ export async function GET(request: NextRequest | Request) {
  */
 export async function POST(request: NextRequest | Request) {
   try {
-    const session = await getSession();
-    if (!session?.childId) {
+    const session = await getChildSession();
+    if (!session) {
       return NextResponse.json(
         { error: "unauthorized", message: "Authentication required" },
         { status: 401 },

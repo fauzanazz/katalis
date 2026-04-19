@@ -1,6 +1,13 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
+
+const SALT_ROUNDS = 12;
+
+async function hashPassword(password: string): Promise<string> {
+  return bcrypt.hash(password, SALT_ROUNDS);
+}
 
 async function main() {
   // Clean existing data
@@ -10,8 +17,42 @@ async function main() {
   await prisma.discovery.deleteMany();
   await prisma.child.deleteMany();
   await prisma.accessCode.deleteMany();
+  await prisma.user.deleteMany();
 
-  // Create valid access codes
+  // ── Seed Users ──────────────────────────────────────────────────────
+  const users = [
+    {
+      email: "admin@katalis.ai",
+      name: "Admin",
+      password: "admin123",
+      role: "admin",
+    },
+    {
+      email: "test@katalis.ai",
+      name: "Test User",
+      password: "test1234",
+      role: "user",
+    },
+    {
+      email: "ai@katalis.ai",
+      name: "AI Agent",
+      password: "ai-agent-password",
+      role: "ai",
+    },
+  ];
+
+  for (const userData of users) {
+    await prisma.user.create({
+      data: {
+        email: userData.email,
+        name: userData.name,
+        passwordHash: await hashPassword(userData.password),
+        role: userData.role,
+      },
+    });
+  }
+
+  // ── Seed Access Codes (existing) ────────────────────────────────────
   const code1 = await prisma.accessCode.create({
     data: {
       code: "KATAL-001",
@@ -28,7 +69,6 @@ async function main() {
     },
   });
 
-  // Create expired access code
   await prisma.accessCode.create({
     data: {
       code: "KATAL-EXP",
@@ -37,7 +77,7 @@ async function main() {
     },
   });
 
-  // Create children for gallery entries
+  // ── Seed Children + Gallery Data (existing) ─────────────────────────
   const child1 = await prisma.child.create({
     data: { accessCodeId: code1.id, locale: "id" },
   });
@@ -46,7 +86,6 @@ async function main() {
     data: { accessCodeId: code2.id, locale: "en" },
   });
 
-  // Create discoveries for gallery entries
   const disc1 = await prisma.discovery.create({
     data: {
       childId: child1.id,
@@ -79,7 +118,6 @@ async function main() {
     },
   });
 
-  // Create quests
   const quest1 = await prisma.quest.create({
     data: {
       childId: child1.id,
@@ -113,7 +151,6 @@ async function main() {
     },
   });
 
-  // Create missions (7 per quest, all completed)
   for (const quest of [quest1, quest2, quest3]) {
     for (let day = 1; day <= 7; day++) {
       await prisma.mission.create({
@@ -132,7 +169,6 @@ async function main() {
     }
   }
 
-  // Create gallery entries at various locations
   const galleryEntriesData = [
     {
       childId: child1.id,
@@ -180,9 +216,18 @@ async function main() {
   }
 
   console.log("Seed data created successfully:");
-  console.log("  - Access code KATAL-001 (valid)");
-  console.log("  - Access code KATAL-002 (valid)");
-  console.log("  - Access code KATAL-EXP (expired)");
+  console.log("");
+  console.log("Users (development only):");
+  console.log("  - admin@katalis.ai (admin)");
+  console.log("  - test@katalis.ai (user)");
+  console.log("  - ai@katalis.ai (ai)");
+  console.log("");
+  console.log("Access codes:");
+  console.log("  - KATAL-001 (valid)");
+  console.log("  - KATAL-002 (valid)");
+  console.log("  - KATAL-EXP (expired)");
+  console.log("");
+  console.log("Gallery data:");
   console.log("  - 2 children with discoveries, quests, and gallery entries");
   console.log("  - 3 gallery entries (Engineering/Indonesia, Narrative/Japan, Art/Indonesia)");
 }

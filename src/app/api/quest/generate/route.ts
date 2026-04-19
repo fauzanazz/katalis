@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { getChildSession } from "@/lib/auth";
 import { sanitizeInput } from "@/lib/sanitize";
 import { QuestGenerationInputSchema } from "@/lib/ai/quest-schemas";
 import { generateQuest } from "@/lib/ai/claude";
@@ -18,8 +18,8 @@ import { prisma } from "@/lib/db";
 export async function POST(request: NextRequest) {
   try {
     // Require authentication
-    const session = await getSession();
-    if (!session?.childId) {
+    const session = await getChildSession();
+    if (!session) {
       return NextResponse.json(
         { error: "unauthorized", message: "Authentication required" },
         { status: 401 },

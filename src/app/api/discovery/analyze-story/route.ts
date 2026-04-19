@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { getChildSession } from "@/lib/auth";
 import { sanitizeInput } from "@/lib/sanitize";
 import { StoryAnalysisInputSchema } from "@/lib/ai/story-schemas";
 import { analyzeStory } from "@/lib/ai/claude";
@@ -17,8 +17,8 @@ import { analyzeStory } from "@/lib/ai/claude";
 export async function POST(request: NextRequest) {
   try {
     // Require authentication
-    const session = await getSession();
-    if (!session?.childId) {
+    const session = await getChildSession();
+    if (!session) {
       return NextResponse.json(
         { error: "unauthorized", message: "Authentication required" },
         { status: 401 },

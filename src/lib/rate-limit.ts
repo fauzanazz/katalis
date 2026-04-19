@@ -1,6 +1,10 @@
 /**
- * Simple in-memory rate limiter for login endpoint.
+ * Simple in-memory rate limiter for auth endpoints.
  * Tracks attempts by IP address with a sliding window.
+ *
+ * ⚠️ In-memory rate limiting — only effective for single-instance deployments.
+ * For production (e.g., Vercel serverless), replace with Vercel KV, Upstash,
+ * or a distributed store.
  */
 
 interface RateLimitEntry {

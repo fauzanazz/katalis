@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/auth";
+import { getChildSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { Talent } from "@/lib/ai/schemas";
 
@@ -14,8 +14,8 @@ import type { Talent } from "@/lib/ai/schemas";
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getSession();
-    if (!session?.childId) {
+    const session = await getChildSession();
+    if (!session) {
       return NextResponse.json(
         { error: "unauthorized", message: "Authentication required" },
         { status: 401 },

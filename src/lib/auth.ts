@@ -7,14 +7,19 @@ const SESSION_EXPIRY_DAYS = 7;
 
 function getSecretKey() {
   const secret = process.env.SESSION_SECRET;
-  if (!secret) {
-    throw new Error("SESSION_SECRET environment variable is not set");
+  if (!secret || secret.length < 32) {
+    throw new Error("SESSION_SECRET must be at least 32 characters");
   }
   return new TextEncoder().encode(secret);
 }
 
+export type SessionType = "child" | "user";
+
 export interface SessionPayload {
-  childId: string;
+  type: SessionType;
+  childId?: string;
+  userId?: string;
+  role?: string;
   expiresAt: string;
 }
 
@@ -35,17 +40,18 @@ export async function decrypt(
       algorithms: ["HS256"],
     });
     return payload as unknown as SessionPayload;
-  } catch {
+  } catch (error) {
+    console.warn("JWT verification failed:", (error as Error).message);
     return null;
   }
 }
 
-export async function createSession(childId: string): Promise<void> {
+async function setSessionCookie(payload: Omit<SessionPayload, "expiresAt">): Promise<void> {
   const expiresAt = new Date(
     Date.now() + SESSION_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
   );
   const session = await encrypt({
-    childId,
+    ...payload,
     expiresAt: expiresAt.toISOString(),
   });
   const cookieStore = await cookies();
@@ -59,6 +65,17 @@ export async function createSession(childId: string): Promise<void> {
   });
 }
 
+export async function createChildSession(childId: string): Promise<void> {
+  return setSessionCookie({ type: "child", childId });
+}
+
+export async function createUserSession(
+  userId: string,
+  role: string,
+): Promise<void> {
+  return setSessionCookie({ type: "user", userId, role });
+}
+
 export async function deleteSession(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE_NAME);
@@ -68,6 +85,13 @@ export async function getSession(): Promise<SessionPayload | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   return decrypt(token);
+}
+
+/** Returns session if authenticated as a child (access code), otherwise null. */
+export async function getChildSession(): Promise<{ childId: string } | null> {
+  const session = await getSession();
+  if (!session || session.type !== "child" || !session.childId) return null;
+  return { childId: session.childId };
 }
 
 export { SESSION_COOKIE_NAME };

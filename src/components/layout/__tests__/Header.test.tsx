@@ -7,9 +7,9 @@ import { Header } from "../Header";
 afterEach(cleanup);
 
 describe("Header", () => {
-  it("renders logo with app name", () => {
+  it("renders the landing page brand label", () => {
     render(<Header isAuthenticated={false} />);
-    expect(screen.getByText("Katalis")).toBeInTheDocument();
+    expect(screen.getByText("Katalis AI")).toBeInTheDocument();
   });
 
   it("renders navigation links (Discover, Quest, Gallery)", () => {
@@ -46,9 +46,9 @@ describe("Header", () => {
     expect(navs.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders hamburger menu button for mobile", () => {
+  it("uses the landing page mobile menu label", () => {
     render(<Header isAuthenticated={false} />);
-    const menuButtons = screen.getAllByLabelText("Open menu");
+    const menuButtons = screen.getAllByLabelText("Open navigation menu");
     expect(menuButtons.length).toBeGreaterThanOrEqual(1);
   });
 

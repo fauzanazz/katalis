@@ -204,11 +204,11 @@ export function HomeLanding() {
       {/* Top bar — sheet on small screens; inline nav md+ */}
       <header
         className={cn(
-          shell,
-          "sticky top-0 z-40 flex items-center justify-between gap-4 border-b border-border/60 bg-background/95 pt-4 pb-2 backdrop-blur-sm transition-transform duration-300 sm:pt-5",
+          "sticky top-0 z-40 w-full border-b border-border/60 bg-background/95 pt-4 pb-2 backdrop-blur-sm transition-transform duration-300 sm:pt-5",
           isHeaderHidden && "-translate-y-full",
         )}
       >
+        <div className={cn(shell, "flex items-center justify-between gap-4")}>
           <Link href="/" className="flex min-w-0 items-center gap-2.5">
             <Image
               src="/images/katalis-logo.png"
@@ -280,7 +280,8 @@ export function HomeLanding() {
               </SheetContent>
             </Sheet>
           </div>
-        </header>
+        </div>
+      </header>
 
         {/* Hero background — Figma hero stack (Rectangle 411, Vector 5, Groups 307–309) */}
         <section

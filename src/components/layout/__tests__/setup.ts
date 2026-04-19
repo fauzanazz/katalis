@@ -38,6 +38,9 @@ vi.mock("next-intl", () => {
     "nav.gallery": "Gallery",
     "nav.login": "Login",
     "nav.logout": "Logout",
+    "landing.brandName": "Katalis AI",
+    "landing.openMenu": "Open navigation menu",
+    "landing.navSheetTitle": "Explore Katalis AI",
     "landing.hero.title": "Discover – Act – Connect",
     "landing.hero.subtitle":
       "A talent discovery and development platform for children",

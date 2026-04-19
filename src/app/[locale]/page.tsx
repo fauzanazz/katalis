@@ -14,16 +14,16 @@ export default function LandingPage() {
       {/* Hero section */}
       <section
         aria-labelledby="hero-heading"
-        className="flex flex-col items-center justify-center bg-zinc-50 px-4 py-20 sm:py-28 dark:bg-zinc-950"
+        className="flex flex-col items-center justify-center bg-background px-4 py-20 sm:py-28"
       >
         <div className="mx-auto w-full max-w-3xl text-center">
           <h1
             id="hero-heading"
-            className="text-4xl font-bold tracking-tight text-zinc-900 sm:text-5xl dark:text-zinc-50"
+            className="text-4xl font-bold tracking-tight text-ink sm:text-5xl"
           >
             {t("landing.hero.title")}
           </h1>
-          <p className="mt-4 text-lg text-zinc-600 dark:text-zinc-400">
+          <p className="mt-4 text-lg text-muted-foreground">
             {t("landing.hero.subtitle")}
           </p>
           <div className="mt-8">
@@ -37,7 +37,7 @@ export default function LandingPage() {
       {/* Three pillars */}
       <section
         aria-labelledby="pillars-heading"
-        className="bg-white px-4 py-16 sm:py-20 dark:bg-zinc-900"
+        className="bg-white px-4 py-16 sm:py-20"
       >
         <h2 id="pillars-heading" className="sr-only">
           {t("common.appName")}
@@ -50,13 +50,13 @@ export default function LandingPage() {
                 key={key}
                 className="flex flex-col items-center text-center"
               >
-                <div className="flex size-14 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
-                  <Icon className="size-7 text-zinc-700 dark:text-zinc-300" />
+                <div className="flex size-14 items-center justify-center rounded-full bg-muted">
+                  <Icon className="size-7 text-foreground" />
                 </div>
-                <h3 className="mt-4 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+                <h3 className="mt-4 text-xl font-semibold text-ink">
                   {t(`landing.pillars.${key}.title`)}
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                   {t(`landing.pillars.${key}.description`)}
                 </p>
               </div>

@@ -79,7 +79,7 @@ export default function QuestListPage() {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center justify-center px-4 py-16">
         <div className="size-12 animate-spin rounded-full border-4 border-zinc-200 border-t-blue-500" />
-        <p className="mt-4 text-zinc-600 dark:text-zinc-400">
+        <p className="mt-4 text-muted-foreground">
           {t("title")}...
         </p>
       </div>
@@ -90,24 +90,24 @@ export default function QuestListPage() {
     <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12">
       {/* Header */}
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl dark:text-zinc-50">
+        <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
           {t("title")}
         </h1>
-        <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+        <p className="mt-2 text-muted-foreground">
           {t("subtitle")}
         </p>
       </div>
 
       {/* Empty state */}
       {quests.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50 px-6 py-16 text-center dark:border-zinc-700 dark:bg-zinc-900/50">
-          <div className="mb-4 flex size-20 items-center justify-center rounded-full bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30">
-            <Sparkles className="size-10 text-purple-600 dark:text-purple-400" />
+        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted px-6 py-16 text-center">
+          <div className="mb-4 flex size-20 items-center justify-center rounded-full bg-gradient-to-r from-purple-100 to-blue-100">
+            <Sparkles className="size-10 text-purple-600" />
           </div>
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
+          <h2 className="text-xl font-bold text-ink">
             {t("empty")}
           </h2>
-          <p className="mt-2 max-w-md text-zinc-600 dark:text-zinc-400">
+          <p className="mt-2 max-w-md text-muted-foreground">
             {t("emptyDesc")}
           </p>
           <Link href="/discover">
@@ -133,28 +133,28 @@ export default function QuestListPage() {
             return (
               <Link key={quest.id} href={`/quest/${quest.id}`}>
                 <div
-                  className="group rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:border-blue-300 hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-blue-600"
+                  className="group rounded-xl border border-border bg-card p-5 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
                   role="article"
                   aria-label={`${quest.dream} - ${getStatusLabel(quest.status)} - ${t("progress", { completed: quest.completedCount, total: quest.totalMissions })}`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     {/* Left content */}
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
+                      <div className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
                         {getStatusIcon(quest.status)}
                       </div>
                       <div className="min-w-0">
-                        <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">
+                        <h3 className="font-semibold text-ink">
                           {quest.dream}
                         </h3>
-                        <div className="mt-1 flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+                        <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
                           <span
                             className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                               quest.status === "completed"
-                                ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                                ? "bg-green-50 text-green-700"
                                 : quest.status === "abandoned"
-                                  ? "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
-                                  : "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                  ? "bg-zinc-100 text-zinc-500"
+                                  : "bg-blue-50 text-blue-700"
                             }`}
                           >
                             {getStatusLabel(quest.status)}
@@ -170,7 +170,7 @@ export default function QuestListPage() {
 
                         {/* Progress bar */}
                         <div
-                          className="mt-2 h-2 w-full max-w-[200px] overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
+                          className="mt-2 h-2 w-full max-w-[200px] overflow-hidden rounded-full bg-muted"
                           role="progressbar"
                           aria-valuenow={progressPercent}
                           aria-valuemin={0}
@@ -190,7 +190,7 @@ export default function QuestListPage() {
                     </div>
 
                     {/* Arrow */}
-                    <ArrowRight className="size-5 shrink-0 text-zinc-400 transition-transform group-hover:translate-x-1 dark:text-zinc-500" />
+                    <ArrowRight className="size-5 shrink-0 text-zinc-400 transition-transform group-hover:translate-x-1" />
                   </div>
                 </div>
               </Link>

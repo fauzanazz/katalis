@@ -229,7 +229,7 @@ export function GalleryDetailClient({ entry }: GalleryDetailClientProps) {
             </h3>
 
             {flagResult === "success" ? (
-              <p className="text-sm text-green-600 dark:text-green-400">
+              <p className="text-sm text-green-600">
                 {t("detail.flagSuccess")}
               </p>
             ) : (
@@ -287,7 +287,7 @@ export function GalleryDetailClient({ entry }: GalleryDetailClientProps) {
 
                 {/* Error */}
                 {flagResult === "error" && (
-                  <p className="mb-3 text-sm text-red-600 dark:text-red-400">
+                  <p className="mb-3 text-sm text-red-600">
                     {t("detail.flagError")}
                   </p>
                 )}

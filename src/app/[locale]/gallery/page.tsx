@@ -227,11 +227,11 @@ export default function GalleryPage() {
 
       {/* Error state */}
       {error && viewMode === "map" && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-          <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4">
+          <p className="text-sm text-red-800">{error}</p>
           <button
             onClick={() => fetchGalleryData(selectedCategory)}
-            className="mt-2 text-sm font-medium text-red-700 underline hover:text-red-900 dark:text-red-300"
+            className="mt-2 text-sm font-medium text-red-700 underline hover:text-red-900"
           >
             {t("retry")}
           </button>

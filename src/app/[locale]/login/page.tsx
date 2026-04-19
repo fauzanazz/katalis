@@ -56,10 +56,10 @@ export default function LoginPage() {
 
   return (
     <div
-      className="flex flex-1 flex-col items-center justify-center bg-zinc-50 px-4 dark:bg-black"
+      className="flex flex-1 flex-col items-center justify-center bg-background px-4"
     >
       <div className="w-full max-w-sm">
-        <h1 className="mb-8 text-center text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+        <h1 className="mb-8 text-center text-2xl font-bold text-ink">
           {t("title")}
         </h1>
         <form onSubmit={handleSubmit} noValidate className="space-y-4">
@@ -80,7 +80,7 @@ export default function LoginPage() {
               placeholder={t("codePlaceholder")}
               aria-invalid={!!error}
               aria-describedby={error ? "code-error" : undefined}
-              className="flex h-12 w-full rounded-md border border-zinc-300 bg-white px-4 text-base text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder:text-zinc-500 dark:focus:border-zinc-400 dark:focus:ring-zinc-400/20"
+              className="flex h-12 w-full rounded-md border border-border bg-white px-4 text-base text-ink placeholder:text-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500/20 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isSubmitting}
             />
           </div>
@@ -89,7 +89,7 @@ export default function LoginPage() {
             <p
               id="code-error"
               role="alert"
-              className="text-sm text-red-600 dark:text-red-400"
+              className="text-sm text-red-600"
             >
               {error}
             </p>

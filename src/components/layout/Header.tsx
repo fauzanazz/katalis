@@ -43,13 +43,13 @@ export function Header({ isAuthenticated }: HeaderProps) {
   return (
     <header
       role="banner"
-      className="sticky top-0 z-40 border-b border-zinc-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 dark:border-zinc-800 dark:bg-zinc-950/95 dark:supports-[backdrop-filter]:bg-zinc-950/80"
+      className="sticky top-0 z-40 border-b border-border bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80"
     >
       <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link
           href="/"
-          className="flex items-center gap-2 text-lg font-bold text-zinc-900 dark:text-zinc-50"
+          className="flex items-center gap-2 text-lg font-bold text-ink"
         >
           {tCommon("appName")}
         </Link>
@@ -64,8 +64,8 @@ export function Header({ isAuthenticated }: HeaderProps) {
                 href={link.href}
                 className={`inline-flex min-h-[44px] items-center rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                   isActive
-                    ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50"
-                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
+                    ? "bg-muted text-ink"
+                    : "text-muted-foreground hover:bg-muted hover:text-ink"
                 }`}
               >
                 {t(link.labelKey)}
@@ -108,7 +108,7 @@ export function Header({ isAuthenticated }: HeaderProps) {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[280px] p-0">
-              <SheetHeader className="border-b border-zinc-200 dark:border-zinc-800">
+              <SheetHeader className="border-b border-border">
                 <SheetTitle className="text-left text-lg font-bold">
                   {tCommon("appName")}
                 </SheetTitle>
@@ -127,22 +127,22 @@ export function Header({ isAuthenticated }: HeaderProps) {
                       onClick={() => setMobileOpen(false)}
                       className={`flex min-h-[44px] items-center rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                         isActive
-                          ? "bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50"
-                          : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
+                          ? "bg-muted text-ink"
+                          : "text-muted-foreground hover:bg-muted hover:text-ink"
                       }`}
                     >
                       {t(link.labelKey)}
                     </Link>
                   );
                 })}
-                <div className="my-2 border-t border-zinc-200 dark:border-zinc-800" />
+                <div className="my-2 border-t border-border" />
                 {isAuthenticated ? (
                   <button
                     onClick={() => {
                       setMobileOpen(false);
                       handleLogout();
                     }}
-                    className="flex min-h-[44px] items-center rounded-md px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
+                    className="flex min-h-[44px] items-center rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-ink"
                   >
                     {t("logout")}
                   </button>
@@ -150,7 +150,7 @@ export function Header({ isAuthenticated }: HeaderProps) {
                   <Link
                     href="/login"
                     onClick={() => setMobileOpen(false)}
-                    className="flex min-h-[44px] items-center rounded-md px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
+                    className="flex min-h-[44px] items-center rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-ink"
                   >
                     {t("login")}
                   </Link>

@@ -145,7 +145,7 @@ export default function QuestCompletePage() {
     return (
       <div className="mx-auto flex w-full max-w-3xl flex-col items-center justify-center px-4 py-16">
         <div className="size-12 animate-spin rounded-full border-4 border-zinc-200 border-t-blue-500" />
-        <p className="mt-4 text-zinc-600 dark:text-zinc-400">
+        <p className="mt-4 text-muted-foreground">
           {t("loading")}
         </p>
       </div>
@@ -156,10 +156,10 @@ export default function QuestCompletePage() {
   if (pageState === "error") {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center justify-center px-4 py-16">
-        <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
+        <h2 className="text-xl font-bold text-ink">
           {tOverview("notFound")}
         </h2>
-        <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+        <p className="mt-2 text-muted-foreground">
           {tOverview("notFoundDesc")}
         </p>
         <Link href="/quest">
@@ -176,16 +176,16 @@ export default function QuestCompletePage() {
   if (pageState === "not-ready") {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center justify-center px-4 py-16">
-        <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+        <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-amber-100">
           <Trophy
-            className="size-8 text-amber-600 dark:text-amber-400"
+            className="size-8 text-amber-600"
             aria-hidden="true"
           />
         </div>
-        <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
+        <h2 className="text-xl font-bold text-ink">
           {t("notReady")}
         </h2>
-        <p className="mt-2 text-center text-zinc-600 dark:text-zinc-400">
+        <p className="mt-2 text-center text-muted-foreground">
           {t("notReadyDesc")}
         </p>
         <Link href={`/quest/${questId}`}>
@@ -211,7 +211,7 @@ export default function QuestCompletePage() {
         </div>
 
         {/* Celebration visual */}
-        <div className="mb-6 flex size-24 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-500 shadow-lg shadow-green-200 dark:shadow-green-900/30">
+        <div className="mb-6 flex size-24 items-center justify-center rounded-full bg-gradient-to-br from-green-400 to-emerald-500 shadow-lg shadow-green-200">
           <CheckCircle2
             className="size-12 text-white"
             aria-hidden="true"
@@ -220,10 +220,10 @@ export default function QuestCompletePage() {
 
         {pageState === "submitted" && (
           <>
-            <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+            <h2 className="text-2xl font-bold text-ink">
               {t("submitSuccess")}
             </h2>
-            <p className="mt-2 text-center text-zinc-600 dark:text-zinc-400">
+            <p className="mt-2 text-center text-muted-foreground">
               {t("encouragement")}
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -244,10 +244,10 @@ export default function QuestCompletePage() {
 
         {pageState === "skipped" && (
           <>
-            <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+            <h2 className="text-2xl font-bold text-ink">
               {t("title")}
             </h2>
-            <p className="mt-2 text-center text-zinc-600 dark:text-zinc-400">
+            <p className="mt-2 text-center text-muted-foreground">
               {t("encouragement")}
             </p>
             <div className="mt-8">
@@ -298,7 +298,7 @@ export default function QuestCompletePage() {
       <div className="mb-8 text-center">
         <div className="mb-4 flex justify-center">
           <div className="relative">
-            <div className="flex size-20 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 shadow-lg shadow-amber-200 dark:shadow-amber-900/30">
+            <div className="flex size-20 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 shadow-lg shadow-amber-200">
               <Trophy
                 className="size-10 text-white"
                 aria-hidden="true"
@@ -316,34 +316,34 @@ export default function QuestCompletePage() {
           </div>
         </div>
 
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl dark:text-zinc-50">
+        <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
           {t("title")}
         </h1>
-        <p className="mt-2 text-lg text-zinc-600 dark:text-zinc-400">
+        <p className="mt-2 text-lg text-muted-foreground">
           {t("congratulations")}
         </p>
       </div>
 
       {/* Journey summary */}
       <section
-        className="mb-8 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900"
+        className="mb-8 rounded-xl border border-border bg-card p-5 shadow-sm"
         aria-labelledby="journey-summary"
       >
         <h2
           id="journey-summary"
-          className="mb-4 text-lg font-bold text-zinc-900 dark:text-zinc-50"
+          className="mb-4 text-lg font-bold text-ink"
         >
           {t("summary")}
         </h2>
 
         {/* Dream */}
-        <div className="mb-4 flex items-start gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+        <div className="mb-4 flex items-start gap-2 text-sm text-muted-foreground">
           <Sparkles
             className="mt-0.5 size-4 shrink-0 text-purple-500"
             aria-hidden="true"
           />
           <div>
-            <span className="font-medium text-zinc-700 dark:text-zinc-300">
+            <span className="font-medium text-foreground">
               {t("dreamLabel")}:
             </span>{" "}
             {quest.dream}
@@ -352,45 +352,45 @@ export default function QuestCompletePage() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-900/20">
+          <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-3">
             <CheckCircle2
-              className="size-6 text-green-600 dark:text-green-400"
+              className="size-6 text-green-600"
               aria-hidden="true"
             />
-            <span className="text-sm font-medium text-green-700 dark:text-green-300">
+            <span className="text-sm font-medium text-green-700">
               {t("missionsCompleted", {
                 count: quest.completedCount,
               })}
             </span>
           </div>
-          <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20">
+          <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
             <Camera
-              className="size-6 text-blue-600 dark:text-blue-400"
+              className="size-6 text-blue-600"
               aria-hidden="true"
             />
-            <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+            <span className="text-sm font-medium text-blue-700">
               {t("photosUploaded", { count: photosUploaded })}
             </span>
           </div>
         </div>
 
-        <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="mt-4 text-sm text-muted-foreground">
           {t("journeySummary")}
         </p>
       </section>
 
       {/* Best work selection */}
       <section
-        className="mb-8 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900"
+        className="mb-8 rounded-xl border border-border bg-card p-5 shadow-sm"
         aria-labelledby="best-work-selection"
       >
         <h2
           id="best-work-selection"
-          className="mb-2 text-lg font-bold text-zinc-900 dark:text-zinc-50"
+          className="mb-2 text-lg font-bold text-ink"
         >
           {t("selectBestWork")}
         </h2>
-        <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mb-4 text-sm text-muted-foreground">
           {t("selectBestWorkDesc")}
         </p>
 
@@ -423,8 +423,8 @@ export default function QuestCompletePage() {
                   }
                   className={`group relative overflow-hidden rounded-lg border-2 transition-all ${
                     isSelected
-                      ? "border-blue-500 ring-2 ring-blue-300 dark:ring-blue-700"
-                      : "border-zinc-200 hover:border-blue-300 dark:border-zinc-700 dark:hover:border-blue-600"
+                      ? "border-blue-500 ring-2 ring-blue-300"
+                      : "border-zinc-200 hover:border-blue-300"
                   }`}
                 >
                   <div className="aspect-square overflow-hidden">
@@ -466,7 +466,7 @@ export default function QuestCompletePage() {
 
         {/* Selection label */}
         {selectedDay !== null && (
-          <p className="mt-3 text-sm font-medium text-blue-600 dark:text-blue-400">
+          <p className="mt-3 text-sm font-medium text-blue-600">
             {t("selectedPhoto", { day: selectedDay })}
           </p>
         )}
@@ -475,21 +475,21 @@ export default function QuestCompletePage() {
       {/* Gallery preview */}
       {selectedPhotoUrl && (
         <section
-          className="mb-8 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900"
+          className="mb-8 rounded-xl border border-border bg-card p-5 shadow-sm"
           aria-labelledby="gallery-preview"
         >
           <h2
             id="gallery-preview"
-            className="mb-2 text-lg font-bold text-zinc-900 dark:text-zinc-50"
+            className="mb-2 text-lg font-bold text-ink"
           >
             {t("previewTitle")}
           </h2>
-          <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mb-4 text-sm text-muted-foreground">
             {t("previewDesc")}
           </p>
 
           <div
-            className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800"
+            className="overflow-hidden rounded-lg border border-border bg-muted"
             aria-label={t("galleryEntryPreview")}
           >
             <div className="aspect-video overflow-hidden">
@@ -512,10 +512,10 @@ export default function QuestCompletePage() {
                   className="size-4 text-zinc-400"
                   aria-hidden="true"
                 />
-                <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                <span className="font-medium text-foreground">
                   {t("talentLabel")}:
                 </span>{" "}
-                <span className="text-zinc-600 dark:text-zinc-400">
+                <span className="text-muted-foreground">
                   {topTalent}
                 </span>
               </div>
@@ -524,10 +524,10 @@ export default function QuestCompletePage() {
                   className="size-4 text-zinc-400"
                   aria-hidden="true"
                 />
-                <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                <span className="font-medium text-foreground">
                   {t("locationLabel")}:
                 </span>{" "}
-                <span className="text-zinc-600 dark:text-zinc-400">
+                <span className="text-muted-foreground">
                   {quest.localContext}
                 </span>
               </div>
@@ -540,7 +540,7 @@ export default function QuestCompletePage() {
       {submitError && (
         <div
           role="alert"
-          className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-center text-sm text-red-700 dark:border-red-800 dark:bg-red-950/20 dark:text-red-400"
+          className="mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-center text-sm text-red-700"
         >
           {submitError}
         </div>

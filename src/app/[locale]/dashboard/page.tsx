@@ -21,13 +21,13 @@ function DashboardContent() {
 
   return (
     <div
-      className="flex flex-1 flex-col items-center justify-center bg-zinc-50 px-4 dark:bg-black"
+      className="flex flex-1 flex-col items-center justify-center bg-background px-4"
     >
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+        <h1 className="text-3xl font-bold text-ink">
           {t("common.appName")}
         </h1>
-        <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+        <p className="mt-2 text-muted-foreground">
           {t("landing.hero.subtitle")}
         </p>
       </div>

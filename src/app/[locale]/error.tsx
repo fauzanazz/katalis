@@ -14,13 +14,13 @@ export default function LocaleError({ error, reset }: ErrorPageProps) {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-4 py-20">
-      <p className="text-6xl font-bold text-zinc-300 dark:text-zinc-700">
+      <p className="text-6xl font-bold text-zinc-300">
         ⚠️
       </p>
-      <h1 className="mt-4 text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+      <h1 className="mt-4 text-2xl font-bold text-ink">
         {t("title")}
       </h1>
-      <p className="mt-2 max-w-md text-center text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="mt-2 max-w-md text-center text-sm text-muted-foreground">
         {t("description")}
       </p>
       <div className="mt-8 flex gap-3">

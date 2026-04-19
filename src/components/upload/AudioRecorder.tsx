@@ -324,8 +324,8 @@ export function AudioRecorder({
   // Complete state
   if (recorderState === "complete" && uploadResult) {
     return (
-      <div className="flex flex-col items-center gap-4 rounded-lg border-2 border-green-300 bg-green-50 p-6 dark:border-green-700 dark:bg-green-950/20">
-        <p className="text-sm font-medium text-green-700 dark:text-green-300">
+      <div className="flex flex-col items-center gap-4 rounded-lg border-2 border-green-300 bg-green-50 p-6">
+        <p className="text-sm font-medium text-green-700">
           {t("uploadComplete")}
         </p>
         {audioUrl && (
@@ -349,10 +349,10 @@ export function AudioRecorder({
   return (
     <div className="flex flex-col gap-4">
       {/* Recording controls */}
-      <div className="flex flex-col items-center gap-4 rounded-lg border-2 border-zinc-200 bg-zinc-50 p-6 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="flex flex-col items-center gap-4 rounded-lg border-2 border-border bg-muted p-6">
         {recorderState === "idle" || recorderState === "requesting-permission" || recorderState === "error" ? (
           <div className="flex flex-col items-center gap-3">
-            <div className="flex size-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+            <div className="flex size-16 items-center justify-center rounded-full bg-red-100">
               <Mic className="size-8 text-red-500" />
             </div>
             <Button
@@ -372,7 +372,7 @@ export function AudioRecorder({
             <div className="flex size-16 animate-pulse items-center justify-center rounded-full bg-red-500">
               <Mic className="size-8 text-white" />
             </div>
-            <p className="text-sm font-medium text-red-600 dark:text-red-400">
+            <p className="text-sm font-medium text-red-600">
               {t("recording")} {formatDuration(duration)}
             </p>
             <Button
@@ -387,7 +387,7 @@ export function AudioRecorder({
           </div>
         ) : recorderState === "stopped" ? (
           <div className="flex flex-col items-center gap-3">
-            <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <p className="text-sm font-medium text-foreground">
               {t("recordingComplete")} ({formatDuration(duration)})
             </p>
             {audioUrl && (
@@ -425,7 +425,7 @@ export function AudioRecorder({
             <div className="animate-pulse">
               <Upload className="size-10 text-blue-500" />
             </div>
-            <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <p className="text-sm font-medium text-foreground">
               {t("uploading")}
             </p>
             <div className="w-full max-w-xs">
@@ -435,7 +435,7 @@ export function AudioRecorder({
                 aria-valuenow={progress}
                 aria-valuemin={0}
                 aria-valuemax={100}
-                className="h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700"
+                className="h-2 w-full overflow-hidden rounded-full bg-zinc-200"
               >
                 <div
                   className="h-full rounded-full bg-blue-500 transition-all duration-300"
@@ -449,7 +449,7 @@ export function AudioRecorder({
           </div>
         ) : null}
 
-        <p className="text-xs text-zinc-400 dark:text-zinc-500">
+        <p className="text-xs text-zinc-400">
           {t("acceptedFormats")}
         </p>
       </div>
@@ -482,7 +482,7 @@ export function AudioRecorder({
       {error && (
         <div
           role="alert"
-          className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/20 dark:text-red-400"
+          className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700"
         >
           <p>{error}</p>
         </div>

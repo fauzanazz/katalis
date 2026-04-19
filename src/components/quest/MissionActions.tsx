@@ -135,26 +135,26 @@ export function MissionActions({
     return (
       <section
         aria-labelledby="mission-proof-section"
-        className="mt-6 rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20"
+        className="mt-6 rounded-lg border border-green-200 bg-green-50 p-4"
       >
         <div className="flex items-center gap-2">
           <CheckCircle2
-            className="size-5 text-green-600 dark:text-green-400"
+            className="size-5 text-green-600"
             aria-hidden="true"
           />
           <h3
             id="mission-proof-section"
-            className="text-sm font-semibold text-green-700 dark:text-green-300"
+            className="text-sm font-semibold text-green-700"
           >
             {t("statusCompleted")}
           </h3>
         </div>
         {proofPhotoUrl && (
           <div className="mt-3">
-            <p className="mb-2 text-sm text-green-600 dark:text-green-400">
+            <p className="mb-2 text-sm text-green-600">
               {t("viewCompletedProof")}
             </p>
-            <div className="overflow-hidden rounded-lg border border-green-200 dark:border-green-700">
+            <div className="overflow-hidden rounded-lg border border-green-200">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={proofPhotoUrl}
@@ -177,7 +177,7 @@ export function MissionActions({
       {error && (
         <div
           role="alert"
-          className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/20 dark:text-red-400"
+          className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700"
         >
           {error}
         </div>
@@ -188,7 +188,7 @@ export function MissionActions({
         <div
           role="status"
           aria-live="polite"
-          className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-950/20 dark:text-green-400"
+          className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700"
         >
           {successMessage}
         </div>
@@ -196,8 +196,8 @@ export function MissionActions({
 
       {/* Available: Show Start Mission button */}
       {status === "available" && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
-          <p className="mb-3 text-sm text-blue-700 dark:text-blue-300">
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <p className="mb-3 text-sm text-blue-700">
             {t("startMissionDesc")}
           </p>
           <Button
@@ -223,23 +223,23 @@ export function MissionActions({
 
       {/* In Progress: Show upload proof + complete button */}
       {status === "in_progress" && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20">
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
           <div className="mb-3 flex items-center gap-2">
             <Camera
-              className="size-5 text-amber-600 dark:text-amber-400"
+              className="size-5 text-amber-600"
               aria-hidden="true"
             />
-            <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
+            <p className="text-sm font-medium text-amber-700">
               {t("missionInProgress")}
             </p>
           </div>
 
           {/* Proof photo section */}
           <div className="mb-4">
-            <h4 className="mb-2 text-sm font-semibold text-amber-800 dark:text-amber-200">
+            <h4 className="mb-2 text-sm font-semibold text-amber-800">
               {t("proofPhoto")}
             </h4>
-            <p className="mb-3 text-xs text-amber-600 dark:text-amber-400">
+            <p className="mb-3 text-xs text-amber-600">
               {t("proofPhotoRequired")}
             </p>
 
@@ -249,7 +249,7 @@ export function MissionActions({
                 onError={(err) => setError(err)}
               />
             ) : (
-              <div className="flex flex-col items-center gap-3 rounded-lg border border-green-300 bg-green-50 p-4 dark:border-green-700 dark:bg-green-950/20">
+              <div className="flex flex-col items-center gap-3 rounded-lg border border-green-300 bg-green-50 p-4">
                 <div className="overflow-hidden rounded-lg">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img

@@ -26,22 +26,22 @@ export function AnalysisError({ errorType, onRetry }: AnalysisErrorProps) {
 
   return (
     <div
-      className="flex flex-col items-center gap-4 rounded-xl border border-red-200 bg-red-50 p-6 dark:border-red-800 dark:bg-red-950/20"
+      className="flex flex-col items-center gap-4 rounded-xl border border-red-200 bg-red-50 p-6"
       role="alert"
     >
       <AlertCircle className="size-10 text-red-500" />
       <div className="text-center">
-        <p className="text-lg font-medium text-red-700 dark:text-red-400">
+        <p className="text-lg font-medium text-red-700">
           {t(messageKey)}
         </p>
-        <p className="mt-1 text-sm text-red-600 dark:text-red-500">
+        <p className="mt-1 text-sm text-red-600">
           {t("errorHint")}
         </p>
       </div>
       <Button
         onClick={onRetry}
         variant="outline"
-        className="border-red-300 text-red-700 hover:bg-red-100 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950/40"
+        className="border-red-300 text-red-700 hover:bg-red-100"
       >
         <RefreshCw className="mr-2 size-4" />
         {t("retry")}

@@ -105,7 +105,7 @@ export default function DiscoveryHistoryPage() {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center justify-center px-4 py-16">
         <div className="size-12 animate-spin rounded-full border-4 border-zinc-200 border-t-blue-500" />
-        <p className="mt-4 text-zinc-600 dark:text-zinc-400">
+        <p className="mt-4 text-muted-foreground">
           {t("results.loading")}
         </p>
       </div>
@@ -116,14 +116,14 @@ export default function DiscoveryHistoryPage() {
     <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12">
       {/* Header */}
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl dark:text-zinc-50">
+        <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
           {t("history.title")}
         </h1>
-        <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+        <p className="mt-2 text-muted-foreground">
           {t("history.subtitle")}
         </p>
         {total > 0 && (
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             {t("history.totalDiscoveries", { count: total })}
           </p>
         )}
@@ -131,14 +131,14 @@ export default function DiscoveryHistoryPage() {
 
       {/* Empty state */}
       {discoveries.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50 px-6 py-16 text-center dark:border-zinc-700 dark:bg-zinc-900/50">
-          <div className="mb-4 flex size-20 items-center justify-center rounded-full bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30">
-            <Sparkles className="size-10 text-purple-600 dark:text-purple-400" />
+        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted px-6 py-16 text-center">
+          <div className="mb-4 flex size-20 items-center justify-center rounded-full bg-gradient-to-r from-blue-100 to-purple-100">
+            <Sparkles className="size-10 text-purple-600" />
           </div>
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
+          <h2 className="text-xl font-bold text-ink">
             {t("history.empty")}
           </h2>
-          <p className="mt-2 max-w-md text-zinc-600 dark:text-zinc-400">
+          <p className="mt-2 max-w-md text-muted-foreground">
             {t("history.emptyDesc")}
           </p>
           <Link href="/discover">
@@ -159,21 +159,21 @@ export default function DiscoveryHistoryPage() {
               href={`/discover/results/${discovery.id}`}
             >
               <div
-                className="group rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:border-blue-300 hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-blue-600"
+                className="group rounded-xl border border-border bg-card p-5 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
                 role="article"
                 aria-label={`${getTypeLabel(discovery.type)} - ${t("history.talentSummary", { count: discovery.talents.length })}`}
               >
                 <div className="flex items-start justify-between gap-4">
                   {/* Type icon and info */}
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
+                    <div className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
                       {getTypeIcon(discovery.type)}
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">
+                      <h3 className="font-semibold text-ink">
                         {getTypeLabel(discovery.type)}
                       </h3>
-                      <div className="mt-1 flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+                      <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock className="size-3.5" />
                         <span>
                           {new Date(discovery.createdAt).toLocaleDateString()}
@@ -190,13 +190,13 @@ export default function DiscoveryHistoryPage() {
                         {discovery.talents.slice(0, 3).map((talent, i) => (
                           <span
                             key={`${talent.name}-${i}`}
-                            className="inline-block rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                            className="inline-block rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700"
                           >
                             {talent.name}
                           </span>
                         ))}
                         {discovery.talents.length > 3 && (
-                          <span className="inline-block rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                          <span className="inline-block rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-500">
                             +{discovery.talents.length - 3}
                           </span>
                         )}
@@ -205,7 +205,7 @@ export default function DiscoveryHistoryPage() {
                   </div>
 
                   {/* Arrow */}
-                  <ArrowRight className="size-5 shrink-0 text-zinc-400 transition-transform group-hover:translate-x-1 dark:text-zinc-500" />
+                  <ArrowRight className="size-5 shrink-0 text-zinc-400 transition-transform group-hover:translate-x-1" />
                 </div>
               </div>
             </Link>

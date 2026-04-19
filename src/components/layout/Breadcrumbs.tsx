@@ -61,10 +61,10 @@ export function Breadcrumbs() {
   return (
     <nav
       aria-label="Breadcrumb"
-      className="border-b border-zinc-100 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-900/50"
+      className="border-b border-border/70 bg-background/80"
     >
       <div className="mx-auto max-w-5xl px-4 py-2 sm:px-6 lg:px-8">
-        <ol className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+        <ol className="flex items-center gap-1 text-xs text-muted-foreground">
           {breadcrumbs.map((crumb, index) => {
             const isLast = index === breadcrumbs.length - 1;
             return (
@@ -77,7 +77,7 @@ export function Breadcrumbs() {
                 )}
                 {isLast ? (
                   <span
-                    className="font-medium text-zinc-900 dark:text-zinc-100"
+                    className="font-medium text-ink"
                     aria-current="page"
                   >
                     {crumb.label}
@@ -85,7 +85,7 @@ export function Breadcrumbs() {
                 ) : (
                   <Link
                     href={crumb.href}
-                    className="transition-colors hover:text-zinc-900 dark:hover:text-zinc-100"
+                    className="transition-colors hover:text-ink"
                   >
                     {crumb.label}
                   </Link>

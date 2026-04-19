@@ -104,7 +104,7 @@ export default function DiscoveryResultsPage() {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center justify-center px-4 py-16">
         <div className="size-12 animate-spin rounded-full border-4 border-zinc-200 border-t-blue-500" />
-        <p className="mt-4 text-zinc-600 dark:text-zinc-400">{t("loading")}</p>
+        <p className="mt-4 text-muted-foreground">{t("loading")}</p>
       </div>
     );
   }
@@ -112,10 +112,10 @@ export default function DiscoveryResultsPage() {
   if (error || !result) {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center justify-center px-4 py-16">
-        <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
+        <h2 className="text-xl font-bold text-ink">
           {t("notFound")}
         </h2>
-        <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+        <p className="mt-2 text-muted-foreground">
           {t("notFoundDesc")}
         </p>
         <Link href="/discover">
@@ -149,7 +149,7 @@ export default function DiscoveryResultsPage() {
       {/* Share confirmation message */}
       {shareMessage && (
         <div
-          className="mb-4 rounded-lg bg-green-50 p-3 text-center text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400"
+          className="mb-4 rounded-lg bg-green-50 p-3 text-center text-sm text-green-700"
           role="status"
           aria-live="polite"
         >
@@ -159,18 +159,18 @@ export default function DiscoveryResultsPage() {
 
       {/* Header */}
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30">
-          <Sparkles className="size-8 text-purple-600 dark:text-purple-400" />
+        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-gradient-to-r from-blue-100 to-purple-100">
+          <Sparkles className="size-8 text-purple-600" />
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl dark:text-zinc-50">
+        <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
           {t("pageTitle")}
         </h1>
-        <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+        <p className="mt-2 text-muted-foreground">
           {t("pageSubtitle")}
         </p>
 
         {/* Discovery metadata */}
-        <div className="mt-4 flex items-center justify-center gap-4 text-sm text-zinc-500 dark:text-zinc-400">
+        <div className="mt-4 flex items-center justify-center gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1">
             {getTypeIcon(result.type)}
             {getTypeLabel(result.type)}
@@ -189,23 +189,23 @@ export default function DiscoveryResultsPage() {
         {result.talents.map((talent, index) => (
           <div
             key={`${talent.name}-${index}`}
-            className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900"
+            className="rounded-xl border border-border bg-card p-5 shadow-sm transition-shadow hover:shadow-md"
             role="article"
             aria-label={t("talentCardLabel", { name: talent.name })}
           >
             {/* Talent name and confidence */}
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+              <h3 className="text-lg font-semibold text-ink">
                 {talent.name}
               </h3>
-              <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+              <span className="text-sm font-medium text-muted-foreground">
                 {Math.round(talent.confidence * 100)}%
               </span>
             </div>
 
             {/* Confidence bar */}
             <div
-              className="mb-3 h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
+              className="mb-3 h-2 w-full overflow-hidden rounded-full bg-muted"
               role="progressbar"
               aria-valuenow={Math.round(talent.confidence * 100)}
               aria-valuemin={0}
@@ -222,7 +222,7 @@ export default function DiscoveryResultsPage() {
             </div>
 
             {/* Reasoning */}
-            <p className="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+            <p className="text-sm leading-relaxed text-muted-foreground">
               {talent.reasoning}
             </p>
           </div>

@@ -46,23 +46,23 @@ export function MissionDetail({
       {/* Header */}
       <div>
         <div className="mb-1 flex items-center gap-2">
-          <span className="text-sm font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+          <span className="text-sm font-semibold uppercase tracking-wide text-blue-600">
             {t("dayLabel", { day: mission.day })}
           </span>
           {isCompleted && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+            <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
               <CheckCircle2 className="size-3" aria-hidden="true" />
               {t("statusCompleted")}
             </span>
           )}
           {isInProgress && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
               <Loader2 className="size-3" aria-hidden="true" />
               {t("statusInProgress")}
             </span>
           )}
         </div>
-        <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+        <h2 className="text-2xl font-bold text-ink">
           {mission.title}
         </h2>
       </div>
@@ -71,12 +71,12 @@ export function MissionDetail({
       <section aria-labelledby="mission-description">
         <h3
           id="mission-description"
-          className="mb-2 flex items-center gap-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300"
+          className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground"
         >
           <BookOpen className="size-4" aria-hidden="true" />
           {t("description")}
         </h3>
-        <p className="leading-relaxed text-zinc-600 dark:text-zinc-400">
+        <p className="leading-relaxed text-muted-foreground">
           {mission.description}
         </p>
       </section>
@@ -86,7 +86,7 @@ export function MissionDetail({
         <section aria-labelledby="mission-instructions">
           <h3
             id="mission-instructions"
-            className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300"
+            className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground"
           >
             <ListOrdered className="size-4" aria-hidden="true" />
             {t("instructions")}
@@ -95,12 +95,12 @@ export function MissionDetail({
             {mission.instructions.map((step, index) => (
               <li
                 key={index}
-                className="flex gap-3 rounded-lg border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900/50"
+                className="flex gap-3 rounded-lg border border-border/60 bg-muted p-3"
               >
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
                   {index + 1}
                 </span>
-                <span className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
+                <span className="text-sm leading-relaxed text-foreground">
                   {step}
                 </span>
               </li>
@@ -113,7 +113,7 @@ export function MissionDetail({
       <section aria-labelledby="mission-materials">
         <h3
           id="mission-materials"
-          className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300"
+          className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground"
         >
           <Package className="size-4" aria-hidden="true" />
           {t("materials")}
@@ -123,14 +123,14 @@ export function MissionDetail({
             {mission.materials.map((material, index) => (
               <li
                 key={index}
-                className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300"
+                className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-sm text-amber-800"
               >
                 {material}
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-sm italic text-zinc-400 dark:text-zinc-500">
+          <p className="text-sm italic text-zinc-400">
             {t("noMaterials")}
           </p>
         )}
@@ -140,7 +140,7 @@ export function MissionDetail({
       <section aria-labelledby="mission-tips">
         <h3
           id="mission-tips"
-          className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300"
+          className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground"
         >
           <Lightbulb className="size-4" aria-hidden="true" />
           {t("tips")}
@@ -150,7 +150,7 @@ export function MissionDetail({
             {mission.tips.map((tip, index) => (
               <li
                 key={index}
-                className="flex gap-2 rounded-lg border border-purple-100 bg-purple-50 p-3 text-sm text-purple-800 dark:border-purple-800 dark:bg-purple-900/20 dark:text-purple-300"
+                className="flex gap-2 rounded-lg border border-purple-100 bg-purple-50 p-3 text-sm text-purple-800"
               >
                 <Lightbulb
                   className="mt-0.5 size-4 shrink-0"
@@ -161,7 +161,7 @@ export function MissionDetail({
             ))}
           </ul>
         ) : (
-          <p className="text-sm italic text-zinc-400 dark:text-zinc-500">
+          <p className="text-sm italic text-zinc-400">
             {t("noTips")}
           </p>
         )}
@@ -185,12 +185,12 @@ export function MissionDetail({
         <section aria-labelledby="mission-proof">
           <h3
             id="mission-proof"
-            className="mb-3 flex items-center gap-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300"
+            className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground"
           >
             <CheckCircle2 className="size-4" aria-hidden="true" />
             {t("proofPhoto")}
           </h3>
-          <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700">
+          <div className="overflow-hidden rounded-lg border border-border">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={mission.proofPhotoUrl}

@@ -302,7 +302,7 @@ export function UploadZone({
   // Upload complete state: show preview
   if (uploadState === "complete" && uploadResult && preview) {
     return (
-      <div className="flex flex-col items-center gap-4 rounded-lg border-2 border-green-300 bg-green-50 p-6 dark:border-green-700 dark:bg-green-950/20">
+      <div className="flex flex-col items-center gap-4 rounded-lg border-2 border-green-300 bg-green-50 p-6">
         <div className="relative">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -311,7 +311,7 @@ export function UploadZone({
             className="max-h-48 max-w-full rounded-lg object-contain"
           />
         </div>
-        <p className="text-sm font-medium text-green-700 dark:text-green-300">
+        <p className="text-sm font-medium text-green-700">
           {t("uploadComplete")}
         </p>
         <div className="flex gap-2">
@@ -373,8 +373,8 @@ export function UploadZone({
           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
           ${
             isDragOver
-              ? "border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-950/20"
-              : "border-zinc-300 bg-zinc-50 hover:border-zinc-400 hover:bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-900 dark:hover:border-zinc-500 dark:hover:bg-zinc-800"
+              ? "border-blue-500 bg-blue-50"
+              : "border-zinc-300 bg-zinc-50 hover:border-zinc-400 hover:bg-zinc-100"
           }
           ${(disabled || uploadState === "uploading") ? "cursor-not-allowed opacity-50" : ""}
         `}
@@ -384,7 +384,7 @@ export function UploadZone({
             <div className="animate-pulse">
               <Upload className="size-10 text-blue-500" />
             </div>
-            <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <p className="text-sm font-medium text-foreground">
               {t("uploading")}
             </p>
             {/* Progress bar */}
@@ -395,7 +395,7 @@ export function UploadZone({
                 aria-valuenow={progress}
                 aria-valuemin={0}
                 aria-valuemax={100}
-                className="h-2 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700"
+                className="h-2 w-full overflow-hidden rounded-full bg-zinc-200"
               >
                 <div
                   className="h-full rounded-full bg-blue-500 transition-all duration-300"
@@ -423,27 +423,27 @@ export function UploadZone({
             {isDragOver ? (
               <>
                 <ImageIcon className="size-10 text-blue-500" />
-                <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                <p className="text-sm font-medium text-blue-600">
                   {t("dropzoneActive")}
                 </p>
               </>
             ) : (
               <>
-                <Upload className="size-10 text-zinc-400 dark:text-zinc-500" />
+                <Upload className="size-10 text-zinc-400" />
                 {/* Desktop text */}
-                <p className="hidden text-sm font-medium text-zinc-700 sm:block dark:text-zinc-300">
+                <p className="hidden text-sm font-medium text-foreground sm:block">
                   {t("dropzone")}
                 </p>
-                <p className="hidden text-xs text-zinc-500 sm:block dark:text-zinc-400">
+                <p className="hidden text-xs text-muted-foreground sm:block">
                   {t("clickToUpload")}
                 </p>
                 {/* Mobile text */}
-                <p className="text-sm font-medium text-zinc-700 sm:hidden dark:text-zinc-300">
+                <p className="text-sm font-medium text-foreground sm:hidden">
                   {t("tapToUpload")}
                 </p>
               </>
             )}
-            <p className="text-xs text-zinc-400 dark:text-zinc-500">
+            <p className="text-xs text-zinc-400">
               {t("acceptedFormats")}
             </p>
           </div>
@@ -487,7 +487,7 @@ export function UploadZone({
       {error && (
         <div
           role="alert"
-          className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/20 dark:text-red-400"
+          className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700"
         >
           <p>{error}</p>
           {uploadState === "error" && (

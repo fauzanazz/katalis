@@ -35,27 +35,27 @@ const statusConfig: Record<
 > = {
   locked: {
     iconKey: "locked",
-    colorClasses: "text-zinc-400 dark:text-zinc-500",
-    bgClasses: "bg-zinc-100 dark:bg-zinc-800",
-    borderClasses: "border-zinc-200 dark:border-zinc-700",
+    colorClasses: "text-zinc-400",
+    bgClasses: "bg-zinc-100",
+    borderClasses: "border-zinc-200",
   },
   available: {
     iconKey: "available",
-    colorClasses: "text-blue-600 dark:text-blue-400",
-    bgClasses: "bg-blue-50 dark:bg-blue-900/20",
-    borderClasses: "border-blue-300 dark:border-blue-700",
+    colorClasses: "text-blue-600",
+    bgClasses: "bg-blue-50",
+    borderClasses: "border-blue-300",
   },
   in_progress: {
     iconKey: "in_progress",
-    colorClasses: "text-amber-600 dark:text-amber-400",
-    bgClasses: "bg-amber-50 dark:bg-amber-900/20",
-    borderClasses: "border-amber-300 dark:border-amber-700",
+    colorClasses: "text-amber-600",
+    bgClasses: "bg-amber-50",
+    borderClasses: "border-amber-300",
   },
   completed: {
     iconKey: "completed",
-    colorClasses: "text-green-600 dark:text-green-400",
-    bgClasses: "bg-green-50 dark:bg-green-900/20",
-    borderClasses: "border-green-300 dark:border-green-700",
+    colorClasses: "text-green-600",
+    bgClasses: "bg-green-50",
+    borderClasses: "border-green-300",
   },
 };
 
@@ -110,12 +110,12 @@ export function QuestTimeline({
   return (
     <div className="flex flex-col gap-4">
       {/* Progress indicator */}
-      <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="rounded-xl border border-border bg-card p-4">
         <div className="mb-2 flex items-center justify-between text-sm">
-          <span className="font-medium text-zinc-700 dark:text-zinc-300">
+          <span className="font-medium text-foreground">
             {t("progressLabel")}
           </span>
-          <span className="text-zinc-500 dark:text-zinc-400">
+          <span className="text-muted-foreground">
             {t("progressValue", {
               completed: completedCount,
               total: totalMissions,
@@ -123,7 +123,7 @@ export function QuestTimeline({
           </span>
         </div>
         <div
-          className="h-3 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
+          className="h-3 w-full overflow-hidden rounded-full bg-muted"
           role="progressbar"
           aria-valuenow={progressPercent}
           aria-valuemin={0}
@@ -160,7 +160,7 @@ export function QuestTimeline({
                     config.borderClasses
                   } ${config.bgClasses} ${
                     isSelected
-                      ? "ring-2 ring-blue-500 ring-offset-1 dark:ring-offset-zinc-950"
+                      ? "ring-2 ring-blue-500 ring-offset-1"
                       : ""
                   } ${
                     isClickable
@@ -199,8 +199,8 @@ export function QuestTimeline({
                     <p
                       className={`mt-0.5 truncate text-sm font-medium ${
                         isLocked
-                          ? "text-zinc-400 dark:text-zinc-500"
-                          : "text-zinc-900 dark:text-zinc-50"
+                          ? "text-zinc-400"
+                          : "text-ink"
                       }`}
                     >
                       {mission.title}

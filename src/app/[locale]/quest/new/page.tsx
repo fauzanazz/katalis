@@ -175,13 +175,13 @@ export default function QuestNewPage() {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-16 sm:py-24">
         <div className="flex flex-col items-center gap-6 text-center">
-          <div className="flex size-20 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
+          <div className="flex size-20 items-center justify-center rounded-full bg-purple-100">
             <Loader2
-              className="size-10 animate-spin text-purple-600 dark:text-purple-400"
+              className="size-10 animate-spin text-purple-600"
               aria-hidden="true"
             />
           </div>
-          <p className="text-zinc-600 dark:text-zinc-400">
+          <p className="text-muted-foreground">
             {t("title")}...
           </p>
         </div>
@@ -194,17 +194,17 @@ export default function QuestNewPage() {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-16 sm:py-24">
         <div className="flex flex-col items-center gap-6 text-center">
-          <div className="flex size-20 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+          <div className="flex size-20 items-center justify-center rounded-full bg-amber-100">
             <Sparkles
-              className="size-10 text-amber-600 dark:text-amber-400"
+              className="size-10 text-amber-600"
               aria-hidden="true"
             />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+            <h2 className="text-2xl font-bold text-ink">
               {t("noDiscovery")}
             </h2>
-            <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+            <p className="mt-2 text-muted-foreground">
               {t("noDiscoveryDesc")}
             </p>
           </div>
@@ -225,17 +225,17 @@ export default function QuestNewPage() {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-16 sm:py-24">
         <div className="flex flex-col items-center gap-6 text-center">
-          <div className="flex size-20 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
+          <div className="flex size-20 items-center justify-center rounded-full bg-purple-100">
             <Loader2
-              className="size-10 animate-spin text-purple-600 dark:text-purple-400"
+              className="size-10 animate-spin text-purple-600"
               aria-hidden="true"
             />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+            <h2 className="text-2xl font-bold text-ink">
               {t("generating")}
             </h2>
-            <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+            <p className="mt-2 text-muted-foreground">
               {t("generatingSubtext")}
             </p>
           </div>
@@ -255,17 +255,17 @@ export default function QuestNewPage() {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-16 sm:py-24">
         <div className="flex flex-col items-center gap-6 text-center">
-          <div className="flex size-20 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+          <div className="flex size-20 items-center justify-center rounded-full bg-red-100">
             <AlertCircle
-              className="size-10 text-red-600 dark:text-red-400"
+              className="size-10 text-red-600"
               aria-hidden="true"
             />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
+            <h2 className="text-xl font-bold text-ink">
               {errorMessages[errorType]}
             </h2>
-            <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+            <p className="mt-2 text-muted-foreground">
               {t("error.hint")}
             </p>
           </div>
@@ -282,25 +282,25 @@ export default function QuestNewPage() {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl dark:text-zinc-50">
+        <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
           {t("title")}
         </h1>
-        <p className="mt-2 text-zinc-600 dark:text-zinc-400">
+        <p className="mt-2 text-muted-foreground">
           {t("subtitle")}
         </p>
       </div>
 
       {/* Talent summary from latest discovery */}
       {latestDiscovery && latestDiscovery.talents.length > 0 && (
-        <div className="mb-8 rounded-xl border border-purple-200 bg-purple-50 p-4 dark:border-purple-800 dark:bg-purple-900/20">
-          <h2 className="mb-3 text-sm font-semibold text-purple-800 dark:text-purple-300">
+        <div className="mb-8 rounded-xl border border-purple-200 bg-purple-50 p-4">
+          <h2 className="mb-3 text-sm font-semibold text-purple-800">
             {t("talentSummary")}
           </h2>
           <div className="flex flex-wrap gap-2">
             {latestDiscovery.talents.map((talent) => (
               <span
                 key={talent.name}
-                className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-700 dark:bg-purple-900/40 dark:text-purple-300"
+                className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-700"
               >
                 <Sparkles className="mr-1.5 size-3.5" aria-hidden="true" />
                 {talent.name}
@@ -315,7 +315,7 @@ export default function QuestNewPage() {
         <div className="flex flex-col gap-2">
           <label
             htmlFor="dream-input"
-            className="text-sm font-semibold text-zinc-800 dark:text-zinc-200"
+            className="text-sm font-semibold text-ink"
           >
             {t("dreamLabel")}
           </label>
@@ -326,10 +326,10 @@ export default function QuestNewPage() {
             placeholder={t("dreamPlaceholder")}
             maxLength={DREAM_MAX_LENGTH}
             rows={3}
-            className={`w-full resize-none rounded-lg border bg-white px-4 py-3 text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder:text-zinc-600 ${
+            className={`w-full resize-none rounded-lg border bg-white px-4 py-3 text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
               dreamError
                 ? "border-red-400 focus:ring-red-500"
-                : "border-zinc-300 dark:border-zinc-700"
+                : "border-zinc-300"
             }`}
             aria-invalid={!!dreamError}
             aria-describedby={
@@ -340,7 +340,7 @@ export default function QuestNewPage() {
             {dreamError ? (
               <p
                 id="dream-error"
-                className="text-red-600 dark:text-red-400"
+                className="text-red-600"
                 role="alert"
               >
                 {dreamError}
@@ -348,7 +348,7 @@ export default function QuestNewPage() {
             ) : (
               <p
                 id="dream-help"
-                className="text-zinc-500 dark:text-zinc-400"
+                className="text-zinc-500"
               >
                 {t("dreamHelp")}
               </p>
@@ -356,8 +356,8 @@ export default function QuestNewPage() {
             <span
               className={`tabular-nums ${
                 dream.length >= DREAM_MAX_LENGTH
-                  ? "text-red-600 dark:text-red-400"
-                  : "text-zinc-400 dark:text-zinc-500"
+                  ? "text-red-600"
+                  : "text-zinc-400"
               }`}
               aria-label={t("charCount", {
                 count: dream.length,
@@ -376,7 +376,7 @@ export default function QuestNewPage() {
         <div className="flex flex-col gap-2">
           <label
             htmlFor="context-input"
-            className="text-sm font-semibold text-zinc-800 dark:text-zinc-200"
+            className="text-sm font-semibold text-ink"
           >
             {t("contextLabel")}
           </label>
@@ -387,10 +387,10 @@ export default function QuestNewPage() {
             placeholder={t("contextPlaceholder")}
             maxLength={CONTEXT_MAX_LENGTH}
             rows={3}
-            className={`w-full resize-none rounded-lg border bg-white px-4 py-3 text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder:text-zinc-600 ${
+            className={`w-full resize-none rounded-lg border bg-white px-4 py-3 text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
               contextError
                 ? "border-red-400 focus:ring-red-500"
-                : "border-zinc-300 dark:border-zinc-700"
+                : "border-zinc-300"
             }`}
             aria-invalid={!!contextError}
             aria-describedby={
@@ -401,7 +401,7 @@ export default function QuestNewPage() {
             {contextError ? (
               <p
                 id="context-error"
-                className="text-red-600 dark:text-red-400"
+                className="text-red-600"
                 role="alert"
               >
                 {contextError}
@@ -409,7 +409,7 @@ export default function QuestNewPage() {
             ) : (
               <p
                 id="context-help"
-                className="text-zinc-500 dark:text-zinc-400"
+                className="text-zinc-500"
               >
                 {t("contextHelp")}
               </p>
@@ -417,8 +417,8 @@ export default function QuestNewPage() {
             <span
               className={`tabular-nums ${
                 localContext.length >= CONTEXT_MAX_LENGTH
-                  ? "text-red-600 dark:text-red-400"
-                  : "text-zinc-400 dark:text-zinc-500"
+                  ? "text-red-600"
+                  : "text-zinc-400"
               }`}
               aria-label={t("charCount", {
                 count: localContext.length,

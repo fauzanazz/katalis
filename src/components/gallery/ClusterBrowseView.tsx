@@ -88,11 +88,11 @@ export function ClusterBrowseView({
   // Error state
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-        <p className="text-sm text-red-800 dark:text-red-200">{t("error")}</p>
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+        <p className="text-sm text-red-800">{t("error")}</p>
         <button
           onClick={fetchClusters}
-          className="mt-2 text-sm font-medium text-red-700 underline hover:text-red-900 dark:text-red-300"
+          className="mt-2 text-sm font-medium text-red-700 underline hover:text-red-900"
         >
           {t("viewAll")}
         </button>

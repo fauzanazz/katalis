@@ -145,10 +145,10 @@ export function StoryPrompt({
     <div className="flex flex-col gap-6">
       {/* Story prompt images */}
       <div>
-        <h2 className="mb-3 text-center text-lg font-semibold text-zinc-800 dark:text-zinc-200">
+        <h2 className="mb-3 text-center text-lg font-semibold text-ink">
           {t("imagePromptTitle")}
         </h2>
-        <p className="mb-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="mb-4 text-center text-sm text-muted-foreground">
           {t("imagePromptSubtitle")}
         </p>
         <div
@@ -159,10 +159,10 @@ export function StoryPrompt({
           {images.map((image) => (
             <div
               key={image.id}
-              className="aspect-square overflow-hidden rounded-xl border-2 border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900"
+              className="aspect-square overflow-hidden rounded-xl border-2 border-border bg-card shadow-sm"
             >
               {imageErrors.has(image.id) ? (
-                <div className="flex size-full items-center justify-center bg-zinc-100 dark:bg-zinc-800">
+                <div className="flex size-full items-center justify-center bg-muted">
                   <ImageIcon className="size-8 text-zinc-400" />
                 </div>
               ) : (
@@ -210,7 +210,7 @@ export function StoryPrompt({
         <div className="flex flex-col gap-3">
           <label
             htmlFor="story-text"
-            className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
+            className="text-sm font-medium text-foreground"
           >
             {t("textLabel")}
           </label>
@@ -224,7 +224,7 @@ export function StoryPrompt({
             aria-label={t("textLabel")}
             aria-describedby="story-char-count story-validation-error"
             aria-invalid={validationError ? "true" : undefined}
-            className="min-h-[160px] w-full resize-y rounded-lg border-2 border-zinc-200 bg-white p-4 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-200 disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-purple-500 dark:focus:ring-purple-800"
+            className="min-h-[160px] w-full resize-y rounded-lg border-2 border-border bg-white p-4 text-sm text-ink placeholder:text-zinc-400 focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-200 disabled:opacity-50"
             maxLength={STORY_MAX_LENGTH}
           />
           <div className="flex items-center justify-between">
@@ -232,7 +232,7 @@ export function StoryPrompt({
               id="story-char-count"
               className={`text-xs ${
                 charCount < STORY_MIN_LENGTH
-                  ? "text-zinc-400 dark:text-zinc-500"
+                  ? "text-zinc-400"
                   : charCount > STORY_MAX_LENGTH * 0.9
                     ? "text-amber-500"
                     : "text-green-500"
@@ -251,7 +251,7 @@ export function StoryPrompt({
             <p
               id="story-validation-error"
               role="alert"
-              className="text-sm text-red-600 dark:text-red-400"
+              className="text-sm text-red-600"
             >
               {validationError}
             </p>
@@ -272,7 +272,7 @@ export function StoryPrompt({
       {/* Audio story input */}
       {inputMode === "audio" && (
         <div className="flex flex-col gap-4">
-          <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="text-center text-sm text-muted-foreground">
             {t("audioInstructions")}
           </p>
           <AudioRecorder

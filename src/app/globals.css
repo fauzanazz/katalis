@@ -1,26 +1,172 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f9f9f9;
+  --foreground: #2f2e2e;
+  --ink: #030914;
+
+  --card: #ffffff;
+  --card-foreground: #030914;
+  --popover: #ffffff;
+  --popover-foreground: #030914;
+
+  --primary: #5794f6;
+  --primary-foreground: #ffffff;
+  --secondary: #f3b835;
+  --secondary-foreground: #030914;
+  --accent: #e9ebab;
+  --accent-foreground: #030914;
+  --muted: #f6f3ea;
+  --muted-foreground: #535252;
+  --destructive: #d94f4f;
+  --destructive-foreground: #ffffff;
+  --border: #ddd6c7;
+  --input: #ffffff;
+  --ring: #70a5f5;
+
+  --auth-surface: #f6f9f7;
+  --general-surface: #fcf9ef;
+  --plain-surface: #ffffff;
+
+  --blue-ocean-light: #70a5f5;
+  --blue-ocean: #619bf7;
+  --blue-ocean-deep: #5794f6;
+  --yellow-sun-light: #f7ce4f;
+  --yellow-sun: #f3b835;
+  --yellow-sun-deep: #f6a926;
+  --green-leaf-light: #e9ebab;
+  --green-leaf: #c9e094;
+  --green-leaf-deep: #accd75;
+  --pink-bloom: #e3a8d2;
+  --pink-bloom-soft: #f3d5e9;
+  --lavender-mist: #a5a0ca;
+  --mint-cloud: #91c2b3;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ink: var(--ink);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-auth-surface: var(--auth-surface);
+  --color-general-surface: var(--general-surface);
+  --color-plain-surface: var(--plain-surface);
+
+  --color-blue-ocean-light: var(--blue-ocean-light);
+  --color-blue-ocean: var(--blue-ocean);
+  --color-blue-ocean-deep: var(--blue-ocean-deep);
+  --color-yellow-sun-light: var(--yellow-sun-light);
+  --color-yellow-sun: var(--yellow-sun);
+  --color-yellow-sun-deep: var(--yellow-sun-deep);
+  --color-green-leaf-light: var(--green-leaf-light);
+  --color-green-leaf: var(--green-leaf);
+  --color-green-leaf-deep: var(--green-leaf-deep);
+  --color-pink-bloom: var(--pink-bloom);
+  --color-pink-bloom-soft: var(--pink-bloom-soft);
+  --color-lavender-mist: var(--lavender-mist);
+  --color-mint-cloud: var(--mint-cloud);
+
+  --font-sans: var(--font-instrument-sans);
+  --font-display: var(--font-montserrat);
+  --font-rubik: var(--font-montserrat);
+  --font-mono:
+    "SFMono-Regular", "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+
+  --radius-xs: 0.5rem;
+  --radius-sm: 0.75rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+
+  --shadow-xs: 0 1px 2px rgb(3 9 20 / 0.04);
+  --shadow-sm: 0 10px 24px rgb(3 9 20 / 0.06);
+  --shadow-md: 0 18px 44px rgb(3 9 20 / 0.08);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+*,
+::before,
+::after {
+  box-sizing: border-box;
+  border-color: var(--border);
+}
+
+html {
+  min-height: 100%;
+  scroll-behavior: smooth;
+  background-color: var(--background);
+  color-scheme: light;
 }
 
 body {
+  min-height: 100vh;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-instrument-sans), Arial, Helvetica, sans-serif;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--ink);
+}
+
+::selection {
+  background: #f7ce4f99;
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

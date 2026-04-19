@@ -102,3 +102,14 @@ model GalleryEntry {
   child          Child    @relation(fields: [childId], references: [id])
   quest          Quest    @relation(fields: [questId], references: [id])
 }
+
+model RateLimit {
+  id         String   @id @default(cuid())
+  identifier String   // IP or composite key (e.g., "ip:endpoint")
+  endpoint   String   @default("default") // e.g., "login", "register"
+  count      Int      @default(1)
+  resetAt    DateTime // When the sliding window resets
+
+  @@unique([identifier, endpoint])
+  @@index([resetAt])
+}

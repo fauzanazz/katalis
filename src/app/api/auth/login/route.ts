@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { createChildSession, createUserSession } from "@/lib/auth";
-import { isRateLimited } from "@/lib/rate-limit";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { sanitizeInput, isValidAccessCodeFormat } from "@/lib/sanitize";
 import { verifyPassword } from "@/lib/password";
 import { routing } from "@/i18n/routing";
@@ -23,10 +23,17 @@ export async function POST(request: NextRequest) {
       request.headers.get("x-real-ip") ||
       "unknown";
 
-    if (isRateLimited(ip)) {
+    const rateResult = await checkRateLimit(ip, "login");
+    if (rateResult.limited) {
       return NextResponse.json(
         { error: "rate_limited", message: "Too many login attempts. Please try again later." },
-        { status: 429 },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": rateResult.resetAt.toISOString(),
+          },
+        },
       );
     }
 

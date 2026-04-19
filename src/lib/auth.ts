@@ -94,4 +94,25 @@ export async function getChildSession(): Promise<{ childId: string } | null> {
   return { childId: session.childId };
 }
 
+/** Returns session if authenticated as a user (email/password), otherwise null. */
+export async function getUserSession(): Promise<{
+  userId: string;
+  role: string;
+} | null> {
+  const session = await getSession();
+  if (!session || session.type !== "user" || !session.userId || !session.role)
+    return null;
+  return { userId: session.userId, role: session.role };
+}
+
+/** Returns user session if authenticated as admin, otherwise null. */
+export async function getAdminSession(): Promise<{
+  userId: string;
+  role: string;
+} | null> {
+  const userSession = await getUserSession();
+  if (!userSession || userSession.role !== "admin") return null;
+  return userSession;
+}
+
 export { SESSION_COOKIE_NAME };

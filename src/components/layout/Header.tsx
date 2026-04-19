@@ -18,6 +18,7 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 
 interface HeaderProps {
   isAuthenticated: boolean;
+  isAdmin: boolean;
 }
 
 const NAV_LINKS = [
@@ -26,7 +27,7 @@ const NAV_LINKS = [
   { href: "/gallery", labelKey: "gallery" },
 ] as const;
 
-export function Header({ isAuthenticated }: HeaderProps) {
+export function Header({ isAuthenticated, isAdmin }: HeaderProps) {
   const tNav = useTranslations("nav");
   const tLanding = useTranslations("landing");
   const pathname = usePathname();
@@ -85,6 +86,14 @@ export function Header({ isAuthenticated }: HeaderProps) {
               </Link>
             );
           })}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className={cn(navLinkClass, pathname.startsWith("/admin") && "bg-zinc-100")}
+            >
+              {tNav("admin")}
+            </Link>
+          )}
           {isAuthenticated ? (
             <button
               onClick={handleLogout}

@@ -85,6 +85,20 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     );
   }
 
+  // Admin routes require admin role
+  if (pathnameWithoutLocale.startsWith("/admin")) {
+    if (!isAuthenticated) {
+      return NextResponse.redirect(
+        new URL(`/${locale}/login`, request.url),
+      );
+    }
+    if (session?.type !== "user" || session?.role !== "admin") {
+      return NextResponse.redirect(
+        new URL(`/${locale}/dashboard`, request.url),
+      );
+    }
+  }
+
   return intlResponse;
 }
 

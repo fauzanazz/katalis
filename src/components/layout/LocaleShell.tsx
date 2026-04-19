@@ -11,9 +11,10 @@ import { SkipToContent } from "@/components/layout/SkipToContent";
 type LocaleShellProps = {
   children: ReactNode;
   isAuthenticated: boolean;
+  isAdmin: boolean;
 };
 
-export function LocaleShell({ children, isAuthenticated }: LocaleShellProps) {
+export function LocaleShell({ children, isAuthenticated, isAdmin }: LocaleShellProps) {
   const pathname = usePathname();
   const isLanding =
     pathname === "/" ||
@@ -24,7 +25,7 @@ export function LocaleShell({ children, isAuthenticated }: LocaleShellProps) {
     <>
       <SkipToContent />
       {!isLanding ? (
-        <Header isAuthenticated={isAuthenticated} />
+        <Header isAuthenticated={isAuthenticated} isAdmin={isAdmin} />
       ) : null}
       {!isLanding ? <Breadcrumbs /> : null}
       <main id="main-content" role="main" className="flex-1">

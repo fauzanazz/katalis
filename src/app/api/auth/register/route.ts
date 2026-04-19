@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
 import { createUserSession } from "@/lib/auth";
-import { isRateLimited } from "@/lib/rate-limit";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const RegisterSchema = z.object({
   name: z.string().min(2).max(100),
@@ -18,10 +18,17 @@ export async function POST(request: NextRequest) {
       request.headers.get("x-real-ip") ||
       "unknown";
 
-    if (isRateLimited(ip)) {
+    const rateResult = await checkRateLimit(ip, "register");
+    if (rateResult.limited) {
       return NextResponse.json(
         { error: "rate_limited", message: "Too many attempts. Please try again later." },
-        { status: 429 },
+        {
+          status: 429,
+          headers: {
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": rateResult.resetAt.toISOString(),
+          },
+        },
       );
     }
 

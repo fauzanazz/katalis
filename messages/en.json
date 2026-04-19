@@ -19,7 +19,8 @@
     "gallery": "Gallery",
     "login": "Login",
     "logout": "Logout",
-    "register": "Sign Up"
+    "register": "Sign Up",
+    "admin": "Admin"
   },
   "landing": {
     "brandName": "Katalis AI",
@@ -191,7 +192,10 @@
     "history": "History",
     "results": "Results",
     "new": "New Quest",
-    "complete": "Complete"
+    "complete": "Complete",
+    "admin": "Admin",
+    "users": "Users",
+    "codes": "Access Codes"
   },
   "discover": {
     "title": "Discover Your Talents",
@@ -552,6 +556,59 @@
       "flagDetailsLabel": "Additional details (optional)",
       "flagSubmit": "Submit Report",
       "flagCancel": "Cancel"
+    }
+  },
+  "admin": {
+    "title": "Admin Dashboard",
+    "subtitle": "Manage your platform",
+    "stats": {
+      "totalUsers": "Total Users",
+      "totalChildren": "Children",
+      "activeCodes": "Active Codes",
+      "totalDiscoveries": "Discoveries",
+      "totalQuests": "Quests",
+      "totalGalleryEntries": "Gallery Entries"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "users": "Users",
+      "codes": "Access Codes"
+    },
+    "users": {
+      "title": "Users",
+      "email": "Email",
+      "name": "Name",
+      "role": "Role",
+      "createdAt": "Joined",
+      "noUsers": "No users found.",
+      "roleAdmin": "Admin",
+      "roleUser": "User",
+      "roleAi": "AI Agent"
+    },
+    "codes": {
+      "title": "Access Codes",
+      "code": "Code",
+      "status": "Status",
+      "expiresAt": "Expires",
+      "children": "Children",
+      "active": "Active",
+      "inactive": "Inactive",
+      "noExpiry": "Never",
+      "noCodes": "No access codes found.",
+      "createButton": "Create Code",
+      "createTitle": "Create Access Code",
+      "codeLabel": "Code",
+      "codePlaceholder": "Leave blank to auto-generate",
+      "expiresLabel": "Expires At (optional)",
+      "cancel": "Cancel",
+      "create": "Create",
+      "created": "Access code created successfully",
+      "createError": "Failed to create access code"
+    },
+    "forbidden": {
+      "title": "Access Denied",
+      "description": "You don't have permission to access this page.",
+      "backHome": "Go to Dashboard"
     }
   }
 }

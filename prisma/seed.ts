@@ -18,6 +18,7 @@ async function main() {
   await prisma.child.deleteMany();
   await prisma.accessCode.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.rateLimit.deleteMany();
 
   // ── Seed Users ──────────────────────────────────────────────────────
   const users = [

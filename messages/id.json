@@ -19,7 +19,8 @@
     "gallery": "Galeri",
     "login": "Masuk",
     "logout": "Keluar",
-    "register": "Daftar"
+    "register": "Daftar",
+    "admin": "Admin"
   },
   "landing": {
     "brandName": "Katalis AI",
@@ -191,7 +192,10 @@
     "history": "Riwayat",
     "results": "Hasil",
     "new": "Misi Baru",
-    "complete": "Selesai"
+    "complete": "Selesai",
+    "admin": "Admin",
+    "users": "Pengguna",
+    "codes": "Kode Akses"
   },
   "discover": {
     "title": "Temukan Bakatmu",
@@ -552,6 +556,59 @@
       "flagDetailsLabel": "Detail tambahan (opsional)",
       "flagSubmit": "Kirim Laporan",
       "flagCancel": "Batal"
+    }
+  },
+  "admin": {
+    "title": "Dashboard Admin",
+    "subtitle": "Kelola platform Anda",
+    "stats": {
+      "totalUsers": "Total Pengguna",
+      "totalChildren": "Anak",
+      "activeCodes": "Kode Aktif",
+      "totalDiscoveries": "Penemuan",
+      "totalQuests": "Misi",
+      "totalGalleryEntries": "Entri Galeri"
+    },
+    "tabs": {
+      "overview": "Ringkasan",
+      "users": "Pengguna",
+      "codes": "Kode Akses"
+    },
+    "users": {
+      "title": "Pengguna",
+      "email": "Email",
+      "name": "Nama",
+      "role": "Peran",
+      "createdAt": "Bergabung",
+      "noUsers": "Tidak ada pengguna.",
+      "roleAdmin": "Admin",
+      "roleUser": "Pengguna",
+      "roleAi": "Agen AI"
+    },
+    "codes": {
+      "title": "Kode Akses",
+      "code": "Kode",
+      "status": "Status",
+      "expiresAt": "Kedaluwarsa",
+      "children": "Anak",
+      "active": "Aktif",
+      "inactive": "Tidak Aktif",
+      "noExpiry": "Tidak Pernah",
+      "noCodes": "Tidak ada kode akses.",
+      "createButton": "Buat Kode",
+      "createTitle": "Buat Kode Akses",
+      "codeLabel": "Kode",
+      "codePlaceholder": "Kosongkan untuk otomatis",
+      "expiresLabel": "Kedaluwarsa pada (opsional)",
+      "cancel": "Batal",
+      "create": "Buat",
+      "created": "Kode akses berhasil dibuat",
+      "createError": "Gagal membuat kode akses"
+    },
+    "forbidden": {
+      "title": "Akses Ditolak",
+      "description": "Anda tidak memiliki izin untuk mengakses halaman ini.",
+      "backHome": "Ke Dashboard"
     }
   }
 }

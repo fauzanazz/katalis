@@ -1,70 +1,67 @@
-/**
- * Simple in-memory rate limiter for auth endpoints.
- * Tracks attempts by IP address with a sliding window.
- *
- * ⚠️ In-memory rate limiting — only effective for single-instance deployments.
- * For production (e.g., Vercel serverless), replace with Vercel KV, Upstash,
- * or a distributed store.
- */
-
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
-
-const rateLimitStore = new Map<string, RateLimitEntry>();
+import { prisma } from "@/lib/db";
 
 const MAX_ATTEMPTS = 10;
-const WINDOW_MS = 60 * 1000; // 1 minute window
+const WINDOW_MS = 60 * 1000; // 1 minute
+
+interface RateLimitResult {
+  limited: boolean;
+  remaining: number;
+  resetAt: Date;
+}
 
 /**
- * Check if a request from the given identifier is rate limited.
- * @returns true if the request should be blocked
+ * Distributed rate limiter using Prisma (SQLite).
+ * Works across all instances sharing the same database.
  */
-export function isRateLimited(identifier: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitStore.get(identifier);
+export async function checkRateLimit(
+  identifier: string,
+  endpoint: string = "default",
+): Promise<RateLimitResult> {
+  const now = new Date();
 
-  // Clean up expired entries periodically
-  if (rateLimitStore.size > 10000) {
-    for (const [key, val] of rateLimitStore) {
-      if (val.resetAt <= now) {
-        rateLimitStore.delete(key);
-      }
-    }
-  }
-
-  if (!entry || entry.resetAt <= now) {
-    // Start new window
-    rateLimitStore.set(identifier, {
-      count: 1,
-      resetAt: now + WINDOW_MS,
+  // Periodically clean up expired entries (1% chance per check)
+  if (Math.random() < 0.01) {
+    await prisma.rateLimit.deleteMany({
+      where: { resetAt: { lt: now } },
     });
-    return false;
   }
 
-  entry.count++;
+  const existing = await prisma.rateLimit.findUnique({
+    where: {
+      identifier_endpoint: { identifier, endpoint },
+    },
+  });
 
-  if (entry.count > MAX_ATTEMPTS) {
-    return true;
+  // No entry or expired window — start fresh
+  if (!existing || existing.resetAt < now) {
+    const resetAt = new Date(now.getTime() + WINDOW_MS);
+    await prisma.rateLimit.upsert({
+      where: {
+        identifier_endpoint: { identifier, endpoint },
+      },
+      create: { identifier, endpoint, count: 1, resetAt },
+      update: { count: 1, resetAt },
+    });
+
+    return { limited: false, remaining: MAX_ATTEMPTS - 1, resetAt };
   }
 
-  return false;
-}
+  // Active window — increment count
+  const newCount = existing.count + 1;
+  const limited = newCount > MAX_ATTEMPTS;
 
-/** Get remaining attempts for an identifier */
-export function getRemainingAttempts(identifier: string): number {
-  const now = Date.now();
-  const entry = rateLimitStore.get(identifier);
-
-  if (!entry || entry.resetAt <= now) {
-    return MAX_ATTEMPTS;
+  if (!limited) {
+    await prisma.rateLimit.update({
+      where: {
+        identifier_endpoint: { identifier, endpoint },
+      },
+      data: { count: newCount },
+    });
   }
 
-  return Math.max(0, MAX_ATTEMPTS - entry.count);
-}
-
-/** Reset rate limit store (for testing) */
-export function resetRateLimitStore(): void {
-  rateLimitStore.clear();
+  return {
+    limited,
+    remaining: Math.max(0, MAX_ATTEMPTS - newCount),
+    resetAt: existing.resetAt,
+  };
 }

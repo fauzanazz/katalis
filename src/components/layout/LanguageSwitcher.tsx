@@ -3,8 +3,14 @@
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
-import { Globe } from "lucide-react";
+import { Check, ChevronDown, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function LanguageSwitcher() {
   const locale = useLocale();
@@ -15,28 +21,44 @@ export function LanguageSwitcher() {
   const currentLocale = routing.locales.includes(locale as (typeof routing.locales)[number])
     ? (locale as (typeof routing.locales)[number])
     : routing.defaultLocale;
-  const localeIndex = routing.locales.indexOf(currentLocale);
-  const targetLocale =
-    routing.locales[(localeIndex + 1) % routing.locales.length] ??
-    routing.defaultLocale;
-
-  function handleSwitch() {
+  function handleSwitch(nextLocale: (typeof routing.locales)[number]) {
     router.replace(
       { pathname },
-      { locale: targetLocale },
+      { locale: nextLocale },
     );
   }
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={handleSwitch}
-      aria-label={t("switch")}
-      className="min-h-[44px] min-w-[44px] gap-1.5"
-    >
-      <Globe className="size-4" />
-      <span className="text-sm font-medium">{t(targetLocale)}</span>
-    </Button>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          aria-label={t("switch")}
+          className="min-h-[44px] min-w-[44px] gap-1.5"
+        >
+          <Globe className="size-4" />
+          <span className="text-sm font-medium">{t(currentLocale)}</span>
+          <ChevronDown className="size-4 opacity-70" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="min-w-[12rem]">
+        {routing.locales.map((availableLocale) => {
+          const isActive = availableLocale === currentLocale;
+
+          return (
+            <DropdownMenuItem
+              key={availableLocale}
+              disabled={isActive}
+              onSelect={() => handleSwitch(availableLocale)}
+              className="justify-between gap-3"
+            >
+              <span>{t(availableLocale)}</span>
+              {isActive ? <Check className="size-4 text-primary" /> : null}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

@@ -1,5 +1,31 @@
 import { vi } from "vitest";
 
+const mockNavigationState = vi.hoisted(() => ({
+  locale: "en",
+  pathname: "/",
+  push: vi.fn(),
+  replace: vi.fn(),
+  refresh: vi.fn(),
+}));
+
+export function setMockLocale(locale: string) {
+  mockNavigationState.locale = locale;
+}
+
+export function setMockPathname(pathname: string) {
+  mockNavigationState.pathname = pathname;
+}
+
+export function resetNavigationMocks() {
+  mockNavigationState.locale = "en";
+  mockNavigationState.pathname = "/";
+  mockNavigationState.push.mockReset();
+  mockNavigationState.replace.mockReset();
+  mockNavigationState.refresh.mockReset();
+}
+
+export const mockRouterReplace = mockNavigationState.replace;
+
 // Mock next-intl
 vi.mock("next-intl", () => {
   const translations: Record<string, string> = {
@@ -30,6 +56,7 @@ vi.mock("next-intl", () => {
     "footer.copyright": "© 2026 Katalis. All rights reserved.",
     "language.en": "English",
     "language.id": "Bahasa Indonesia",
+    "language.zh": "Chinese",
     "language.switch": "Switch Language",
     "notFound.title": "Page Not Found",
     "notFound.description":
@@ -50,7 +77,7 @@ vi.mock("next-intl", () => {
         return value;
       };
     },
-    useLocale: () => "en",
+    useLocale: () => mockNavigationState.locale,
   };
 });
 
@@ -65,11 +92,11 @@ vi.mock("@/i18n/navigation", async () => {
         children as React.ReactNode,
       );
     },
-    usePathname: () => "/",
+    usePathname: () => mockNavigationState.pathname,
     useRouter: () => ({
-      push: vi.fn(),
-      replace: vi.fn(),
-      refresh: vi.fn(),
+      push: mockNavigationState.push,
+      replace: mockNavigationState.replace,
+      refresh: mockNavigationState.refresh,
     }),
   };
 });

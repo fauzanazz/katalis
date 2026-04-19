@@ -21,24 +21,101 @@
     "logout": "Keluar"
   },
   "landing": {
+    "brandName": "Katalis AI",
+    "openMenu": "Buka menu navigasi",
+    "navSheetTitle": "Jelajahi Katalis AI",
     "hero": {
-      "title": "Temukan – Bertindak – Terhubung",
-      "subtitle": "Platform penemuan dan pengembangan bakat untuk anak-anak",
-      "cta": "Mulai Sekarang"
+      "safePill": "Aman · Privat · Bebas iklan",
+      "title": "Temukan bakat terpendam anak Anda",
+      "subtitle": "Mentor AI yang mengubah rasa ingin tahu menjadi karya nyata hanya dalam 7 hari.",
+      "cta": "Mulai petualangan",
+      "meta": "Untuk usia 6-12 tahun · Tanpa kartu kredit",
+      "imageAlt": "Anak-anak sedang mengeksplorasi proyek kreatif bersama"
     },
-    "pillars": {
-      "discover": {
-        "title": "Temukan",
-        "description": "Unggah gambar, foto, atau rekam cerita. AI kami menemukan bakat dan minat unikmu yang tersembunyi."
+    "problem": {
+      "eyebrow": "Masalah",
+      "titleBefore": "Terlalu banyak bakat hebat yang ",
+      "titleEmphasis": "tetap terpendam",
+      "titleAfter": "",
+      "body": "Anak-anak penuh ide, tetapi kurikulum yang seragam dan akses mentor yang terbatas membuat minat unik mereka jarang benar-benar berkembang."
+    },
+    "stats": {
+      "sectionTitle": "Statistik penemuan bakat",
+      "centerValue": "3 dari 4",
+      "donutAria": "anak kesulitan menemukan minat sejatinya",
+      "leftCaption": "anak kesulitan menemukan minat sejatinya",
+      "rightTitle": "identitas",
+      "rightCaption": "lorem ipsum dolor sit amet"
+    },
+    "journey": {
+      "eyebrow": "Perjalanan",
+      "titleBefore": "5 langkah untuk menemukan ",
+      "titleEmphasis": "bakat",
+      "titleAfter": "",
+      "step1": {
+        "title": "Penemuan bakat",
+        "body": "Unggah foto hasil karya anak"
       },
-      "act": {
-        "title": "Bertindak",
-        "description": "Dapatkan rencana misi 7 hari yang dipersonalisasi berdasarkan bakat dan impianmu. Berubah dari pengamat menjadi pelaku."
+      "step2": {
+        "title": "Pilih misi 7 hari",
+        "body": "AI mengecek bahan yang tersedia di rumah"
       },
-      "connect": {
-        "title": "Terhubung",
-        "description": "Pamerkan karya-karyamu yang sudah selesai di peta dunia. Terhubung dengan anak-anak di seluruh dunia yang memiliki minat yang sama."
+      "step3": {
+        "title": "Pendampingan harian",
+        "body": "Chat interaktif & refleksi suara"
+      },
+      "step4": {
+        "title": "Pameran global",
+        "body": "Bergabung dengan Squad dari seluruh dunia"
+      },
+      "step5": {
+        "title": "Pertumbuhan berkelanjutan",
+        "body": "Dari percikan minat menjadi hobi jangka panjang"
       }
+    },
+    "features": {
+      "eyebrow": "Fitur Utama",
+      "title": "Satu ekosistem, <accent>empat peran</accent>",
+      "talentScout": {
+        "title": "Talent Scout",
+        "body": "Unggah foto hasil karya"
+      },
+      "questBuddy": {
+        "title": "Quest Buddy",
+        "body": "Mentor chat untuk misi 7 hari"
+      },
+      "squadGallery": {
+        "title": "Squad Gallery",
+        "body": "Pameran aman lintas negara"
+      },
+      "parentBridge": {
+        "title": "Parent Bridge",
+        "body": "Laporan & tips yang realistis"
+      }
+    },
+    "community": {
+      "eyebrow": "Komunitas Global",
+      "title": "Squad dari 20+ negara",
+      "tagEco": "#EcoEngineers",
+      "tagTiny": "#TinyArtists",
+      "tagStory": "#StoryMakers",
+      "tagMini": "#MiniScientists",
+      "tagDesign": "#SmallDesigners",
+      "boxArtAlt": "Palet kreatif dan alat seni",
+      "boxScienceAlt": "Ikon eksperimen dan penemuan sains",
+      "boxMobilityAlt": "Ikon proyek mobilitas dan engineering"
+    },
+    "closing": {
+      "freeBadge": "Gratis Selamanya",
+      "title": "Siap menyalakan bakat anak Anda?",
+      "sub": "Tanpa kartu kredit · Bisa batal kapan saja",
+      "primaryCta": "Unduh Katalis AI",
+      "secondaryCta": "Tonton demo 30 detik",
+      "footerLine1": "© 2026 Katalis AI",
+      "footerNavLabel": "Navigasi footer",
+      "footerPrivacy": "Privasi",
+      "footerTerms": "Syarat",
+      "footerContact": "Kontak"
     }
   },
   "auth": {

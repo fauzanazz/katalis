@@ -21,24 +21,101 @@
     "logout": "Logout"
   },
   "landing": {
+    "brandName": "Katalis AI",
+    "openMenu": "Open navigation menu",
+    "navSheetTitle": "Explore Katalis AI",
     "hero": {
-      "title": "Discover – Act – Connect",
-      "subtitle": "A talent discovery and development platform for children",
-      "cta": "Get Started"
+      "safePill": "Safe · Private · Ad-Free",
+      "title": "Discover your child's hidden talents",
+      "subtitle": "An AI mentor that turns curiosity into real creations in just 7 days.",
+      "cta": "Start the adventure",
+      "meta": "For ages 6-12 · No credit needed",
+      "imageAlt": "Children exploring creative projects together"
     },
-    "pillars": {
-      "discover": {
-        "title": "Discover",
-        "description": "Upload drawings, photos, or record stories. Our AI discovers your unique talents and interests beyond the surface."
+    "problem": {
+      "eyebrow": "The Problem",
+      "titleBefore": "Too many amazing talents ",
+      "titleEmphasis": "stay dormant",
+      "titleAfter": "",
+      "body": "Kids are full of ideas, but one-size-fits-all curriculums and limited access to mentors mean their unique interests rarely get to grow."
+    },
+    "stats": {
+      "sectionTitle": "Talent discovery statistics",
+      "centerValue": "3 in 4",
+      "donutAria": "children struggle to find their true interest",
+      "leftCaption": "children struggle to find their true interest",
+      "rightTitle": "identity",
+      "rightCaption": "lorem ipsum dolor sit amet"
+    },
+    "journey": {
+      "eyebrow": "The Journey",
+      "titleBefore": "5 steps to uncover a ",
+      "titleEmphasis": "talent",
+      "titleAfter": "",
+      "step1": {
+        "title": "Talent discovery",
+        "body": "Upload a photo of your creation"
       },
-      "act": {
-        "title": "Act",
-        "description": "Get a personalized 7-day quest plan based on your talents and dreams. Turn from an observer into a doer."
+      "step2": {
+        "title": "Pick a 7-day mission",
+        "body": "AI checks materials at home"
       },
-      "connect": {
-        "title": "Connect",
-        "description": "Showcase your completed works on a global map. Connect with children worldwide who share your passions."
+      "step3": {
+        "title": "Daily mentorship",
+        "body": "Interactive chat & voice reflection"
+      },
+      "step4": {
+        "title": "Global showcase",
+        "body": "Join a worldwide Squad"
+      },
+      "step5": {
+        "title": "Continued growth",
+        "body": "From spark to long-term hobby"
       }
+    },
+    "features": {
+      "eyebrow": "Key Features",
+      "title": "One ecosystem, <accent>four roles</accent>",
+      "talentScout": {
+        "title": "Talent Scout",
+        "body": "Upload a photo of your creation"
+      },
+      "questBuddy": {
+        "title": "Quest Buddy",
+        "body": "7-day mission chat mentor"
+      },
+      "squadGallery": {
+        "title": "Squad Gallery",
+        "body": "Safe cross-country showcase"
+      },
+      "parentBridge": {
+        "title": "Parent Bridge",
+        "body": "Reports & realistic tips"
+      }
+    },
+    "community": {
+      "eyebrow": "Global Community",
+      "title": "Squads from 20+ countries",
+      "tagEco": "#EcoEngineers",
+      "tagTiny": "#TinyArtists",
+      "tagStory": "#StoryMakers",
+      "tagMini": "#MiniScientists",
+      "tagDesign": "#SmallDesigners",
+      "boxArtAlt": "Creative palette and art tools",
+      "boxScienceAlt": "Science experiment and discovery icon",
+      "boxMobilityAlt": "Mobility and engineering project icon"
+    },
+    "closing": {
+      "freeBadge": "Free Forever",
+      "title": "Ready to spark your child's talent?",
+      "sub": "No credit needed · Cancel anytime",
+      "primaryCta": "Download Katalis AI",
+      "secondaryCta": "Watch 30-sec Demo",
+      "footerLine1": "© 2026 Katalis AI",
+      "footerNavLabel": "Footer navigation",
+      "footerPrivacy": "Privacy",
+      "footerTerms": "Terms",
+      "footerContact": "Contact"
     }
   },
   "auth": {

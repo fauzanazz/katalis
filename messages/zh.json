@@ -21,24 +21,101 @@
     "logout": "退出"
   },
   "landing": {
+    "brandName": "Katalis AI",
+    "openMenu": "打开导航菜单",
+    "navSheetTitle": "探索 Katalis AI",
     "hero": {
-      "title": "发现 - 行动 - 连接",
-      "subtitle": "儿童天赋发现与发展平台",
-      "cta": "开始体验"
+      "safePill": "安全 · 私密 · 无广告",
+      "title": "发现孩子隐藏的天赋",
+      "subtitle": "AI 导师在 7 天内把好奇心变成真实作品。",
+      "cta": "开启冒险",
+      "meta": "适合 6-12 岁 · 无需信用卡",
+      "imageAlt": "一起探索创意项目的孩子们"
     },
-    "pillars": {
-      "discover": {
-        "title": "发现",
-        "description": "上传画作、照片或录制故事。我们的 AI 能发现你独特的天赋与兴趣，不止于表面。"
+    "problem": {
+      "eyebrow": "问题",
+      "titleBefore": "太多令人惊喜的天赋 ",
+      "titleEmphasis": "仍然沉睡着",
+      "titleAfter": "",
+      "body": "孩子们充满想法，但千篇一律的课程和有限的导师资源，往往让他们独特的兴趣很难真正成长。"
+    },
+    "stats": {
+      "sectionTitle": "天赋发现数据",
+      "centerValue": "4 个里有 3 个",
+      "donutAria": "孩子很难找到自己真正的兴趣",
+      "leftCaption": "孩子很难找到自己真正的兴趣",
+      "rightTitle": "自我认同",
+      "rightCaption": "lorem ipsum dolor sit amet"
+    },
+    "journey": {
+      "eyebrow": "旅程",
+      "titleBefore": "发现一个 ",
+      "titleEmphasis": "天赋",
+      "titleAfter": " 的 5 个步骤",
+      "step1": {
+        "title": "发现天赋",
+        "body": "上传一张你的作品照片"
       },
-      "act": {
-        "title": "行动",
-        "description": "根据你的天赋与梦想，获得专属 7 天任务计划。从旁观者变成行动者。"
+      "step2": {
+        "title": "选择 7 天任务",
+        "body": "AI 检查家里现有的材料"
       },
-      "connect": {
-        "title": "连接",
-        "description": "在全球地图展示你完成的作品。与世界各地有共同热情的孩子建立联系。"
+      "step3": {
+        "title": "每日陪伴",
+        "body": "互动聊天与语音反思"
+      },
+      "step4": {
+        "title": "全球展示",
+        "body": "加入来自世界各地的 Squad"
+      },
+      "step5": {
+        "title": "持续成长",
+        "body": "从一束火花发展为长期爱好"
       }
+    },
+    "features": {
+      "eyebrow": "核心功能",
+      "title": "一个生态，<accent>四种角色</accent>",
+      "talentScout": {
+        "title": "Talent Scout",
+        "body": "上传你的作品照片"
+      },
+      "questBuddy": {
+        "title": "Quest Buddy",
+        "body": "7 天任务聊天导师"
+      },
+      "squadGallery": {
+        "title": "Squad Gallery",
+        "body": "安全的跨国作品展示"
+      },
+      "parentBridge": {
+        "title": "Parent Bridge",
+        "body": "报告与务实建议"
+      }
+    },
+    "community": {
+      "eyebrow": "全球社区",
+      "title": "来自 20 多个国家的 Squad",
+      "tagEco": "#EcoEngineers",
+      "tagTiny": "#TinyArtists",
+      "tagStory": "#StoryMakers",
+      "tagMini": "#MiniScientists",
+      "tagDesign": "#SmallDesigners",
+      "boxArtAlt": "创意调色板与艺术工具",
+      "boxScienceAlt": "科学实验与探索图标",
+      "boxMobilityAlt": "移动与工程项目图标"
+    },
+    "closing": {
+      "freeBadge": "永久免费",
+      "title": "准备点亮孩子的天赋了吗？",
+      "sub": "无需信用卡 · 随时取消",
+      "primaryCta": "下载 Katalis AI",
+      "secondaryCta": "观看 30 秒演示",
+      "footerLine1": "© 2026 Katalis AI",
+      "footerNavLabel": "页脚导航",
+      "footerPrivacy": "隐私",
+      "footerTerms": "条款",
+      "footerContact": "联系"
     }
   },
   "auth": {

@@ -531,12 +531,18 @@ describe("VAL-CROSS-040: Mobile responsive layout", () => {
   it("all page components use responsive Tailwind classes", async () => {
     const fs = await import("fs");
 
-    // Landing page should have responsive classes
-    const landingCode = fs.readFileSync(
+    // Landing route can delegate to a component; responsive classes should exist
+    // in the route entry or the main landing component it renders.
+    const landingPageCode = fs.readFileSync(
       "src/app/[locale]/page.tsx",
       "utf-8",
     );
-    expect(landingCode).toMatch(/sm:|md:|lg:/);
+    const landingComponentCode = fs.readFileSync(
+      "src/components/landing/HomeLanding.tsx",
+      "utf-8",
+    );
+    expect(landingPageCode).toContain("HomeLanding");
+    expect(landingComponentCode).toMatch(/sm:|md:|lg:/);
 
     // Discovery page should have responsive classes
     const discoverCode = fs.readFileSync(

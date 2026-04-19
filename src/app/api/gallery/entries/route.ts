@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { sanitizeInput } from "@/lib/sanitize";
 import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 import { geocodeLocationText } from "@/lib/geocoding";
+import { moderateImageContent } from "@/lib/moderation";
 
 /**
  * Zod schema for creating a gallery entry.
@@ -222,6 +223,26 @@ export async function POST(request: NextRequest | Request) {
           message: "A gallery entry already exists for this quest.",
         },
         { status: 409 },
+      );
+    }
+
+    // Moderate the gallery photo for child safety
+    const imageModeration = await moderateImageContent({
+      imageUrl: photoUrl,
+      sourceType: "gallery",
+      sourceId: questId,
+      childId: session.childId,
+    });
+
+    if (!imageModeration.allowed) {
+      return NextResponse.json(
+        {
+          error: "content_blocked",
+          message:
+            imageModeration.redirectMessage ??
+            "This image cannot be displayed publicly. Try a different photo!",
+        },
+        { status: 200 },
       );
     }
 

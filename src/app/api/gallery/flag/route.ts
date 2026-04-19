@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { sanitizeInput } from "@/lib/sanitize";
+import { prisma } from "@/lib/db";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 /**
  * POST /api/gallery/flag
  *
- * Basic content safety flag mechanism for gallery entries.
- * Logs flagged content for review (in production, this would
- * integrate with a moderation queue).
- *
- * Publicly accessible — anyone can flag inappropriate content.
+ * Content safety flag mechanism for gallery entries.
+ * Persists flags to the ModerationEvent table for admin review.
  */
 
 const FlagSchema = z.object({
@@ -19,6 +18,13 @@ const FlagSchema = z.object({
   }),
   details: z.string().max(500).optional(),
 });
+
+const REASON_TO_CATEGORY: Record<string, string> = {
+  inappropriate: "sexual",
+  offensive: "hate",
+  spam: "spam",
+  other: "other",
+};
 
 export async function POST(request: NextRequest | Request) {
   try {
@@ -43,13 +49,32 @@ export async function POST(request: NextRequest | Request) {
 
     const { entryId, reason, details } = parsed.data;
 
-    // Sanitize any user-provided text
+    // Rate limit flag submissions
+    const ip = request.headers.get("x-forwarded-for") ?? "unknown";
+    const { limited } = await checkRateLimit(`flag:${ip}`, "flag");
+    if (limited) {
+      return NextResponse.json(
+        { error: "rate_limited", message: "Too many reports. Please try again later." },
+        { status: 429 },
+      );
+    }
+
     const sanitizedDetails = details ? sanitizeInput(details) : undefined;
 
-    // Log the flag (in production, this would persist to a moderation queue)
-    console.log(
-      `[CONTENT FLAG] Entry: ${entryId}, Reason: ${reason}, Details: ${sanitizedDetails ?? "none"}`,
-    );
+    await prisma.moderationEvent.create({
+      data: {
+        sourceType: "flag",
+        sourceId: entryId,
+        contentType: "image",
+        status: "flagged",
+        category: REASON_TO_CATEGORY[reason] ?? "other",
+        severity: reason === "inappropriate" ? "high" : "medium",
+        metadata: JSON.stringify({
+          reason,
+          details: sanitizedDetails,
+        }),
+      },
+    });
 
     return NextResponse.json({
       success: true,

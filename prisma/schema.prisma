@@ -113,3 +113,26 @@ model RateLimit {
   @@unique([identifier, endpoint])
   @@index([resetAt])
 }
+
+model ModerationEvent {
+  id            String   @id @default(cuid())
+  sourceType    String   // "discovery", "quest", "gallery", "flag"
+  sourceId      String?  // ID of the related entity (discovery, quest, gallery entry)
+  contentType   String   // "text", "image", "audio"
+  contentHash   String?  // Hash of the content for dedup
+  status        String   @default("pending") // "pending", "approved", "blocked", "flagged", "redirected"
+  category      String?  // "violence", "self_harm", "sexual", "hate", "harassment", "spam", "other"
+  severity      String?  // "low", "medium", "high", "critical"
+  confidence    Float?   // AI confidence score for the moderation decision
+  aiReasoning   String?  // AI explanation for the moderation decision
+  childId       String?  // If applicable
+  reviewerId    String?  // Admin user who reviewed
+  reviewedAt    DateTime?
+  metadata      String?  // JSON stored as text — additional context
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([sourceType, status])
+  @@index([status, createdAt])
+  @@index([childId])
+}

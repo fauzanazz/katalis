@@ -195,7 +195,8 @@
     "complete": "Complete",
     "admin": "Admin",
     "users": "Users",
-    "codes": "Access Codes"
+    "codes": "Access Codes",
+    "moderation": "Moderation"
   },
   "discover": {
     "title": "Discover Your Talents",
@@ -286,7 +287,9 @@
       "errorTimeout": "The analysis is taking a bit too long. Let's try again!",
       "errorNetwork": "It seems you're not connected. Please check your internet and try again.",
       "errorHint": "Don't worry, your upload is safe. Just tap the button to try again!",
-      "retry": "Try Again"
+      "retry": "Try Again",
+      "lowConfidence": "We're still learning about your unique talents! Keep creating and exploring — every piece helps us understand you better.",
+      "contentBlocked": "Let's try creating something different! How about drawing your favorite animal or a magical world?"
     },
     "results": {
       "pageTitle": "Your Talents Discovered!",
@@ -567,12 +570,14 @@
       "activeCodes": "Active Codes",
       "totalDiscoveries": "Discoveries",
       "totalQuests": "Quests",
-      "totalGalleryEntries": "Gallery Entries"
+      "totalGalleryEntries": "Gallery Entries",
+      "pendingModeration": "Pending Review"
     },
     "tabs": {
       "overview": "Overview",
       "users": "Users",
-      "codes": "Access Codes"
+      "codes": "Access Codes",
+      "moderation": "Moderation"
     },
     "users": {
       "title": "Users",
@@ -604,6 +609,36 @@
       "create": "Create",
       "created": "Access code created successfully",
       "createError": "Failed to create access code"
+    },
+    "moderation": {
+      "title": "Content Moderation",
+      "subtitle": "Review flagged and blocked content",
+      "empty": "No moderation events to review. All clear!",
+      "approve": "Approve",
+      "block": "Block",
+      "reviewed": "Reviewed",
+      "stat_flagged": "Flagged",
+      "stat_pending": "Pending",
+      "stat_blocked": "Blocked",
+      "stat_approved": "Approved",
+      "filter_all": "All",
+      "filter_flagged": "Flagged",
+      "filter_pending": "Pending",
+      "filter_blocked": "Blocked",
+      "filter_approved": "Approved",
+      "status_pending": "Pending",
+      "status_flagged": "Flagged",
+      "status_blocked": "Blocked",
+      "status_approved": "Approved",
+      "status_redirected": "Redirected",
+      "col_date": "Date",
+      "col_source": "Source",
+      "col_type": "Type",
+      "col_status": "Status",
+      "col_category": "Category",
+      "col_severity": "Severity",
+      "col_reasoning": "AI Reasoning",
+      "col_actions": "Actions"
     },
     "forbidden": {
       "title": "Access Denied",

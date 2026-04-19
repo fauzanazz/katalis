@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { prisma } from "@/lib/db";
-import { Users, Shield, Ticket, Sparkles, Swords, Image } from "lucide-react";
+import { Users, Shield, Ticket, Sparkles, Swords, Image, ShieldAlert } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 
 interface StatsData {
@@ -10,10 +10,11 @@ interface StatsData {
   totalDiscoveries: number;
   totalQuests: number;
   totalGalleryEntries: number;
+  pendingModeration: number;
 }
 
 async function getStats(): Promise<StatsData> {
-  const [totalUsers, totalChildren, activeCodes, totalDiscoveries, totalQuests, totalGalleryEntries] =
+  const [totalUsers, totalChildren, activeCodes, totalDiscoveries, totalQuests, totalGalleryEntries, pendingModeration] =
     await Promise.all([
       prisma.user.count(),
       prisma.child.count(),
@@ -21,8 +22,9 @@ async function getStats(): Promise<StatsData> {
       prisma.discovery.count(),
       prisma.quest.count(),
       prisma.galleryEntry.count(),
+      prisma.moderationEvent.count({ where: { status: { in: ["pending", "flagged"] } } }),
     ]);
-  return { totalUsers, totalChildren, activeCodes, totalDiscoveries, totalQuests, totalGalleryEntries };
+  return { totalUsers, totalChildren, activeCodes, totalDiscoveries, totalQuests, totalGalleryEntries, pendingModeration };
 }
 
 export default async function AdminDashboardPage() {
@@ -36,6 +38,7 @@ export default async function AdminDashboardPage() {
     { key: "totalDiscoveries", value: stats.totalDiscoveries, icon: Sparkles, color: "text-amber-600" },
     { key: "totalQuests", value: stats.totalQuests, icon: Swords, color: "text-rose-600" },
     { key: "totalGalleryEntries", value: stats.totalGalleryEntries, icon: Image, color: "text-cyan-600" },
+    { key: "pendingModeration" as const, value: stats.pendingModeration, icon: ShieldAlert, color: "text-red-600" },
   ] as const;
 
   return (
@@ -45,7 +48,7 @@ export default async function AdminDashboardPage() {
         <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-7">
         {statCards.map(({ key, value, icon: Icon, color }) => (
           <div
             key={key}
@@ -60,7 +63,7 @@ export default async function AdminDashboardPage() {
         ))}
       </div>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2">
+      <div className="mt-8 grid gap-4 sm:grid-cols-3">
         <Link
           href="/admin/users"
           className="rounded-xl border border-border/60 bg-background p-6 transition-colors hover:bg-zinc-50"
@@ -77,6 +80,15 @@ export default async function AdminDashboardPage() {
           <h2 className="font-semibold text-foreground">{t("tabs.codes")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {stats.activeCodes} {t("stats.activeCodes").toLowerCase()}
+          </p>
+        </Link>
+        <Link
+          href="/admin/moderation"
+          className="rounded-xl border border-border/60 bg-background p-6 transition-colors hover:bg-zinc-50"
+        >
+          <h2 className="font-semibold text-foreground">{t("tabs.moderation")}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {stats.pendingModeration} {t("stats.pendingModeration").toLowerCase()}
           </p>
         </Link>
       </div>

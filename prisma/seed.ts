@@ -11,6 +11,7 @@ async function hashPassword(password: string): Promise<string> {
 
 async function main() {
   // Clean existing data
+  await prisma.moderationEvent.deleteMany();
   await prisma.galleryEntry.deleteMany();
   await prisma.mission.deleteMany();
   await prisma.quest.deleteMany();

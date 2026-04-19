@@ -195,7 +195,8 @@
     "complete": "完成",
     "admin": "管理",
     "users": "用户",
-    "codes": "访问代码"
+    "codes": "访问代码",
+    "moderation": "审核"
   },
   "discover": {
     "title": "发现你的天赋",
@@ -286,7 +287,9 @@
       "errorTimeout": "分析时间有点长，我们重试一下！",
       "errorNetwork": "你似乎没有连接网络。请检查网络后重试。",
       "errorHint": "别担心，你的上传是安全的。点击按钮重试！",
-      "retry": "重试"
+      "retry": "重试",
+      "lowConfidence": "我们正在发现你独特的才能！继续创作和探索——每一件作品都能帮助我们更好地了解你。",
+      "contentBlocked": "让我们尝试创作不同的东西！画一幅你最喜欢的动物或魔法世界怎么样？"
     },
     "results": {
       "pageTitle": "你的天赋被发现！",
@@ -567,12 +570,14 @@
       "activeCodes": "活跃代码",
       "totalDiscoveries": "发现",
       "totalQuests": "任务",
-      "totalGalleryEntries": "画廊作品"
+      "totalGalleryEntries": "画廊作品",
+      "pendingModeration": "待审核"
     },
     "tabs": {
       "overview": "概览",
       "users": "用户",
-      "codes": "访问代码"
+      "codes": "访问代码",
+      "moderation": "审核"
     },
     "users": {
       "title": "用户",
@@ -604,6 +609,36 @@
       "create": "创建",
       "created": "访问代码创建成功",
       "createError": "创建访问代码失败"
+    },
+    "moderation": {
+      "title": "内容审核",
+      "subtitle": "审核被标记和阻止的内容",
+      "empty": "没有需要审核的事件。一切正常！",
+      "approve": "批准",
+      "block": "阻止",
+      "reviewed": "已审核",
+      "stat_flagged": "已标记",
+      "stat_pending": "待处理",
+      "stat_blocked": "已阻止",
+      "stat_approved": "已批准",
+      "filter_all": "全部",
+      "filter_flagged": "已标记",
+      "filter_pending": "待处理",
+      "filter_blocked": "已阻止",
+      "filter_approved": "已批准",
+      "status_pending": "待处理",
+      "status_flagged": "已标记",
+      "status_blocked": "已阻止",
+      "status_approved": "已批准",
+      "status_redirected": "已重定向",
+      "col_date": "日期",
+      "col_source": "来源",
+      "col_type": "类型",
+      "col_status": "状态",
+      "col_category": "类别",
+      "col_severity": "严重性",
+      "col_reasoning": "AI推理",
+      "col_actions": "操作"
     },
     "forbidden": {
       "title": "访问被拒绝",

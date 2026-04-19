@@ -195,7 +195,8 @@
     "complete": "Selesai",
     "admin": "Admin",
     "users": "Pengguna",
-    "codes": "Kode Akses"
+    "codes": "Kode Akses",
+    "moderation": "Moderasi"
   },
   "discover": {
     "title": "Temukan Bakatmu",
@@ -286,7 +287,9 @@
       "errorTimeout": "Analisis memakan waktu terlalu lama. Ayo coba lagi!",
       "errorNetwork": "Sepertinya kamu tidak terhubung ke internet. Periksa koneksimu dan coba lagi.",
       "errorHint": "Jangan khawatir, unggahanmu aman. Cukup ketuk tombol untuk mencoba lagi!",
-      "retry": "Coba Lagi"
+      "retry": "Coba Lagi",
+      "lowConfidence": "Kami masih mempelajari bakat unikmu! Teruslah berkarya dan menjelajah — setiap karyamu membantu kami mengenalmu lebih baik.",
+      "contentBlocked": "Ayo coba membuat sesuatu yang berbeda! Bagaimana kalau menggambar hewan favoritmu atau dunia ajaib?"
     },
     "results": {
       "pageTitle": "Bakatmu Ditemukan!",
@@ -567,12 +570,14 @@
       "activeCodes": "Kode Aktif",
       "totalDiscoveries": "Penemuan",
       "totalQuests": "Misi",
-      "totalGalleryEntries": "Entri Galeri"
+      "totalGalleryEntries": "Entri Galeri",
+      "pendingModeration": "Menunggu Tinjauan"
     },
     "tabs": {
       "overview": "Ringkasan",
       "users": "Pengguna",
-      "codes": "Kode Akses"
+      "codes": "Kode Akses",
+      "moderation": "Moderasi"
     },
     "users": {
       "title": "Pengguna",
@@ -604,6 +609,36 @@
       "create": "Buat",
       "created": "Kode akses berhasil dibuat",
       "createError": "Gagal membuat kode akses"
+    },
+    "moderation": {
+      "title": "Moderasi Konten",
+      "subtitle": "Tinjau konten yang ditandai dan diblokir",
+      "empty": "Tidak ada peristiwa moderasi untuk ditinjau. Semua aman!",
+      "approve": "Setujui",
+      "block": "Blokir",
+      "reviewed": "Ditinjau",
+      "stat_flagged": "Ditandai",
+      "stat_pending": "Menunggu",
+      "stat_blocked": "Diblokir",
+      "stat_approved": "Disetujui",
+      "filter_all": "Semua",
+      "filter_flagged": "Ditandai",
+      "filter_pending": "Menunggu",
+      "filter_blocked": "Diblokir",
+      "filter_approved": "Disetujui",
+      "status_pending": "Menunggu",
+      "status_flagged": "Ditandai",
+      "status_blocked": "Diblokir",
+      "status_approved": "Disetujui",
+      "status_redirected": "Dialihkan",
+      "col_date": "Tanggal",
+      "col_source": "Sumber",
+      "col_type": "Tipe",
+      "col_status": "Status",
+      "col_category": "Kategori",
+      "col_severity": "Tingkat",
+      "col_reasoning": "Alasan AI",
+      "col_actions": "Tindakan"
     },
     "forbidden": {
       "title": "Akses Ditolak",

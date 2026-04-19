@@ -3,6 +3,7 @@ import { getChildSession } from "@/lib/auth";
 import { sanitizeInput } from "@/lib/sanitize";
 import { StoryAnalysisInputSchema } from "@/lib/ai/story-schemas";
 import { analyzeStory } from "@/lib/ai/claude";
+import { moderateContent, getUncertaintyFallback } from "@/lib/moderation";
 
 /**
  * POST /api/discovery/analyze-story
@@ -50,8 +51,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Moderate story text for child safety
+    const moderationResult = await moderateContent({
+      content: parsed.data.storyText,
+      contentType: "text",
+      sourceType: "discovery",
+      childId: session.childId,
+    });
+
+    if (!moderationResult.allowed) {
+      return NextResponse.json(
+        {
+          error: "content_blocked",
+          message:
+            moderationResult.redirectMessage ??
+            "This content cannot be processed. Let's try something else!",
+          redirect: true,
+        },
+        { status: 200 },
+      );
+    }
+
     // Run Claude story analysis
     const result = await analyzeStory(parsed.data);
+
+    // If all talents have low confidence, add encouraging fallback
+    const maxConfidence = Math.max(...result.talents.map((t) => t.confidence));
+    if (maxConfidence < 0.5) {
+      return NextResponse.json(
+        {
+          talents: result.talents,
+          fallbackMessage: getUncertaintyFallback(),
+          lowConfidence: true,
+        },
+        { status: 200 },
+      );
+    }
 
     return NextResponse.json(result, { status: 200 });
   } catch (error) {

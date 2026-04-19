@@ -4,6 +4,7 @@ import { sanitizeInput } from "@/lib/sanitize";
 import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 import { AnalysisInputSchema } from "@/lib/ai/schemas";
 import { analyzeArtifact } from "@/lib/ai/openai";
+import { moderateImageContent, getUncertaintyFallback } from "@/lib/moderation";
 
 /**
  * POST /api/discovery/analyze
@@ -58,8 +59,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Moderate image content for child safety
+    const moderationResult = await moderateImageContent({
+      imageUrl: parsed.data.artifactUrl,
+      sourceType: "discovery",
+      childId: session.childId,
+    });
+
+    if (!moderationResult.allowed) {
+      return NextResponse.json(
+        {
+          error: "content_blocked",
+          message:
+            moderationResult.redirectMessage ??
+            "This content cannot be processed. Let's try something else!",
+          redirect: true,
+        },
+        { status: 200 },
+      );
+    }
+
     // Run AI analysis
     const result = await analyzeArtifact(parsed.data);
+
+    // If all talents have low confidence, add encouraging fallback
+    const maxConfidence = Math.max(...result.talents.map((t) => t.confidence));
+    if (maxConfidence < 0.5) {
+      return NextResponse.json(
+        {
+          talents: result.talents,
+          fallbackMessage: getUncertaintyFallback(),
+          lowConfidence: true,
+        },
+        { status: 200 },
+      );
+    }
 
     return NextResponse.json(result, { status: 200 });
   } catch (error) {

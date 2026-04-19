@@ -4,6 +4,7 @@ import { sanitizeInput } from "@/lib/sanitize";
 import { QuestGenerationInputSchema } from "@/lib/ai/quest-schemas";
 import { generateQuest } from "@/lib/ai/claude";
 import { prisma } from "@/lib/db";
+import { moderateContent } from "@/lib/moderation";
 
 /**
  * POST /api/quest/generate
@@ -55,6 +56,28 @@ export async function POST(request: NextRequest) {
     }
 
     const { dream, localContext, talents, discoveryId } = parsed.data;
+
+    // Moderate dream and context text for child safety
+    const combinedText = `${dream} ${localContext}`;
+    const moderationResult = await moderateContent({
+      content: combinedText,
+      contentType: "text",
+      sourceType: "quest",
+      childId: session.childId,
+    });
+
+    if (!moderationResult.allowed) {
+      return NextResponse.json(
+        {
+          error: "content_blocked",
+          message:
+            moderationResult.redirectMessage ??
+            "This content cannot be processed. Let's try something else!",
+          redirect: true,
+        },
+        { status: 200 },
+      );
+    }
 
     // Verify child has at least one discovery (no quest without discovery)
     const discoveryCount = await prisma.discovery.count({

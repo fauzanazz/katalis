@@ -196,3 +196,28 @@ model ReflectionEntry {
   @@index([childId])
   @@index([questId])
 }
+
+model Badge {
+  id          String       @id @default(cuid())
+  slug        String       @unique // e.g. "first_step", "week_warrior"
+  category    String       // "progress", "creativity", "reflection", "mentorship"
+  tier        String       @default("bronze") // "bronze", "silver", "gold"
+  icon        String       // emoji identifier, e.g. "🎯"
+  createdAt   DateTime     @default(now())
+
+  @@index([category])
+}
+
+model ChildBadge {
+  id        String   @id @default(cuid())
+  childId   String
+  badgeSlug String   // references Badge.slug — not a FK to allow code-first definitions
+  questId   String?  // Quest context when earned (nullable for lifetime badges)
+  trigger   String   // "mission_complete", "reflection", "mentor_message", "adjustment"
+  metadata  String?  // JSON stored as text — additional context (e.g. mission day)
+  createdAt DateTime @default(now())
+
+  @@unique([childId, badgeSlug]) // Each badge earned once per child
+  @@index([childId])
+  @@index([badgeSlug])
+}

@@ -10,6 +10,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { MissionActions } from "@/components/quest/MissionActions";
+import { MissionChat } from "@/components/quest/MissionChat";
+import { ReflectionCard } from "@/components/quest/ReflectionCard";
 
 export interface MissionData {
   id: string;
@@ -166,6 +168,24 @@ export function MissionDetail({
           </p>
         )}
       </section>
+
+      {/* Mentor chat — only for in-progress missions */}
+      {isInProgress && questId && (
+        <MissionChat
+          questId={questId}
+          missionId={mission.id}
+          missionDay={mission.day}
+          missionTitle={mission.title}
+        />
+      )}
+
+      {/* Daily reflection — only for completed missions */}
+      {isCompleted && questId && (
+        <ReflectionCard
+          questId={questId}
+          missionDay={mission.day}
+        />
+      )}
 
       {/* Mission actions (start, complete, proof upload) */}
       {!readOnly && questId && onStatusChange && (

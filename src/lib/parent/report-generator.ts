@@ -49,8 +49,8 @@ export async function generateParentReport(options: GenerateReportOptions) {
       try {
         const parsed = JSON.parse(disc.detectedTalents) as Array<{ name: string }>;
         talents.push(...parsed.map((t) => t.name));
-      } catch {
-        // skip
+      } catch (parseError) {
+        console.warn("Failed to parse talent data for child:", childId, parseError);
       }
     }
   }
@@ -111,18 +111,7 @@ export async function generateParentReport(options: GenerateReportOptions) {
     },
   });
 
-  return {
-    id: report.id,
-    childId: report.childId,
-    type: report.type,
-    period: JSON.parse(report.period),
-    strengths: JSON.parse(report.strengths) as string[],
-    growthAreas: JSON.parse(report.growthAreas) as string[],
-    tips: JSON.parse(report.tips),
-    summary: report.summary,
-    badgeHighlights: JSON.parse(report.badgeHighlights) as string[],
-    createdAt: report.createdAt.toISOString(),
-  };
+  return toReportResponse(report);
 }
 
 /**
@@ -134,18 +123,7 @@ export async function getReportsForChild(childId: string, parentId: string) {
     orderBy: { createdAt: "desc" },
   });
 
-  return reports.map((r) => ({
-    id: r.id,
-    childId: r.childId,
-    type: r.type,
-    period: JSON.parse(r.period),
-    strengths: JSON.parse(r.strengths) as string[],
-    growthAreas: JSON.parse(r.growthAreas) as string[],
-    tips: JSON.parse(r.tips),
-    summary: r.summary,
-    badgeHighlights: JSON.parse(r.badgeHighlights) as string[],
-    createdAt: r.createdAt.toISOString(),
-  }));
+  return reports.map(toReportResponse);
 }
 
 /**
@@ -158,16 +136,31 @@ export async function getReportById(reportId: string, parentId: string) {
 
   if (!report || report.parentId !== parentId) return null;
 
+  return toReportResponse(report);
+}
+
+function toReportResponse(r: {
+  id: string;
+  childId: string;
+  type: string;
+  period: string;
+  strengths: string;
+  growthAreas: string;
+  tips: string;
+  summary: string;
+  badgeHighlights: string;
+  createdAt: Date;
+}) {
   return {
-    id: report.id,
-    childId: report.childId,
-    type: report.type,
-    period: JSON.parse(report.period),
-    strengths: JSON.parse(report.strengths) as string[],
-    growthAreas: JSON.parse(report.growthAreas) as string[],
-    tips: JSON.parse(report.tips),
-    summary: report.summary,
-    badgeHighlights: JSON.parse(report.badgeHighlights) as string[],
-    createdAt: report.createdAt.toISOString(),
+    id: r.id,
+    childId: r.childId,
+    type: r.type,
+    period: JSON.parse(r.period),
+    strengths: JSON.parse(r.strengths) as string[],
+    growthAreas: JSON.parse(r.growthAreas) as string[],
+    tips: JSON.parse(r.tips),
+    summary: r.summary,
+    badgeHighlights: JSON.parse(r.badgeHighlights) as string[],
+    createdAt: r.createdAt.toISOString(),
   };
 }

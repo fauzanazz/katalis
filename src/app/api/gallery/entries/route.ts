@@ -52,6 +52,46 @@ export async function GET(request: NextRequest | Request) {
       where.talentCategory = talentCategory;
     }
 
+    if (tag) {
+      // Fetch all entries for in-memory tag filtering (SQLite doesn't support JSON queries)
+      const allTagEntries = await prisma.galleryEntry.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+      });
+
+      const matched = allTagEntries
+        .map((entry) => ({
+          id: entry.id,
+          questId: entry.questId,
+          imageUrl: entry.imageUrl,
+          talentCategory: entry.talentCategory,
+          country: entry.country,
+          coordinates: safeParseJSON(entry.coordinates, null),
+          questContext: safeParseJSON(entry.questContext, null),
+          talentTags: safeParseJSON<
+            Array<{ name: string }> | null
+          >(entry.talentTags, null),
+          clusterGroup: entry.clusterGroup,
+          createdAt: entry.createdAt,
+        }))
+        .filter((entry) => {
+          if (!entry.talentTags) return false;
+          return entry.talentTags.some((t) =>
+            t.name.toLowerCase().includes(tag!.toLowerCase()),
+          );
+        });
+
+      const paged = matched.slice(skip, skip + pageSize);
+
+      return NextResponse.json({
+        entries: paged,
+        total: matched.length,
+        page,
+        pageSize,
+        totalPages: Math.ceil(matched.length / pageSize),
+      });
+    }
+
     const [entries, total] = await Promise.all([
       prisma.galleryEntry.findMany({
         where,
@@ -75,22 +115,6 @@ export async function GET(request: NextRequest | Request) {
       clusterGroup: entry.clusterGroup,
       createdAt: entry.createdAt,
     }));
-
-    if (tag) {
-      const filtered = sanitizedEntries.filter((entry) => {
-        if (!entry.talentTags) return false;
-        return (entry.talentTags as Array<{ name: string }>).some(
-          (t) => t.name.toLowerCase().includes(tag.toLowerCase()),
-        );
-      });
-      return NextResponse.json({
-        entries: filtered,
-        total: filtered.length,
-        page,
-        pageSize,
-        totalPages: 1,
-      });
-    }
 
     return NextResponse.json({
       entries: sanitizedEntries,

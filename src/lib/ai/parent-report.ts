@@ -4,6 +4,7 @@
  * Routes to mock when USE_MOCK_AI=true.
  */
 
+import { z } from "zod";
 import { getMockParentReport } from "./mock/parent-report";
 import type { HomeTip } from "@/lib/parent/schemas";
 
@@ -49,6 +50,19 @@ interface ReportOutput {
   badgeHighlights: string[];
 }
 
+const ReportOutputSchema = z.object({
+  strengths: z.array(z.string()),
+  growthAreas: z.array(z.string()),
+  tips: z.array(z.object({
+    title: z.string().min(1),
+    description: z.string().min(1),
+    materials: z.array(z.string()),
+    category: z.string().min(1),
+  })),
+  summary: z.string().min(1),
+  badgeHighlights: z.array(z.string()),
+});
+
 export async function generateAIReport(input: ReportInput): Promise<ReportOutput> {
   if (process.env.USE_MOCK_AI === "true") {
     return getMockParentReport({
@@ -88,5 +102,6 @@ Generate a parent progress report for this period.`;
     throw new Error("Empty response from report generator");
   }
 
-  return JSON.parse(textBlock.text) as ReportOutput;
+  const parsed = JSON.parse(textBlock.text);
+  return ReportOutputSchema.parse(parsed);
 }

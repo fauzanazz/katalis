@@ -9,7 +9,6 @@ import type { ClusterEntry } from "@/lib/ai/clustering-schemas";
 
 interface SyncResult {
   created: number;
-  updated: number;
   totalSquads: number;
 }
 
@@ -20,7 +19,7 @@ export async function syncSquadsFromClusters(): Promise<SyncResult> {
   });
 
   if (entries.length === 0) {
-    return { created: 0, updated: 0, totalSquads: 0 };
+    return { created: 0, totalSquads: 0 };
   }
 
   const clusterEntries: ClusterEntry[] = entries.map((entry) => {
@@ -40,53 +39,53 @@ export async function syncSquadsFromClusters(): Promise<SyncResult> {
     };
   });
 
+  // Get AI clusters
   const result = await clusterGalleryEntries(clusterEntries);
 
-  await prisma.squad.updateMany({
-    where: { status: "active" },
-    data: { status: "archived" },
-  });
-
   let created = 0;
-  let updated = 0;
 
-  for (const cluster of result.clusters) {
-    const clusterEntries = entries.filter((e) =>
-      cluster.entryIds.includes(e.id),
-    );
-
-    const childIds = [...new Set(clusterEntries.map((e) => e.childId))];
-
-    const squad = await prisma.squad.create({
-      data: {
-        name: cluster.label,
-        theme: cluster.talentTheme,
-        description: cluster.description,
-        icon: getSquadIcon(cluster.talentTheme),
-        countries: JSON.stringify(cluster.countries),
-        featuredEntryIds: JSON.stringify(cluster.entryIds.slice(0, 6)),
-        status: "active",
-      },
+  await prisma.$transaction(async (tx) => {
+    // Archive existing squads within transaction
+    await tx.squad.updateMany({
+      where: { status: "active" },
+      data: { status: "archived" },
     });
 
-    for (const childId of childIds) {
-      await prisma.squadMember.upsert({
-        where: {
-          squadId_childId: { squadId: squad.id, childId },
-        },
-        create: { squadId: squad.id, childId },
-        update: {},
-      });
-    }
+    for (const cluster of result.clusters) {
+      const clusterEntriesInCluster = entries.filter((e) =>
+        cluster.entryIds.includes(e.id),
+      );
 
-    created++;
-  }
+      const childIds = [...new Set(clusterEntriesInCluster.map((e) => e.childId))];
+
+      const squad = await tx.squad.create({
+        data: {
+          name: cluster.label,
+          theme: cluster.talentTheme,
+          description: cluster.description,
+          icon: getSquadIcon(cluster.talentTheme),
+          countries: JSON.stringify(cluster.countries),
+          featuredEntryIds: JSON.stringify(cluster.entryIds.slice(0, 6)),
+          status: "active",
+        },
+      });
+
+      // Batch create squad members
+      if (childIds.length > 0) {
+        await tx.squadMember.createMany({
+          data: childIds.map((childId) => ({ squadId: squad.id, childId })),
+        });
+      }
+
+      created++;
+    }
+  });
 
   const totalSquads = await prisma.squad.count({
     where: { status: "active" },
   });
 
-  return { created, updated, totalSquads };
+  return { created, totalSquads };
 }
 
 function getSquadIcon(theme: string): string {

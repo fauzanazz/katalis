@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { UploadZone } from "@/components/upload/UploadZone";
 import type { UploadResultData } from "@/types/upload";
+import type { EarnedBadge } from "@/lib/badges";
 
 interface MissionActionsProps {
   questId: string;
@@ -29,6 +30,7 @@ interface MissionActionsProps {
   status: string;
   proofPhotoUrl: string | null;
   onStatusChange: () => void;
+  onBadgesEarned?: (badges: EarnedBadge[]) => void;
 }
 
 export function MissionActions({
@@ -39,6 +41,7 @@ export function MissionActions({
   status,
   proofPhotoUrl,
   onStatusChange,
+  onBadgesEarned,
 }: MissionActionsProps) {
   const t = useTranslations("quest.overview");
 
@@ -102,6 +105,11 @@ export function MissionActions({
       const data = await res.json();
       setShowConfirmDialog(false);
 
+      // Forward any newly earned badges
+      if (data.newBadges && onBadgesEarned) {
+        onBadgesEarned(data.newBadges);
+      }
+
       if (data.questCompleted) {
         setSuccessMessage(t("allDaysComplete"));
       } else if (data.nextDayUnlocked) {
@@ -119,7 +127,7 @@ export function MissionActions({
     } finally {
       setLoading(false);
     }
-  }, [questId, missionId, missionDay, uploadedProof, t, onStatusChange]);
+  }, [questId, missionId, missionDay, uploadedProof, t, onStatusChange, onBadgesEarned]);
 
   const handleUploadComplete = useCallback(
     (result: UploadResultData) => {

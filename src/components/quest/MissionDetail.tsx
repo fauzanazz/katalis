@@ -12,6 +12,7 @@ import {
 import { MissionActions } from "@/components/quest/MissionActions";
 import { MissionChat } from "@/components/quest/MissionChat";
 import { ReflectionCard } from "@/components/quest/ReflectionCard";
+import type { EarnedBadge } from "@/lib/badges";
 
 export interface MissionData {
   id: string;
@@ -30,6 +31,7 @@ interface MissionDetailProps {
   questId?: string;
   onStatusChange?: () => void;
   readOnly?: boolean;
+  onBadgesEarned?: (badges: EarnedBadge[]) => void;
 }
 
 export function MissionDetail({
@@ -37,6 +39,7 @@ export function MissionDetail({
   questId,
   onStatusChange,
   readOnly = false,
+  onBadgesEarned,
 }: MissionDetailProps) {
   const t = useTranslations("quest.overview");
 
@@ -197,6 +200,7 @@ export function MissionDetail({
           status={mission.status}
           proofPhotoUrl={mission.proofPhotoUrl}
           onStatusChange={onStatusChange}
+          onBadgesEarned={onBadgesEarned}
         />
       )}
 

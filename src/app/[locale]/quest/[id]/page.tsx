@@ -30,6 +30,9 @@ import {
   MissionDetail,
   type MissionData,
 } from "@/components/quest/MissionDetail";
+import { BadgeGrid } from "@/components/quest/BadgeGrid";
+import { BadgeToast } from "@/components/quest/BadgeToast";
+import type { EarnedBadge } from "@/lib/badges";
 
 interface QuestData {
   id: string;
@@ -57,6 +60,7 @@ export default function QuestOverviewPage() {
   const [showAbandonDialog, setShowAbandonDialog] = useState(false);
   const [abandonLoading, setAbandonLoading] = useState(false);
   const [abandonError, setAbandonError] = useState<string | null>(null);
+  const [earnedBadges, setEarnedBadges] = useState<EarnedBadge[]>([]);
 
   const fetchQuest = useCallback(async () => {
     try {
@@ -94,6 +98,12 @@ export default function QuestOverviewPage() {
     // Refetch quest data to update all statuses
     fetchQuest();
   }, [fetchQuest]);
+
+  const handleBadgesEarned = useCallback((badges: EarnedBadge[]) => {
+    if (badges.length > 0) {
+      setEarnedBadges(badges);
+    }
+  }, []);
 
   const handleAbandonQuest = useCallback(async () => {
     setAbandonLoading(true);
@@ -250,6 +260,11 @@ export default function QuestOverviewPage() {
         </div>
       )}
 
+      {/* Badge collection */}
+      <div className="mb-6">
+        <BadgeGrid />
+      </div>
+
       {/* Abandon quest button (only for active quests) */}
       {quest.status === "active" && (
         <div className="mb-4 flex justify-end">
@@ -344,6 +359,7 @@ export default function QuestOverviewPage() {
                 questId={questId}
                 onStatusChange={handleStatusChange}
                 readOnly={isCompleted}
+                onBadgesEarned={handleBadgesEarned}
               />
             </div>
           ) : (
@@ -359,6 +375,11 @@ export default function QuestOverviewPage() {
           )}
         </div>
       </div>
+
+      {/* Badge celebration toast */}
+      {earnedBadges.length > 0 && (
+        <BadgeToast badges={earnedBadges} onClose={() => setEarnedBadges([])} />
+      )}
     </div>
   );
 }

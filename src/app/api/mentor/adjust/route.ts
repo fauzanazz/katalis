@@ -3,6 +3,7 @@ import { getChildSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { AdjustmentInputSchema } from "@/lib/ai/mentor-schemas";
 import { simplifyMission } from "@/lib/ai/mentor";
+import { buildBadgeContext, evaluateBadges, awardBadges } from "@/lib/badges";
 
 /**
  * POST /api/mentor/adjust
@@ -125,6 +126,19 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Check for creativity badges (creative_adapter, persistent_explorer)
+    const badgeCtx = await buildBadgeContext({
+      childId: session.childId,
+      questId: mentorSession.questId,
+    });
+    const newBadgeSlugs = evaluateBadges(badgeCtx);
+    const newBadges = await awardBadges({
+      childId: session.childId,
+      newlyEarnedSlugs: newBadgeSlugs,
+      trigger: "adjustment",
+      questId: mentorSession.questId,
+    });
+
     return NextResponse.json({
       adjustment: {
         id: result.id,
@@ -133,6 +147,7 @@ export async function POST(request: NextRequest) {
         reason,
         createdAt: result.createdAt.toISOString(),
       },
+      newBadges: newBadges.length > 0 ? newBadges : undefined,
     });
   } catch (error) {
     console.error("Mission adjustment error:", error);

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { sanitizeInput } from "@/lib/sanitize";
 import { SendMessageInputSchema } from "@/lib/ai/mentor-schemas";
 import { mentorChat, detectFrustration } from "@/lib/ai/mentor";
+import { buildBadgeContext, evaluateBadges, awardBadges } from "@/lib/badges";
 
 /**
  * POST /api/mentor/message
@@ -167,6 +168,19 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Check for trailblazer badge (first mentor chat usage)
+    const badgeCtx = await buildBadgeContext({
+      childId: session.childId,
+      questId: mentorSession.questId,
+    });
+    const newBadgeSlugs = evaluateBadges(badgeCtx);
+    const newBadges = await awardBadges({
+      childId: session.childId,
+      newlyEarnedSlugs: newBadgeSlugs,
+      trigger: "mentor_message",
+      questId: mentorSession.questId,
+    });
+
     return NextResponse.json({
       message: {
         id: savedMentorMessage.id,
@@ -177,6 +191,7 @@ export async function POST(request: NextRequest) {
         offerAdjustment: mentorResponse.offerAdjustment,
         createdAt: savedMentorMessage.createdAt.toISOString(),
       },
+      newBadges: newBadges.length > 0 ? newBadges : undefined,
     });
   } catch (error) {
     console.error("Mentor message error:", error);

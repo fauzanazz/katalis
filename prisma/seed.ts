@@ -13,6 +13,7 @@ async function main() {
   // Clean existing data
   await prisma.moderationEvent.deleteMany();
   await prisma.reflectionEntry.deleteMany();
+  await prisma.childBadge.deleteMany();
   await prisma.adjustmentEvent.deleteMany();
   await prisma.mentorMessage.deleteMany();
   await prisma.mentorSession.deleteMany();

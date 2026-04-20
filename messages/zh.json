@@ -672,5 +672,54 @@
       "description": "您没有权限访问此页面。",
       "backHome": "返回仪表板"
     }
+  },
+  "badges": {
+    "title": "你的徽章",
+    "subtitle": "你在创意旅程中获得的徽章！",
+    "empty": "还没有徽章——继续探索来获得你的第一个！",
+    "earned": "已获得",
+    "locked": "未解锁",
+    "categoryAll": "全部",
+    "categoryProgress": "进步",
+    "categoryCreativity": "创造力",
+    "categoryReflection": "反思",
+    "categoryMentorship": "指导",
+    "newBadge": "获得新徽章！",
+    "close": "关闭",
+    "tierBronze": "铜",
+    "tierSilver": "银",
+    "tierGold": "金",
+    "first_step": {
+      "name": "第一步",
+      "description": "你开始了你的创意之旅！"
+    },
+    "week_warrior": {
+      "name": "一周勇士",
+      "description": "完成了全部7天的任务！"
+    },
+    "reflector": {
+      "name": "思考者",
+      "description": "花时间反思你的学习"
+    },
+    "deep_thinker": {
+      "name": "深度思考者",
+      "description": "在一个任务中反思了3天或更多"
+    },
+    "storyteller": {
+      "name": "故事家",
+      "description": "分享了语音反思"
+    },
+    "trailblazer": {
+      "name": "开拓者",
+      "description": "向任务伙伴寻求帮助"
+    },
+    "creative_adapter": {
+      "name": "创意改编者",
+      "description": "找到了应对挑战的新方法"
+    },
+    "persistent_explorer": {
+      "name": "坚韧探索者",
+      "description": "即使困难也坚持前进"
+    }
   }
 }

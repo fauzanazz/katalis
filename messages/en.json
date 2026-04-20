@@ -672,5 +672,54 @@
       "description": "You don't have permission to access this page.",
       "backHome": "Go to Dashboard"
     }
+  },
+  "badges": {
+    "title": "Your Badges",
+    "subtitle": "Badges you've earned on your creative journey!",
+    "empty": "No badges yet — keep exploring to earn your first one!",
+    "earned": "Earned",
+    "locked": "Locked",
+    "categoryAll": "All",
+    "categoryProgress": "Progress",
+    "categoryCreativity": "Creativity",
+    "categoryReflection": "Reflection",
+    "categoryMentorship": "Mentorship",
+    "newBadge": "New Badge Earned!",
+    "close": "Close",
+    "tierBronze": "Bronze",
+    "tierSilver": "Silver",
+    "tierGold": "Gold",
+    "first_step": {
+      "name": "First Step",
+      "description": "You started your creative journey!"
+    },
+    "week_warrior": {
+      "name": "Week Warrior",
+      "description": "Completed all 7 days of a quest!"
+    },
+    "reflector": {
+      "name": "Reflector",
+      "description": "Took time to reflect on your learning"
+    },
+    "deep_thinker": {
+      "name": "Deep Thinker",
+      "description": "Reflected on 3 or more days in a quest"
+    },
+    "storyteller": {
+      "name": "Storyteller",
+      "description": "Shared a voice reflection"
+    },
+    "trailblazer": {
+      "name": "Trailblazer",
+      "description": "Asked the Quest Buddy for help"
+    },
+    "creative_adapter": {
+      "name": "Creative Adapter",
+      "description": "Found a new way to approach a challenge"
+    },
+    "persistent_explorer": {
+      "name": "Persistent Explorer",
+      "description": "Kept going even when it was tough"
+    }
   }
 }

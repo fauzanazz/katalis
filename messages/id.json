@@ -672,5 +672,54 @@
       "description": "Anda tidak memiliki izin untuk mengakses halaman ini.",
       "backHome": "Ke Dashboard"
     }
+  },
+  "badges": {
+    "title": "Lencana Kamu",
+    "subtitle": "Lencana yang kamu dapatkan dalam perjalanan kreatifmu!",
+    "empty": "Belum ada lencana — terus eksplorasi untuk mendapatkan yang pertama!",
+    "earned": "Didapat",
+    "locked": "Terkunci",
+    "categoryAll": "Semua",
+    "categoryProgress": "Kemajuan",
+    "categoryCreativity": "Kreativitas",
+    "categoryReflection": "Refleksi",
+    "categoryMentorship": "Bimbingan",
+    "newBadge": "Lencana Baru!",
+    "close": "Tutup",
+    "tierBronze": "Perunggu",
+    "tierSilver": "Perak",
+    "tierGold": "Emas",
+    "first_step": {
+      "name": "Langkah Pertama",
+      "description": "Kamu memulai perjalanan kreatifmu!"
+    },
+    "week_warrior": {
+      "name": "Pejuang Minggu",
+      "description": "Menyelesaikan semua 7 hari quest!"
+    },
+    "reflector": {
+      "name": "Pemikir",
+      "description": "Meluangkan waktu untuk merefleksikan pembelajaranmu"
+    },
+    "deep_thinker": {
+      "name": "Pemikir Mendalam",
+      "description": "Berefleksi pada 3 hari atau lebih dalam satu quest"
+    },
+    "storyteller": {
+      "name": "Pencerita",
+      "description": "Berbagi refleksi suara"
+    },
+    "trailblazer": {
+      "name": "Pelopor",
+      "description": "Bertanya pada Quest Buddy untuk bantuan"
+    },
+    "creative_adapter": {
+      "name": "Penyesuaian Kreatif",
+      "description": "Menemukan cara baru untuk menghadapi tantangan"
+    },
+    "persistent_explorer": {
+      "name": "Penjelajah Tangguh",
+      "description": "Terus maju meskipun sulit"
+    }
   }
 }

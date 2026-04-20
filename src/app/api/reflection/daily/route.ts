@@ -5,6 +5,7 @@ import { sanitizeInput } from "@/lib/sanitize";
 import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 import { ReflectionInputSchema } from "@/lib/ai/mentor-schemas";
 import { summarizeReflection } from "@/lib/ai/mentor";
+import { buildBadgeContext, evaluateBadges, awardBadges } from "@/lib/badges";
 
 /**
  * POST /api/reflection/daily
@@ -107,12 +108,26 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Check for newly earned badges
+    const badgeCtx = await buildBadgeContext({
+      childId: session.childId,
+      questId,
+    });
+    const newBadgeSlugs = evaluateBadges(badgeCtx);
+    const newBadges = await awardBadges({
+      childId: session.childId,
+      newlyEarnedSlugs: newBadgeSlugs,
+      trigger: "reflection",
+      questId,
+    });
+
     return NextResponse.json({
       id: reflection.id,
       missionDay,
       type,
       aiSummary,
       createdAt: reflection.createdAt.toISOString(),
+      newBadges: newBadges.length > 0 ? newBadges : undefined,
     }, { status: 201 });
   } catch (error) {
     console.error("Reflection error:", error);

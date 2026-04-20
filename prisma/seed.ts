@@ -11,6 +11,10 @@ async function hashPassword(password: string): Promise<string> {
 
 async function main() {
   // Clean existing data
+  await prisma.parentReport.deleteMany();
+  await prisma.parentChild.deleteMany();
+  await prisma.squadMember.deleteMany();
+  await prisma.squad.deleteMany();
   await prisma.moderationEvent.deleteMany();
   await prisma.reflectionEntry.deleteMany();
   await prisma.childBadge.deleteMany();
@@ -218,8 +222,104 @@ async function main() {
     },
   ];
 
+  const galleryEntries: { id: string }[] = [];
   for (const entry of galleryEntriesData) {
-    await prisma.galleryEntry.create({ data: entry });
+    const created = await prisma.galleryEntry.create({ data: entry });
+    galleryEntries.push(created);
+  }
+
+  // ── Seed Squads ──────────────────────────────────────────────────────
+  const squad1 = await prisma.squad.create({
+    data: {
+      name: "Robot Builders from Asia",
+      theme: "Engineering",
+      description: "Young engineers from Asia building amazing machines and solving real-world problems!",
+      icon: "🤖",
+      countries: JSON.stringify(["Indonesia"]),
+      featuredEntryIds: JSON.stringify([galleryEntries[0].id]),
+      status: "active",
+    },
+  });
+
+  const squad2 = await prisma.squad.create({
+    data: {
+      name: "Story Tellers from Asia",
+      theme: "Narrative",
+      description: "Creative storytellers from Asia sharing wonderful stories and imagination!",
+      icon: "📖",
+      countries: JSON.stringify(["Japan"]),
+      featuredEntryIds: JSON.stringify([galleryEntries[1].id]),
+      status: "active",
+    },
+  });
+
+  const squad3 = await prisma.squad.create({
+    data: {
+      name: "Young Artists from Indonesia",
+      theme: "Art",
+      description: "Talented young artists from Indonesia creating beautiful artwork!",
+      icon: "🎨",
+      countries: JSON.stringify(["Indonesia"]),
+      featuredEntryIds: JSON.stringify([galleryEntries[2].id]),
+      status: "active",
+    },
+  });
+
+  // ── Seed Squad Members ──────────────────────────────────────────────
+  await prisma.squadMember.createMany({
+    data: [
+      { squadId: squad1.id, childId: child1.id },
+      { squadId: squad2.id, childId: child2.id },
+      { squadId: squad3.id, childId: child1.id },
+    ],
+  });
+
+  // ── Seed Parent-Child Links ──────────────────────────────────────────
+  const testUser = await prisma.user.findUnique({ where: { email: "test@katalis.ai" } });
+  if (testUser) {
+    await prisma.parentChild.create({
+      data: { userId: testUser.id, childId: child1.id },
+    });
+  }
+
+  // ── Seed Parent Report ──────────────────────────────────────────────
+  if (testUser) {
+    await prisma.parentReport.create({
+      data: {
+        parentId: testUser.id,
+        childId: child1.id,
+        type: "weekly",
+        period: JSON.stringify({
+          start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          end: new Date().toISOString(),
+        }),
+        strengths: JSON.stringify([
+          "Strong engineering aptitude demonstrated through robot building",
+          "Excellent problem-solving skills in hands-on projects",
+          "Creative approach to mechanical design",
+        ]),
+        growthAreas: JSON.stringify([
+          "Try combining engineering with storytelling to explain designs",
+          "Explore more complex mechanisms with guidance",
+        ]),
+        tips: JSON.stringify([
+          {
+            title: "Build a Cardboard Bridge",
+            description: "Use household cardboard and tape to build a bridge that holds a toy car. Discuss what makes it strong.",
+            materials: ["Cardboard", "Tape", "Toy car"],
+            category: "Engineering",
+          },
+          {
+            title: "Draw Your Dream Machine",
+            description: "Ask your child to sketch a machine that helps people. Encourage labeling the parts.",
+            materials: ["Paper", "Pencil", "Crayons"],
+            category: "Engineering",
+          },
+        ]),
+        summary: "Your child showed impressive engineering creativity this week! They completed all 7 missions of their robot-building quest, demonstrating strong problem-solving and design thinking. Encourage them to keep building and exploring how things work.",
+        badgeHighlights: JSON.stringify(["first_step", "week_warrior"]),
+      },
+    });
   }
 
   console.log("Seed data created successfully:");
@@ -237,6 +337,12 @@ async function main() {
   console.log("Gallery data:");
   console.log("  - 2 children with discoveries, quests, and gallery entries");
   console.log("  - 3 gallery entries (Engineering/Indonesia, Narrative/Japan, Art/Indonesia)");
+  console.log("");
+  console.log("Squad & Parent data:");
+  console.log("  - 3 squads (Engineering, Narrative, Art)");
+  console.log("  - 3 squad members");
+  console.log("  - 1 parent-child link (test@katalis.ai → child1)");
+  console.log("  - 1 sample parent report");
 }
 
 main()

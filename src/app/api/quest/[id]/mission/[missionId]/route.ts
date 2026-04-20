@@ -4,6 +4,7 @@ import { getChildSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { sanitizeInput } from "@/lib/sanitize";
 import { isAllowedStorageUrl } from "@/lib/url-allowlist";
+import { buildBadgeContext, evaluateBadges, awardBadges } from "@/lib/badges";
 
 /**
  * Zod schema for mission status update requests.
@@ -229,6 +230,19 @@ export async function PATCH(
         };
       });
 
+      // Check for newly earned badges
+      const badgeCtx = await buildBadgeContext({
+        childId: session.childId,
+        questId,
+      });
+      const newBadgeSlugs = evaluateBadges(badgeCtx);
+      const newBadges = await awardBadges({
+        childId: session.childId,
+        newlyEarnedSlugs: newBadgeSlugs,
+        trigger: "mission_complete",
+        questId,
+      });
+
       return NextResponse.json({
         success: true,
         mission: {
@@ -239,6 +253,7 @@ export async function PATCH(
         },
         nextDayUnlocked: result.nextDayUnlocked,
         questCompleted: result.questCompleted,
+        newBadges: newBadges.length > 0 ? newBadges : undefined,
       });
     }
 

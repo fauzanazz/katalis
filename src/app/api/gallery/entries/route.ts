@@ -6,6 +6,7 @@ import { sanitizeInput } from "@/lib/sanitize";
 import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 import { geocodeLocationText } from "@/lib/geocoding";
 import { moderateImageContent } from "@/lib/moderation";
+import { classifyTags } from "@/lib/ai/tag-classifier";
 
 /**
  * Zod schema for creating a gallery entry.
@@ -38,6 +39,7 @@ export async function GET(request: NextRequest | Request) {
       10,
     );
     const talentCategory = url.searchParams.get("talentCategory");
+    const tag = url.searchParams.get("tag");
 
     // Clamp values
     const page = Math.max(1, isNaN(pageParam) ? 1 : pageParam);
@@ -69,9 +71,26 @@ export async function GET(request: NextRequest | Request) {
       country: entry.country,
       coordinates: safeParseJSON(entry.coordinates, null),
       questContext: safeParseJSON(entry.questContext, null),
+      talentTags: safeParseJSON(entry.talentTags, null),
       clusterGroup: entry.clusterGroup,
       createdAt: entry.createdAt,
     }));
+
+    if (tag) {
+      const filtered = sanitizedEntries.filter((entry) => {
+        if (!entry.talentTags) return false;
+        return (entry.talentTags as Array<{ name: string }>).some(
+          (t) => t.name.toLowerCase().includes(tag.toLowerCase()),
+        );
+      });
+      return NextResponse.json({
+        entries: filtered,
+        total: filtered.length,
+        page,
+        pageSize,
+        totalPages: 1,
+      });
+    }
 
     return NextResponse.json({
       entries: sanitizedEntries,
@@ -297,6 +316,24 @@ export async function POST(request: NextRequest | Request) {
       return entry;
     });
 
+    // Classify multi-tags (non-blocking on failure)
+    let classifiedTags: Array<{ name: string; confidence: number; category: string }> | null = null;
+    try {
+      const tagResult = await classifyTags(
+        talentCategory,
+        quest.discovery?.detectedTalents ?? undefined,
+      );
+      if (tagResult.tags.length > 0) {
+        classifiedTags = tagResult.tags;
+        await prisma.galleryEntry.update({
+          where: { id: galleryEntry.id },
+          data: { talentTags: JSON.stringify(tagResult.tags) },
+        });
+      }
+    } catch (tagError) {
+      console.warn("Tag classification failed (non-blocking):", tagError);
+    }
+
     return NextResponse.json(
       {
         success: true,
@@ -308,6 +345,7 @@ export async function POST(request: NextRequest | Request) {
           country: galleryEntry.country,
           coordinates: safeParseJSON(galleryEntry.coordinates, null),
           questContext: safeParseJSON(galleryEntry.questContext, null),
+          talentTags: classifiedTags,
         },
       },
       { status: 201 },

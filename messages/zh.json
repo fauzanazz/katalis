@@ -491,6 +491,33 @@
       "celebrationAnnouncement": "恭喜！你已完成你的任务！"
     }
   },
+  "mentor": {
+    "chatTitle": "任务伙伴",
+    "chatSubtitle": "你在这个任务中的思考伙伴",
+    "greeting": "开始聊天",
+    "placeholder": "输入你的消息...",
+    "send": "发送",
+    "thinking": "思考中...",
+    "suggestions": "快速回复",
+    "adjustment": {
+      "title": "小调整",
+      "description": "让我们试试更简单的方法 — 真正的工程师经常这样做！",
+      "accept": "好的，调整吧！",
+      "decline": "我想继续尝试",
+      "applied": "任务说明已更新为更简单的步骤",
+      "limit": "已达到此任务的最大调整次数"
+    },
+    "reflection": {
+      "title": "每日反思",
+      "subtitle": "分享你今天学到了什么！",
+      "textPlaceholder": "你最喜欢今天任务的哪一部分？你学到了什么？",
+      "voiceButton": "录制反思",
+      "submitButton": "保存反思",
+      "success": "反思已保存！太棒了，你在思考自己的学习！",
+      "alreadyExists": "你已经分享了这一天的反思",
+      "encouragement": "每个伟大的创作者都会花时间思考他们学到了什么！"
+    }
+  },
   "gallery": {
     "title": "全球画廊",
     "subtitle": "探索世界各地有天赋的孩子们的作品！",

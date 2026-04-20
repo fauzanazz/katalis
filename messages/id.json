@@ -491,6 +491,33 @@
       "celebrationAnnouncement": "Selamat! Kamu telah menyelesaikan misimu!"
     }
   },
+  "mentor": {
+    "chatTitle": "Quest Buddy",
+    "chatSubtitle": "Teman berpikirmu untuk misi ini",
+    "greeting": "Mulai Chat",
+    "placeholder": "Tulis pesanmu...",
+    "send": "Kirim",
+    "thinking": "Berpikir...",
+    "suggestions": "Balasan Cepat",
+    "adjustment": {
+      "title": "Penyesuaian Kecil",
+      "description": "Mari coba cara yang lebih sederhana — insinyur sungguhan sering melakukan ini!",
+      "accept": "Ya, Mari Sesuaikan!",
+      "decline": "Aku Tetap Mencoba",
+      "applied": "Instruksi misi diperbarui dengan langkah yang lebih sederhana",
+      "limit": "Penyesuaian maksimum untuk misi ini telah tercapai"
+    },
+    "reflection": {
+      "title": "Refleksi Harian",
+      "subtitle": "Bagikan apa yang kamu pelajari hari ini!",
+      "textPlaceholder": "Apa yang paling kamu sukai dari misi hari ini? Apa yang kamu pelajari?",
+      "voiceButton": "Rekam Refleksi",
+      "submitButton": "Simpan Refleksi",
+      "success": "Refleksi tersimpan! Hebat sekali sudah memikirkan pembelajaranmu!",
+      "alreadyExists": "Kamu sudah berbagi refleksi untuk hari ini",
+      "encouragement": "Setiap kreator hebat meluangkan waktu untuk memikirkan apa yang mereka pelajari!"
+    }
+  },
   "gallery": {
     "title": "Galeri Dunia",
     "subtitle": "Jelajahi karya anak-anak berbakat dari seluruh dunia!",

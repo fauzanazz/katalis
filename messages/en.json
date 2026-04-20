@@ -491,6 +491,33 @@
       "celebrationAnnouncement": "Congratulations! You have completed your quest!"
     }
   },
+  "mentor": {
+    "chatTitle": "Quest Buddy",
+    "chatSubtitle": "Your thinking companion for this mission",
+    "greeting": "Start Chat",
+    "placeholder": "Type your message...",
+    "send": "Send",
+    "thinking": "Thinking...",
+    "suggestions": "Quick Replies",
+    "adjustment": {
+      "title": "Small Adjustment",
+      "description": "Let's try a simpler approach — real engineers do this all the time!",
+      "accept": "Yes, Let's Adjust!",
+      "decline": "I'll Keep Trying",
+      "applied": "Mission instructions updated with simpler steps",
+      "limit": "Maximum adjustments reached for this mission"
+    },
+    "reflection": {
+      "title": "Daily Reflection",
+      "subtitle": "Share what you learned today!",
+      "textPlaceholder": "What did you enjoy most about today's mission? What did you learn?",
+      "voiceButton": "Record Reflection",
+      "submitButton": "Save Reflection",
+      "success": "Reflection saved! Great job thinking about your learning!",
+      "alreadyExists": "You already shared a reflection for this day",
+      "encouragement": "Every great creator takes time to think about what they learned!"
+    }
+  },
   "gallery": {
     "title": "Global Gallery",
     "subtitle": "Explore works by talented children around the world!",

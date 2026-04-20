@@ -42,7 +42,7 @@ vi.mock("@/lib/db", () => ({
 // --- Mock Auth ---
 const mockGetSession = vi.fn();
 vi.mock("@/lib/auth", () => ({
-  getSession: () => mockGetSession(),
+  getChildSession: () => mockGetSession(),
 }));
 
 // --- Mock AI ---
@@ -62,6 +62,16 @@ vi.mock("@/lib/ai/claude", () => ({
 // --- Mock URL allowlist ---
 vi.mock("@/lib/url-allowlist", () => ({
   isAllowedStorageUrl: () => true,
+}));
+
+vi.mock("@/lib/moderation", () => ({
+  moderateContent: vi.fn().mockResolvedValue({
+    allowed: true,
+    status: "approved",
+    confidence: 0.98,
+    reasoning: "Content appears safe",
+    eventId: "mod-1",
+  }),
 }));
 
 // --- Import route handlers ---

@@ -381,7 +381,7 @@ describe("VAL-CROSS-027/028/029: Returning user data persistence", () => {
     }));
 
     vi.doMock("@/lib/auth", () => ({
-      getSession: vi.fn().mockResolvedValue({ childId: "child-1" }),
+      getChildSession: vi.fn().mockResolvedValue({ childId: "child-1" }),
     }));
 
     // Verify the history endpoint exists

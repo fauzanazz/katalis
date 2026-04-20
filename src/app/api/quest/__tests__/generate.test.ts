@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock auth
 vi.mock("@/lib/auth", () => ({
-  getSession: vi.fn(),
+  getChildSession: vi.fn(),
 }));
 
 // Mock Claude AI
@@ -22,12 +22,22 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
+vi.mock("@/lib/moderation", () => ({
+  moderateContent: vi.fn().mockResolvedValue({
+    allowed: true,
+    status: "approved",
+    confidence: 0.98,
+    reasoning: "Content appears safe",
+    eventId: "mod-1",
+  }),
+}));
+
 import { POST } from "../generate/route";
-import { getSession } from "@/lib/auth";
+import { getChildSession } from "@/lib/auth";
 import { generateQuest } from "@/lib/ai/claude";
 import { prisma } from "@/lib/db";
 
-const mockedGetSession = vi.mocked(getSession);
+const mockedGetSession = vi.mocked(getChildSession);
 const mockedGenerateQuest = vi.mocked(generateQuest);
 const mockedQuestCreate = vi.mocked(prisma.quest.create);
 

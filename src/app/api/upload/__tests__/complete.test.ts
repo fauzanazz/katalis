@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock auth
 vi.mock("@/lib/auth", () => ({
-  getSession: vi.fn(),
+  getChildSession: vi.fn(),
 }));
 
 // Mock storage client
@@ -16,9 +16,9 @@ vi.mock("@/lib/storage", () => ({
 }));
 
 import { POST } from "../complete/route";
-import { getSession } from "@/lib/auth";
+import { getChildSession } from "@/lib/auth";
 
-const mockedGetSession = vi.mocked(getSession);
+const mockedGetSession = vi.mocked(getChildSession);
 
 // Test fixture keys - simple paths, not secrets
 const IMG_KEY = "img/a.jpg";

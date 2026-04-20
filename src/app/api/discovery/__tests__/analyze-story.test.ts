@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock auth
 vi.mock("@/lib/auth", () => ({
-  getSession: vi.fn(),
+  getChildSession: vi.fn(),
 }));
 
 // Mock Claude story analysis
@@ -10,11 +10,22 @@ vi.mock("@/lib/ai/claude", () => ({
   analyzeStory: vi.fn(),
 }));
 
+vi.mock("@/lib/moderation", () => ({
+  moderateContent: vi.fn().mockResolvedValue({
+    allowed: true,
+    status: "approved",
+    confidence: 0.98,
+    reasoning: "Content appears safe",
+    eventId: "mod-1",
+  }),
+  getUncertaintyFallback: vi.fn(() => "Keep exploring your amazing talents!"),
+}));
+
 import { POST } from "../analyze-story/route";
-import { getSession } from "@/lib/auth";
+import { getChildSession } from "@/lib/auth";
 import { analyzeStory } from "@/lib/ai/claude";
 
-const mockedGetSession = vi.mocked(getSession);
+const mockedGetSession = vi.mocked(getChildSession);
 const mockedAnalyzeStory = vi.mocked(analyzeStory);
 
 const validSession = { childId: "child-1", expiresAt: new Date().toISOString() };

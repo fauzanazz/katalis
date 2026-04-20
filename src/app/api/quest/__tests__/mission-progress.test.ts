@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock auth
 vi.mock("@/lib/auth", () => ({
-  getSession: vi.fn(),
+  getChildSession: vi.fn(),
 }));
 
 // Mock Prisma
@@ -17,15 +17,34 @@ vi.mock("@/lib/db", () => ({
       findMany: vi.fn(),
       updateMany: vi.fn(),
     },
+    mentorSession: {
+      upsert: vi.fn().mockResolvedValue({ id: "ms-1" }),
+    },
     $transaction: vi.fn(),
   },
 }));
 
+vi.mock("@/lib/badges", () => ({
+  buildBadgeContext: vi.fn().mockResolvedValue({
+    childId: "child-1",
+    completedMissionCount: 1,
+    totalMissionCount: 7,
+    reflectionCount: 0,
+    questReflectionCount: 0,
+    hasUsedMentorChat: false,
+    adjustmentCount: 0,
+    hasVoiceReflection: false,
+    existingBadgeSlugs: [],
+  }),
+  evaluateBadges: vi.fn(() => []),
+  awardBadges: vi.fn(() => []),
+}));
+
 import { PATCH } from "../[id]/mission/[missionId]/route";
-import { getSession } from "@/lib/auth";
+import { getChildSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
-const mockedGetSession = vi.mocked(getSession);
+const mockedGetSession = vi.mocked(getChildSession);
 const mockedQuestFindUnique = vi.mocked(prisma.quest.findUnique);
 const mockedTransaction = vi.mocked(prisma.$transaction);
 

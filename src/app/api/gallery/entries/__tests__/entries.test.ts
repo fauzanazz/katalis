@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock auth
 vi.mock("@/lib/auth", () => ({
-  getSession: vi.fn(),
+  getChildSession: vi.fn(),
 }));
 
 // Mock Prisma
@@ -21,11 +21,25 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
+vi.mock("@/lib/moderation", () => ({
+  moderateImageContent: vi.fn().mockResolvedValue({
+    allowed: true,
+    status: "approved",
+    confidence: 0.97,
+    reasoning: "Image appears safe",
+    eventId: "mod-1",
+  }),
+}));
+
+vi.mock("@/lib/ai/tag-classifier", () => ({
+  classifyTags: vi.fn().mockResolvedValue({ tags: [] }),
+}));
+
 import { GET, POST } from "../route";
-import { getSession } from "@/lib/auth";
+import { getChildSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
-const mockedGetSession = vi.mocked(getSession);
+const mockedGetSession = vi.mocked(getChildSession);
 const mockedGalleryFindMany = vi.mocked(prisma.galleryEntry.findMany);
 const mockedGalleryCount = vi.mocked(prisma.galleryEntry.count);
 const mockedGalleryFindUnique = vi.mocked(prisma.galleryEntry.findUnique);

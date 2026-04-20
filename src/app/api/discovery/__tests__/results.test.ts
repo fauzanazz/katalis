@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock auth
 vi.mock("@/lib/auth", () => ({
-  getSession: vi.fn(),
+  getChildSession: vi.fn(),
 }));
 
 // Mock Prisma
@@ -20,10 +20,10 @@ vi.mock("@/lib/db", () => ({
 import { POST } from "../save/route";
 import { GET as GETResult } from "../[id]/route";
 import { GET as GETHistory } from "../history/route";
-import { getSession } from "@/lib/auth";
+import { getChildSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
-const mockedGetSession = vi.mocked(getSession);
+const mockedGetSession = vi.mocked(getChildSession);
 const mockedDiscovery = vi.mocked(prisma.discovery);
 
 const validSession = { childId: "child-1", expiresAt: new Date().toISOString() };

@@ -20,4 +20,5 @@ export type {
   BadgeContext,
   EarnedBadge,
 } from "./schemas";
+export { buildBadgeContext } from "./build-context";
 export { awardBadges } from "./award";

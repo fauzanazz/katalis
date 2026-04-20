@@ -545,9 +545,22 @@
       "clusterDetail": "Cluster: {label}",
       "ariaLabel": "Browse AI-generated talent clusters"
     },
+    "squads": {
+      "loading": "Discovering talent squads...",
+      "error": "Could not load squads. Please try again.",
+      "empty": "No squads available yet. Complete quests to join talent squads!",
+      "retry": "Try Again",
+      "backToSquads": "Back to Squads",
+      "squadDetail": "Squad: {name}",
+      "membersCount": "{count, plural, one {# member} other {# members}}",
+      "worksCount": "{count, plural, one {# work} other {# works}}",
+      "viewSquad": "View Squad",
+      "ariaLabel": "Browse talent squads"
+    },
     "views": {
       "map": "Map View",
-      "clusters": "Cluster View"
+      "clusters": "Cluster View",
+      "squads": "Squads"
     },
     "map": {
       "loading": "Loading gallery map...",
@@ -586,6 +599,57 @@
       "flagDetailsLabel": "Additional details (optional)",
       "flagSubmit": "Submit Report",
       "flagCancel": "Cancel"
+    }
+  },
+  "parent": {
+    "dashboard": {
+      "title": "Parent Dashboard",
+      "subtitle": "Track your child's progress and get mentoring tips",
+      "loading": "Loading your children...",
+      "addChild": "Add Child",
+      "noChildren": "No children linked yet",
+      "noChildrenHint": "Enter your child's access code to see their progress here.",
+      "childTitle": "Child {id}",
+      "claimedAt": "Linked {date}",
+      "questCount": "{count, plural, one {# quest} other {# quests}}",
+      "tipPreview": "Suggested Activities",
+      "viewReports": "View Reports",
+      "reportError": "Failed to generate report. Please try again."
+    },
+    "claim": {
+      "title": "Link Your Child",
+      "description": "Enter the access code your child uses to sign in. This links their profile to your account.",
+      "codeLabel": "Access Code",
+      "codePlaceholder": "e.g. KATAL-001",
+      "submit": "Link Child",
+      "cancel": "Cancel",
+      "linking": "Linking...",
+      "errorDefault": "Could not link child. Please check the code and try again."
+    },
+    "reports": {
+      "title": "Progress Reports",
+      "backToDashboard": "Back to Dashboard",
+      "backToList": "Back to Reports",
+      "noChildSelected": "No child selected. Go back to the dashboard first.",
+      "noReports": "No reports yet. Generate your first report!",
+      "generateNew": "New Report",
+      "generateFirst": "Generate First Report",
+      "generating": "Generating report...",
+      "generateError": "Failed to generate report. Please try again.",
+      "weekly": "Weekly",
+      "biweekly": "Biweekly",
+      "period": "{start} — {end}"
+    },
+    "report": {
+      "weeklyReport": "Weekly Progress Report",
+      "biweeklyReport": "Biweekly Progress Report",
+      "period": "{start} — {end}",
+      "summaryLabel": "Summary",
+      "strengthsLabel": "Strengths Observed",
+      "growthLabel": "Growth Opportunities",
+      "tipsLabel": "At-Home Activities",
+      "badgesLabel": "Badges Earned",
+      "generatedAt": "Generated on {date}"
     }
   },
   "admin": {

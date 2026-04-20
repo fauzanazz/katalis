@@ -545,9 +545,22 @@
       "clusterDetail": "Kluster: {label}",
       "ariaLabel": "Jelajahi kluster bakat yang dihasilkan AI"
     },
+    "squads": {
+      "loading": "Menemukan skuad bakat...",
+      "error": "Tidak dapat memuat skuad. Silakan coba lagi.",
+      "empty": "Belum ada skuad. Selesaikan misi untuk bergabung dengan skuad bakat!",
+      "retry": "Coba Lagi",
+      "backToSquads": "Kembali ke Skuad",
+      "squadDetail": "Skuad: {name}",
+      "membersCount": "{count, plural, one {# anggota} other {# anggota}}",
+      "worksCount": "{count, plural, one {# karya} other {# karya}}",
+      "viewSquad": "Lihat Skuad",
+      "ariaLabel": "Jelajahi skuad bakat"
+    },
     "views": {
       "map": "Tampilan Peta",
-      "clusters": "Tampilan Kluster"
+      "clusters": "Tampilan Kluster",
+      "squads": "Skuad"
     },
     "map": {
       "loading": "Memuat peta galeri...",
@@ -586,6 +599,57 @@
       "flagDetailsLabel": "Detail tambahan (opsional)",
       "flagSubmit": "Kirim Laporan",
       "flagCancel": "Batal"
+    }
+  },
+  "parent": {
+    "dashboard": {
+      "title": "Dasbor Orang Tua",
+      "subtitle": "Pantau perkembangan anak dan dapatkan tips bimbingan",
+      "loading": "Memuat data anak...",
+      "addChild": "Tambah Anak",
+      "noChildren": "Belum ada anak yang terhubung",
+      "noChildrenHint": "Masukkan kode akses anak Anda untuk melihat perkembangannya di sini.",
+      "childTitle": "Anak {id}",
+      "claimedAt": "Terhubung {date}",
+      "questCount": "{count, plural, one {# misi} other {# misi}}",
+      "tipPreview": "Aktivitas yang Disarankan",
+      "viewReports": "Lihat Laporan",
+      "reportError": "Gagal membuat laporan. Silakan coba lagi."
+    },
+    "claim": {
+      "title": "Hubungkan Anak Anda",
+      "description": "Masukkan kode akses yang digunakan anak Anda untuk masuk. Ini akan menghubungkan profil mereka ke akun Anda.",
+      "codeLabel": "Kode Akses",
+      "codePlaceholder": "contoh: KATAL-001",
+      "submit": "Hubungkan",
+      "cancel": "Batal",
+      "linking": "Menghubungkan...",
+      "errorDefault": "Tidak dapat menghubungkan anak. Periksa kode dan coba lagi."
+    },
+    "reports": {
+      "title": "Laporan Perkembangan",
+      "backToDashboard": "Kembali ke Dasbor",
+      "backToList": "Kembali ke Laporan",
+      "noChildSelected": "Tidak ada anak yang dipilih. Kembali ke dasbor terlebih dahulu.",
+      "noReports": "Belum ada laporan. Buat laporan pertama Anda!",
+      "generateNew": "Laporan Baru",
+      "generateFirst": "Buat Laporan Pertama",
+      "generating": "Membuat laporan...",
+      "generateError": "Gagal membuat laporan. Silakan coba lagi.",
+      "weekly": "Mingguan",
+      "biweekly": "Dua Mingguan",
+      "period": "{start} — {end}"
+    },
+    "report": {
+      "weeklyReport": "Laporan Perkembangan Mingguan",
+      "biweeklyReport": "Laporan Perkembangan Dua Mingguan",
+      "period": "{start} — {end}",
+      "summaryLabel": "Ringkasan",
+      "strengthsLabel": "Kekuatan yang Teramati",
+      "growthLabel": "Peluang Pertumbuhan",
+      "tipsLabel": "Aktivitas di Rumah",
+      "badgesLabel": "Lencana yang Diperoleh",
+      "generatedAt": "Dibuat pada {date}"
     }
   },
   "admin": {

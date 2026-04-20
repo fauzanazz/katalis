@@ -545,9 +545,22 @@
       "clusterDetail": "群组：{label}",
       "ariaLabel": "浏览AI生成的天赋群组"
     },
+    "squads": {
+      "loading": "正在发现天赋小队...",
+      "error": "无法加载小队。请重试。",
+      "empty": "还没有小队。完成任务来加入天赋小队吧！",
+      "retry": "重试",
+      "backToSquads": "返回小队",
+      "squadDetail": "小队：{name}",
+      "membersCount": "{count} 名成员",
+      "worksCount": "{count, plural, one {# 件作品} other {# 件作品}}",
+      "viewSquad": "查看小队",
+      "ariaLabel": "浏览天赋小队"
+    },
     "views": {
       "map": "地图视图",
-      "clusters": "群组视图"
+      "clusters": "群组视图",
+      "squads": "小队"
     },
     "map": {
       "loading": "正在加载画廊地图...",
@@ -586,6 +599,57 @@
       "flagDetailsLabel": "补充详情（可选）",
       "flagSubmit": "提交举报",
       "flagCancel": "取消"
+    }
+  },
+  "parent": {
+    "dashboard": {
+      "title": "家长仪表板",
+      "subtitle": "跟踪孩子的进步并获取指导建议",
+      "loading": "正在加载孩子数据...",
+      "addChild": "添加孩子",
+      "noChildren": "尚未关联孩子",
+      "noChildrenHint": "输入孩子的访问码以在此处查看他们的进步。",
+      "childTitle": "孩子 {id}",
+      "claimedAt": "关联于 {date}",
+      "questCount": "{count, plural, one {# 个任务} other {# 个任务}}",
+      "tipPreview": "推荐活动",
+      "viewReports": "查看报告",
+      "reportError": "生成报告失败，请重试。"
+    },
+    "claim": {
+      "title": "关联您的孩子",
+      "description": "输入您的孩子用于登录的访问码。这将把他们的资料关联到您的账户。",
+      "codeLabel": "访问码",
+      "codePlaceholder": "例如：KATAL-001",
+      "submit": "关联",
+      "cancel": "取消",
+      "linking": "正在关联...",
+      "errorDefault": "无法关联孩子。请检查访问码后重试。"
+    },
+    "reports": {
+      "title": "进步报告",
+      "backToDashboard": "返回仪表板",
+      "backToList": "返回报告列表",
+      "noChildSelected": "未选择孩子。请先返回仪表板。",
+      "noReports": "还没有报告。生成您的第一份报告吧！",
+      "generateNew": "新报告",
+      "generateFirst": "生成第一份报告",
+      "generating": "正在生成报告...",
+      "generateError": "生成报告失败，请重试。",
+      "weekly": "每周",
+      "biweekly": "每两周",
+      "period": "{start} — {end}"
+    },
+    "report": {
+      "weeklyReport": "每周进步报告",
+      "biweeklyReport": "每两周进步报告",
+      "period": "{start} — {end}",
+      "summaryLabel": "总结",
+      "strengthsLabel": "观察到的优势",
+      "growthLabel": "成长机会",
+      "tipsLabel": "家庭活动",
+      "badgesLabel": "获得的徽章",
+      "generatedAt": "生成于 {date}"
     }
   },
   "admin": {

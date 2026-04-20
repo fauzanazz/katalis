@@ -133,6 +133,18 @@ export async function PATCH(
         data: { status: "in_progress" },
       });
 
+      // Auto-create mentor session for this mission
+      await prisma.mentorSession.upsert({
+        where: { missionId },
+        create: {
+          missionId,
+          childId: session.childId,
+          questId,
+          status: "active",
+        },
+        update: {},
+      });
+
       return NextResponse.json({
         success: true,
         mission: {

@@ -82,7 +82,9 @@ model Mission {
   proofPhotoUrl String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  quest         Quest    @relation(fields: [questId], references: [id])
+  quest              Quest              @relation(fields: [questId], references: [id])
+  mentorSession      MentorSession?
+  adjustmentEvents   AdjustmentEvent[]
 
   @@unique([questId, day])
 }
@@ -135,4 +137,62 @@ model ModerationEvent {
   @@index([sourceType, status])
   @@index([status, createdAt])
   @@index([childId])
+}
+
+model MentorSession {
+  id              String            @id @default(cuid())
+  missionId       String            @unique
+  childId         String
+  questId         String
+  status          String            @default("active") // "active", "completed"
+  adjustmentCount Int               @default(0)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  mission         Mission           @relation(fields: [missionId], references: [id])
+  messages        MentorMessage[]
+  adjustments     AdjustmentEvent[]
+
+  @@index([childId])
+  @@index([questId])
+}
+
+model MentorMessage {
+  id        String        @id @default(cuid())
+  sessionId String
+  role      String        // "child" or "mentor"
+  content   String
+  meta      String?       // JSON stored as text — { quickReply?, suggestions?, frustrationLevel? }
+  createdAt DateTime      @default(now())
+  session   MentorSession @relation(fields: [sessionId], references: [id])
+
+  @@index([sessionId, createdAt])
+}
+
+model AdjustmentEvent {
+  id                    String        @id @default(cuid())
+  sessionId             String
+  missionId             String
+  originalInstructions  String        // JSON stored as text — original instruction array
+  simplifiedInstructions String       // JSON stored as text — simplified instruction array
+  reason                String        // "frustration_detected", "child_requested", "time_based"
+  createdAt             DateTime      @default(now())
+  session               MentorSession @relation(fields: [sessionId], references: [id])
+  mission               Mission       @relation(fields: [missionId], references: [id])
+
+  @@index([missionId])
+}
+
+model ReflectionEntry {
+  id         String   @id @default(cuid())
+  childId    String
+  questId    String
+  missionDay Int      // Which day the reflection is for (1-7)
+  type       String   // "text" or "voice"
+  content    String   // Text content or transcription
+  fileUrl    String?  // Voice recording URL if type is "voice"
+  aiSummary  String?  // AI-generated summary of the reflection
+  createdAt  DateTime @default(now())
+
+  @@index([childId])
+  @@index([questId])
 }

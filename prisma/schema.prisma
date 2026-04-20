@@ -9,44 +9,49 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  name         String
-  role         String   @default("user") // "user", "admin", "ai"
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id            String         @id @default(cuid())
+  email         String         @unique
+  passwordHash  String
+  name          String
+  role          String         @default("user") // "user", "admin", "ai"
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  children      ParentChild[]
+  parentReports ParentReport[]
 }
 
 model AccessCode {
-  id        String   @id @default(cuid())
-  code      String   @unique
-  active    Boolean  @default(true)
+  id        String    @id @default(cuid())
+  code      String    @unique
+  active    Boolean   @default(true)
   expiresAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   children  Child[]
 }
 
 model Child {
-  id           String        @id @default(cuid())
-  accessCodeId String
-  locale       String        @default("id")
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  accessCode   AccessCode    @relation(fields: [accessCodeId], references: [id])
-  discoveries  Discovery[]
-  quests       Quest[]
-  galleryEntries GalleryEntry[]
+  id               String         @id @default(cuid())
+  accessCodeId     String
+  locale           String         @default("id")
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  accessCode       AccessCode     @relation(fields: [accessCodeId], references: [id])
+  discoveries      Discovery[]
+  quests           Quest[]
+  galleryEntries   GalleryEntry[]
+  squadMemberships SquadMember[]
+  parentLinks      ParentChild[]
+  parentReports    ParentReport[]
 }
 
 model Discovery {
   id              String   @id @default(cuid())
   childId         String
-  type            String   // "artifact" or "story"
+  type            String // "artifact" or "story"
   fileUrl         String?
-  aiAnalysis      String?  // JSON stored as text for SQLite
-  detectedTalents String?  // JSON stored as text for SQLite
+  aiAnalysis      String? // JSON stored as text for SQLite
+  detectedTalents String? // JSON stored as text for SQLite
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   child           Child    @relation(fields: [childId], references: [id])
@@ -70,21 +75,21 @@ model Quest {
 }
 
 model Mission {
-  id            String   @id @default(cuid())
-  questId       String
-  day           Int      // 1-7
-  title         String
-  description   String
-  instructions  String   // JSON stored as text for SQLite
-  materials     String   // JSON stored as text for SQLite
-  tips          String   // JSON stored as text for SQLite
-  status        String   @default("locked") // "locked", "available", "in_progress", "completed"
-  proofPhotoUrl String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  quest              Quest              @relation(fields: [questId], references: [id])
-  mentorSession      MentorSession?
-  adjustmentEvents   AdjustmentEvent[]
+  id               String            @id @default(cuid())
+  questId          String
+  day              Int // 1-7
+  title            String
+  description      String
+  instructions     String // JSON stored as text for SQLite
+  materials        String // JSON stored as text for SQLite
+  tips             String // JSON stored as text for SQLite
+  status           String            @default("locked") // "locked", "available", "in_progress", "completed"
+  proofPhotoUrl    String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  quest            Quest             @relation(fields: [questId], references: [id])
+  mentorSession    MentorSession?
+  adjustmentEvents AdjustmentEvent[]
 
   @@unique([questId, day])
 }
@@ -96,9 +101,10 @@ model GalleryEntry {
   imageUrl       String
   talentCategory String
   country        String?
-  coordinates    String?  // JSON stored as text for SQLite (lat/lng)
-  questContext   String?  // JSON stored as text for SQLite (quest title, dream, mission summaries)
+  coordinates    String? // JSON stored as text for SQLite (lat/lng)
+  questContext   String? // JSON stored as text for SQLite (quest title, dream, mission summaries)
   clusterGroup   String?
+  talentTags     String? // JSON array: [{ name: "Engineering", confidence: 0.95 }, ...]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   child          Child    @relation(fields: [childId], references: [id])
@@ -107,7 +113,7 @@ model GalleryEntry {
 
 model RateLimit {
   id         String   @id @default(cuid())
-  identifier String   // IP or composite key (e.g., "ip:endpoint")
+  identifier String // IP or composite key (e.g., "ip:endpoint")
   endpoint   String   @default("default") // e.g., "login", "register"
   count      Int      @default(1)
   resetAt    DateTime // When the sliding window resets
@@ -117,22 +123,22 @@ model RateLimit {
 }
 
 model ModerationEvent {
-  id            String   @id @default(cuid())
-  sourceType    String   // "discovery", "quest", "gallery", "flag"
-  sourceId      String?  // ID of the related entity (discovery, quest, gallery entry)
-  contentType   String   // "text", "image", "audio"
-  contentHash   String?  // Hash of the content for dedup
-  status        String   @default("pending") // "pending", "approved", "blocked", "flagged", "redirected"
-  category      String?  // "violence", "self_harm", "sexual", "hate", "harassment", "spam", "other"
-  severity      String?  // "low", "medium", "high", "critical"
-  confidence    Float?   // AI confidence score for the moderation decision
-  aiReasoning   String?  // AI explanation for the moderation decision
-  childId       String?  // If applicable
-  reviewerId    String?  // Admin user who reviewed
-  reviewedAt    DateTime?
-  metadata      String?  // JSON stored as text — additional context
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id          String    @id @default(cuid())
+  sourceType  String // "discovery", "quest", "gallery", "flag"
+  sourceId    String? // ID of the related entity (discovery, quest, gallery entry)
+  contentType String // "text", "image", "audio"
+  contentHash String? // Hash of the content for dedup
+  status      String    @default("pending") // "pending", "approved", "blocked", "flagged", "redirected"
+  category    String? // "violence", "self_harm", "sexual", "hate", "harassment", "spam", "other"
+  severity    String? // "low", "medium", "high", "critical"
+  confidence  Float? // AI confidence score for the moderation decision
+  aiReasoning String? // AI explanation for the moderation decision
+  childId     String? // If applicable
+  reviewerId  String? // Admin user who reviewed
+  reviewedAt  DateTime?
+  metadata    String? // JSON stored as text — additional context
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([sourceType, status])
   @@index([status, createdAt])
@@ -159,9 +165,9 @@ model MentorSession {
 model MentorMessage {
   id        String        @id @default(cuid())
   sessionId String
-  role      String        // "child" or "mentor"
+  role      String // "child" or "mentor"
   content   String
-  meta      String?       // JSON stored as text — { quickReply?, suggestions?, frustrationLevel? }
+  meta      String? // JSON stored as text — { quickReply?, suggestions?, frustrationLevel? }
   createdAt DateTime      @default(now())
   session   MentorSession @relation(fields: [sessionId], references: [id])
 
@@ -169,15 +175,15 @@ model MentorMessage {
 }
 
 model AdjustmentEvent {
-  id                    String        @id @default(cuid())
-  sessionId             String
-  missionId             String
-  originalInstructions  String        // JSON stored as text — original instruction array
-  simplifiedInstructions String       // JSON stored as text — simplified instruction array
-  reason                String        // "frustration_detected", "child_requested", "time_based"
-  createdAt             DateTime      @default(now())
-  session               MentorSession @relation(fields: [sessionId], references: [id])
-  mission               Mission       @relation(fields: [missionId], references: [id])
+  id                     String        @id @default(cuid())
+  sessionId              String
+  missionId              String
+  originalInstructions   String // JSON stored as text — original instruction array
+  simplifiedInstructions String // JSON stored as text — simplified instruction array
+  reason                 String // "frustration_detected", "child_requested", "time_based"
+  createdAt              DateTime      @default(now())
+  session                MentorSession @relation(fields: [sessionId], references: [id])
+  mission                Mission       @relation(fields: [missionId], references: [id])
 
   @@index([missionId])
 }
@@ -186,11 +192,11 @@ model ReflectionEntry {
   id         String   @id @default(cuid())
   childId    String
   questId    String
-  missionDay Int      // Which day the reflection is for (1-7)
-  type       String   // "text" or "voice"
-  content    String   // Text content or transcription
-  fileUrl    String?  // Voice recording URL if type is "voice"
-  aiSummary  String?  // AI-generated summary of the reflection
+  missionDay Int // Which day the reflection is for (1-7)
+  type       String // "text" or "voice"
+  content    String // Text content or transcription
+  fileUrl    String? // Voice recording URL if type is "voice"
+  aiSummary  String? // AI-generated summary of the reflection
   createdAt  DateTime @default(now())
 
   @@index([childId])
@@ -198,12 +204,12 @@ model ReflectionEntry {
 }
 
 model Badge {
-  id          String       @id @default(cuid())
-  slug        String       @unique // e.g. "first_step", "week_warrior"
-  category    String       // "progress", "creativity", "reflection", "mentorship"
-  tier        String       @default("bronze") // "bronze", "silver", "gold"
-  icon        String       // emoji identifier, e.g. "🎯"
-  createdAt   DateTime     @default(now())
+  id        String   @id @default(cuid())
+  slug      String   @unique // e.g. "first_step", "week_warrior"
+  category  String // "progress", "creativity", "reflection", "mentorship"
+  tier      String   @default("bronze") // "bronze", "silver", "gold"
+  icon      String // emoji identifier, e.g. "🎯"
+  createdAt DateTime @default(now())
 
   @@index([category])
 }
@@ -211,13 +217,79 @@ model Badge {
 model ChildBadge {
   id        String   @id @default(cuid())
   childId   String
-  badgeSlug String   // references Badge.slug — not a FK to allow code-first definitions
-  questId   String?  // Quest context when earned (nullable for lifetime badges)
-  trigger   String   // "mission_complete", "reflection", "mentor_message", "adjustment"
-  metadata  String?  // JSON stored as text — additional context (e.g. mission day)
+  badgeSlug String // references Badge.slug — not a FK to allow code-first definitions
+  questId   String? // Quest context when earned (nullable for lifetime badges)
+  trigger   String // "mission_complete", "reflection", "mentor_message", "adjustment"
+  metadata  String? // JSON stored as text — additional context (e.g. mission day)
   createdAt DateTime @default(now())
 
   @@unique([childId, badgeSlug]) // Each badge earned once per child
   @@index([childId])
   @@index([badgeSlug])
+}
+
+model Squad {
+  id               String        @id @default(cuid())
+  name             String
+  theme            String
+  description      String
+  icon             String        @default("🌟")
+  countries        String        @default("[]")
+  featuredEntryIds String        @default("[]")
+  status           String        @default("active")
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  members          SquadMember[]
+
+  @@index([theme])
+  @@index([status])
+}
+
+model SquadMember {
+  id       String   @id @default(cuid())
+  squadId  String
+  childId  String
+  joinedAt DateTime @default(now())
+
+  squad Squad @relation(fields: [squadId], references: [id])
+  child Child @relation(fields: [childId], references: [id])
+
+  @@unique([squadId, childId])
+  @@index([childId])
+}
+
+model ParentChild {
+  id        String   @id @default(cuid())
+  userId    String
+  childId   String
+  claimedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  child Child @relation(fields: [childId], references: [id])
+
+  @@unique([userId, childId])
+  @@index([userId])
+  @@index([childId])
+}
+
+model ParentReport {
+  id              String   @id @default(cuid())
+  parentId        String
+  childId         String
+  type            String // "weekly", "biweekly"
+  period          String // JSON: { start: ISO, end: ISO }
+  strengths       String // JSON array of strings
+  growthAreas     String // JSON array of strings
+  tips            String // JSON array of tip objects
+  summary         String // AI-generated narrative
+  badgeHighlights String // JSON: badge names earned
+  metadata        String? // JSON: additional context
+  createdAt       DateTime @default(now())
+
+  parent User  @relation(fields: [parentId], references: [id])
+  child  Child @relation(fields: [childId], references: [id])
+
+  @@index([parentId])
+  @@index([childId])
+  @@index([createdAt])
 }

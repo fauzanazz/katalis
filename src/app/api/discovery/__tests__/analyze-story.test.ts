@@ -5,8 +5,8 @@ vi.mock("@/lib/auth", () => ({
   getChildSession: vi.fn(),
 }));
 
-// Mock Claude story analysis
-vi.mock("@/lib/ai/claude", () => ({
+// Mock AI client
+vi.mock("@/lib/ai/client", () => ({
   analyzeStory: vi.fn(),
 }));
 
@@ -23,7 +23,7 @@ vi.mock("@/lib/moderation", () => ({
 
 import { POST } from "../analyze-story/route";
 import { getChildSession } from "@/lib/auth";
-import { analyzeStory } from "@/lib/ai/claude";
+import { analyzeStory } from "@/lib/ai/client";
 
 const mockedGetSession = vi.mocked(getChildSession);
 const mockedAnalyzeStory = vi.mocked(analyzeStory);

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { clusterGalleryEntries } from "@/lib/ai/claude";
+import { clusterGalleryEntries } from "@/lib/ai/client";
 import type { ClusterEntry } from "@/lib/ai/clustering-schemas";
 
 /**

@@ -67,21 +67,21 @@ describe("POST /api/upload/presigned-url", () => {
   });
 
   it("returns 400 for missing filename", async () => {
-    mockedGetSession.mockResolvedValue({ childId: "child-1", expiresAt: new Date().toISOString() });
+    mockedGetSession.mockResolvedValue({ childId: "child-1" });
 
     const res = await POST(createRequest({ contentType: "image/jpeg" }));
     expect(res.status).toBe(400);
   });
 
   it("returns 400 for missing content type", async () => {
-    mockedGetSession.mockResolvedValue({ childId: "child-1", expiresAt: new Date().toISOString() });
+    mockedGetSession.mockResolvedValue({ childId: "child-1" });
 
     const res = await POST(createRequest({ filename: "test.jpg" }));
     expect(res.status).toBe(400);
   });
 
   it("returns 400 for unsupported file type", async () => {
-    mockedGetSession.mockResolvedValue({ childId: "child-1", expiresAt: new Date().toISOString() });
+    mockedGetSession.mockResolvedValue({ childId: "child-1" });
 
     const res = await POST(
       createRequest({ filename: "test.exe", contentType: "application/octet-stream" }),
@@ -92,7 +92,7 @@ describe("POST /api/upload/presigned-url", () => {
   });
 
   it("returns 200 with presigned URL for valid image", async () => {
-    mockedGetSession.mockResolvedValue({ childId: "child-1", expiresAt: new Date().toISOString() });
+    mockedGetSession.mockResolvedValue({ childId: "child-1" });
     mockGetPresignedUploadUrl.mockResolvedValue(makeMockPresigned(IMG_KEY));
 
     const res = await POST(
@@ -105,7 +105,7 @@ describe("POST /api/upload/presigned-url", () => {
   });
 
   it("returns 200 with presigned URL for valid audio", async () => {
-    mockedGetSession.mockResolvedValue({ childId: "child-1", expiresAt: new Date().toISOString() });
+    mockedGetSession.mockResolvedValue({ childId: "child-1" });
     mockGetPresignedUploadUrl.mockResolvedValue(makeMockPresigned(AUD_KEY));
 
     const res = await POST(
@@ -118,7 +118,7 @@ describe("POST /api/upload/presigned-url", () => {
   });
 
   it("returns 400 for invalid JSON body", async () => {
-    mockedGetSession.mockResolvedValue({ childId: "child-1", expiresAt: new Date().toISOString() });
+    mockedGetSession.mockResolvedValue({ childId: "child-1" });
 
     const req = new Request("http://localhost:3100/api/upload/presigned-url", {
       method: "POST",
@@ -131,7 +131,7 @@ describe("POST /api/upload/presigned-url", () => {
   });
 
   it("does not expose raw R2 credentials in response", async () => {
-    mockedGetSession.mockResolvedValue({ childId: "child-1", expiresAt: new Date().toISOString() });
+    mockedGetSession.mockResolvedValue({ childId: "child-1" });
     mockGetPresignedUploadUrl.mockResolvedValue(makeMockPresigned(IMG_KEY));
 
     const res = await POST(

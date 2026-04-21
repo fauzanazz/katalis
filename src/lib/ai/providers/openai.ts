@@ -303,12 +303,12 @@ Design missions that connect their dream with their talents, using materials ava
     } catch (error) {
       console.error("Text moderation error:", error);
       return {
-        allowed: true,
+        allowed: false,
         status: "flagged",
         category: undefined,
         severity: undefined,
         confidence: 0,
-        reasoning: "Moderation failed, flagged for async review",
+        reasoning: "Moderation unavailable — content blocked pending review",
       };
     }
   },
@@ -329,12 +329,12 @@ Design missions that connect their dream with their talents, using materials ava
     } catch (error) {
       console.error("Image moderation error:", error);
       return {
-        allowed: true,
+        allowed: false,
         status: "flagged",
         category: undefined,
         severity: undefined,
         confidence: 0,
-        reasoning: "Moderation failed, flagged for async review",
+        reasoning: "Moderation unavailable — content blocked pending review",
       };
     }
   },

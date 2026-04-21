@@ -31,7 +31,7 @@ describe("LocaleShell", () => {
     mockUsePathname.mockReturnValue("/");
 
     render(
-      <LocaleShell isAuthenticated={false}>
+      <LocaleShell isAuthenticated={false} isAdmin={false}>
         <div>Landing content</div>
       </LocaleShell>,
     );
@@ -45,7 +45,7 @@ describe("LocaleShell", () => {
     mockUsePathname.mockReturnValue("/zh");
 
     render(
-      <LocaleShell isAuthenticated={false}>
+      <LocaleShell isAuthenticated={false} isAdmin={false}>
         <div>Landing content</div>
       </LocaleShell>,
     );

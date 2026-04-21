@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getChildSession } from "@/lib/auth";
 import { sanitizeInput } from "@/lib/sanitize";
 import { QuestGenerationInputSchema } from "@/lib/ai/quest-schemas";
-import { generateQuest } from "@/lib/ai/claude";
+import { generateQuest } from "@/lib/ai/client";
 import { prisma } from "@/lib/db";
 import { moderateContent } from "@/lib/moderation";
 

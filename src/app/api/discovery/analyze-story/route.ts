@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getChildSession } from "@/lib/auth";
 import { sanitizeInput } from "@/lib/sanitize";
 import { StoryAnalysisInputSchema } from "@/lib/ai/story-schemas";
-import { analyzeStory } from "@/lib/ai/claude";
+import { analyzeStory } from "@/lib/ai/client";
 import { moderateContent, getUncertaintyFallback } from "@/lib/moderation";
 
 /**

@@ -9,14 +9,14 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
-// Mock the Claude client
-vi.mock("@/lib/ai/claude", () => ({
+// Mock AI client
+vi.mock("@/lib/ai/client", () => ({
   clusterGalleryEntries: vi.fn(),
 }));
 
 import { POST } from "../route";
 import { prisma } from "@/lib/db";
-import { clusterGalleryEntries } from "@/lib/ai/claude";
+import { clusterGalleryEntries } from "@/lib/ai/client";
 
 const mockedFindMany = vi.mocked(prisma.galleryEntry.findMany);
 const mockedCluster = vi.mocked(clusterGalleryEntries);

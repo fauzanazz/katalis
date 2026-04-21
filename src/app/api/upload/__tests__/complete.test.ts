@@ -52,19 +52,19 @@ describe("POST /api/upload/complete", () => {
   });
 
   it("returns 400 for missing key", async () => {
-    mockedGetSession.mockResolvedValue({ childId: "child-1", expiresAt: new Date().toISOString() });
+    mockedGetSession.mockResolvedValue({ childId: "child-1" });
     const res = await POST(createRequest({ category: "image" }));
     expect(res.status).toBe(400);
   });
 
   it("returns 400 for invalid category", async () => {
-    mockedGetSession.mockResolvedValue({ childId: "child-1", expiresAt: new Date().toISOString() });
+    mockedGetSession.mockResolvedValue({ childId: "child-1" });
     const res = await POST(createRequest(makePayload(IMG_KEY, "video")));
     expect(res.status).toBe(400);
   });
 
   it("returns 200 with public URL for valid completion", async () => {
-    mockedGetSession.mockResolvedValue({ childId: "child-1", expiresAt: new Date().toISOString() });
+    mockedGetSession.mockResolvedValue({ childId: "child-1" });
     const fileUrl = `http://localhost:3100/uploads/${IMG_KEY}`;
     mockGetPublicUrl.mockReturnValue(fileUrl);
 
@@ -77,7 +77,7 @@ describe("POST /api/upload/complete", () => {
   });
 
   it("returns consistent structure for image upload", async () => {
-    mockedGetSession.mockResolvedValue({ childId: "child-1", expiresAt: new Date().toISOString() });
+    mockedGetSession.mockResolvedValue({ childId: "child-1" });
     mockGetPublicUrl.mockReturnValue(`http://localhost:3100/uploads/${IMG_KEY}`);
 
     const res = await POST(createRequest(makePayload(IMG_KEY, "image")));
@@ -88,7 +88,7 @@ describe("POST /api/upload/complete", () => {
   });
 
   it("returns consistent structure for audio upload", async () => {
-    mockedGetSession.mockResolvedValue({ childId: "child-1", expiresAt: new Date().toISOString() });
+    mockedGetSession.mockResolvedValue({ childId: "child-1" });
     mockGetPublicUrl.mockReturnValue(`http://localhost:3100/uploads/${AUD_KEY}`);
 
     const res = await POST(createRequest(makePayload(AUD_KEY, "audio")));

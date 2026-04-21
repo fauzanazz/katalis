@@ -3,7 +3,7 @@ import { getChildSession } from "@/lib/auth";
 import { sanitizeInput } from "@/lib/sanitize";
 import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 import { AnalysisInputSchema } from "@/lib/ai/schemas";
-import { analyzeArtifact } from "@/lib/ai/openai";
+import { analyzeArtifact } from "@/lib/ai/client";
 import { moderateImageContent, getUncertaintyFallback } from "@/lib/moderation";
 
 /**

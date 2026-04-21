@@ -46,7 +46,7 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 // --- Mock AI ---
-vi.mock("@/lib/ai/claude", () => ({
+vi.mock("@/lib/ai/client", () => ({
   generateQuest: vi.fn().mockResolvedValue({
     missions: Array.from({ length: 7 }, (_, i) => ({
       day: i + 1,

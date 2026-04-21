@@ -90,9 +90,30 @@ Open [http://localhost:3100](http://localhost:3100) in your browser.
 ```bash
 bun run dev        # Development server on port 3100
 bun run build      # Production build
-bun run test       # Run all tests (496 tests)
+bun run test       # Run all tests (502 tests)
 bun run typecheck  # TypeScript type checking
 bun run lint       # ESLint
+```
+
+## Testing
+
+**Important:** Always use `bun run test`, NOT `bun test`.
+
+| Command | Runner | Config |
+|---------|--------|--------|
+| `bun run test` | Vitest | `vitest.config.mts` ✓ |
+| `bun test` | Bun's built-in | Ignores vitest config ✗ |
+
+This project uses **Vitest** with setup files that mock `server-only` and other Next.js internals. Running `bun test` directly bypasses the vitest config and will cause failures.
+
+```bash
+# Correct
+bun run test                           # Run all tests
+bun run test src/lib/ai                # Run specific folder
+bun run test:watch                     # Watch mode
+
+# Wrong — will fail
+bun test
 ```
 
 ## Project Structure

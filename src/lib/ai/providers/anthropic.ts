@@ -6,8 +6,53 @@ import { QuestGenerationOutputSchema } from "../quest-schemas";
 import type { QuestGenerationInput, QuestGenerationOutput } from "../quest-schemas";
 import { ClusteringOutputSchema } from "../clustering-schemas";
 import type { ClusterEntry, ClusteringOutput } from "../clustering-schemas";
+import type { ModerationResult } from "@/lib/moderation/schemas";
+import { mapToModerationResult } from "@/lib/moderation/map-result";
 
 const API_TIMEOUT_MS = 30_000;
+
+const TEXT_MODERATION_PROMPT = `You are a child safety content moderator. Analyze the following text content for any harmful, inappropriate, or unsafe material for children (ages 6-12).
+
+Check for these categories:
+- violence: Threats, graphic violence, weapons, fighting
+- self_harm: Self-injury, depression, suicidal content
+- sexual: Sexual content, inappropriate advances
+- hate: Hate speech, discrimination, slurs
+- harassment: Bullying, targeted harassment, intimidation
+- spam: Repetitive, irrelevant, or promotional content
+- other: Any other concerning content
+
+Respond ONLY with valid JSON:
+{
+  "isHarmful": boolean,
+  "category": "violence" | "self_harm" | "sexual" | "hate" | "harassment" | "spam" | "other" | null,
+  "severity": "low" | "medium" | "high" | "critical" | null,
+  "confidence": number (0.0-1.0),
+  "reasoning": "Brief explanation of the decision"
+}
+
+Be CONSERVATIVE: when in doubt, flag for review rather than allowing. Children's safety is paramount.`;
+
+const IMAGE_MODERATION_PROMPT = `You are a child safety image moderator. Analyze the provided image for any harmful, inappropriate, or unsafe content for children (ages 6-12).
+
+Check for:
+- violence: Graphic violence, weapons, fighting scenes
+- self_harm: Self-injury imagery, concerning symbols
+- sexual: Inappropriate or sexual content
+- hate: Hate symbols, discriminatory imagery
+- harassment: Bullying or targeting imagery
+- other: Any other concerning visual content
+
+Respond ONLY with valid JSON:
+{
+  "isHarmful": boolean,
+  "category": "violence" | "self_harm" | "sexual" | "hate" | "harassment" | "other" | null,
+  "severity": "low" | "medium" | "high" | "critical" | null,
+  "confidence": number (0.0-1.0),
+  "reasoning": "Brief explanation"
+}
+
+Be CONSERVATIVE: when in doubt, flag for review. Children's safety is paramount.`;
 
 const ARTIFACT_SYSTEM_PROMPT = `You are an expert child development specialist and talent scout. Your job is to analyze children's creative artifacts (drawings, paintings, photos, audio recordings) to detect their deep interests and talents.
 
@@ -252,5 +297,53 @@ Design missions that connect their dream with their talents, using materials ava
     return messageJSON(CLUSTERING_SYSTEM_PROMPT, userMessage, 2000, (raw) =>
       ClusteringOutputSchema.parse(raw),
     );
+  },
+
+  async moderateText(content: string): Promise<ModerationResult> {
+    try {
+      const parsed = await messageJSON(
+        TEXT_MODERATION_PROMPT,
+        `Analyze this text for child safety:\n\n"${content}"`,
+        300,
+        (raw) => raw as { isHarmful: boolean; category?: string; severity?: string; confidence: number; reasoning: string },
+      );
+      return mapToModerationResult(parsed);
+    } catch (error) {
+      console.error("Text moderation error:", error);
+      return {
+        allowed: false,
+        status: "flagged",
+        category: undefined,
+        severity: undefined,
+        confidence: 0,
+        reasoning: "Moderation unavailable — content blocked pending review",
+      };
+    }
+  },
+
+  async moderateImage(imageUrl: string): Promise<ModerationResult> {
+    try {
+      const userContent = [
+        { type: "text" as const, text: "Analyze this image for child safety concerns:" },
+        { type: "image" as const, source: { type: "url" as const, url: imageUrl } },
+      ];
+      const parsed = await messageJSON(
+        IMAGE_MODERATION_PROMPT,
+        userContent,
+        300,
+        (raw) => raw as { isHarmful: boolean; category?: string; severity?: string; confidence: number; reasoning: string },
+      );
+      return mapToModerationResult(parsed);
+    } catch (error) {
+      console.error("Image moderation error:", error);
+      return {
+        allowed: false,
+        status: "flagged",
+        category: undefined,
+        severity: undefined,
+        confidence: 0,
+        reasoning: "Moderation unavailable — content blocked pending review",
+      };
+    }
   },
 };

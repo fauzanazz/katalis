@@ -130,9 +130,13 @@ async function getClient() {
   return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: API_TIMEOUT_MS });
 }
 
+type ContentBlock =
+  | { type: "text"; text: string }
+  | { type: "image"; source: { type: "url"; url: string } };
+
 async function messageJSON<T>(
   systemPrompt: string,
-  userMessage: string,
+  userContent: string | ContentBlock[],
   maxTokens: number,
   parse: (raw: unknown) => T,
 ): Promise<T> {
@@ -140,13 +144,18 @@ async function messageJSON<T>(
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
+  const content =
+    typeof userContent === "string"
+      ? userContent
+      : (userContent as Parameters<typeof client.messages.create>[0]["messages"][0]["content"]);
+
   try {
     const response = await client.messages.create(
       {
         model: "claude-sonnet-4-20250514",
         max_tokens: maxTokens,
         system: systemPrompt,
-        messages: [{ role: "user", content: userMessage }],
+        messages: [{ role: "user", content }],
       },
       { signal: controller.signal },
     );
@@ -172,12 +181,23 @@ async function messageJSON<T>(
 
 export const anthropicProvider: AIProvider = {
   async analyzeArtifact(input: AnalysisInput): Promise<AnalysisOutput> {
-    const userMessage =
+    const userContent: ContentBlock[] =
       input.artifactType === "image"
-        ? `Please analyze this child's artwork (available at: ${input.artifactUrl}) and detect their interests and talents. Look beyond surface-level categorization.`
-        : `Please analyze this child's audio recording (available at: ${input.artifactUrl}) and detect their interests and talents based on vocal patterns, narrative structure, and content themes. Look beyond surface-level categorization.`;
+        ? [
+            {
+              type: "text",
+              text: "Please analyze this child's artwork and detect their interests and talents. Look beyond surface-level categorization.",
+            },
+            { type: "image", source: { type: "url", url: input.artifactUrl } },
+          ]
+        : [
+            {
+              type: "text",
+              text: `Please analyze this child's audio recording (available at: ${input.artifactUrl}) and detect their interests and talents based on vocal patterns, narrative structure, and content themes. Look beyond surface-level categorization.`,
+            },
+          ];
 
-    return messageJSON(ARTIFACT_SYSTEM_PROMPT, userMessage, 1500, (raw) =>
+    return messageJSON(ARTIFACT_SYSTEM_PROMPT, userContent, 1500, (raw) =>
       AnalysisOutputSchema.parse(raw),
     );
   },

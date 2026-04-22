@@ -6,7 +6,7 @@ import { routing } from "@/i18n/routing";
 
 const CreateChildSchema = z.object({
   name: z.string().min(1).max(50),
-  locale: z.enum(routing.locales as [string, ...string[]]).optional(),
+  locale: z.enum([...routing.locales]).optional(),
 });
 
 export async function POST(request: NextRequest | Request) {

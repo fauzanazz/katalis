@@ -750,6 +750,22 @@
       "backHome": "Ke Dashboard"
     }
   },
+  "legal": {
+    "privacy": {
+      "title": "Kebijakan Privasi",
+      "stub": "Privasi Anda penting bagi kami. Katalis dirancang dengan mempertimbangkan keamanan anak-anak. Kami mengumpulkan data minimal, tidak pernah menjual informasi pribadi, dan mematuhi peraturan perlindungan anak. Orang tua dapat meminta penghapusan data kapan saja."
+    },
+    "terms": {
+      "title": "Ketentuan Layanan",
+      "stub": "Dengan menggunakan Katalis, Anda setuju untuk menggunakan platform secara bertanggung jawab. Konten harus sesuai untuk anak usia 6-12 tahun. Kami berhak memoderasi dan menghapus konten yang melanggar pedoman komunitas kami."
+    },
+    "contact": {
+      "title": "Hubungi Kami",
+      "stub": "Punya pertanyaan, masukan, atau butuh bantuan? Kami senang mendengar dari Anda. Hubungi tim kami dan kami akan merespons sesegera mungkin.",
+      "emailHref": "mailto:hello@katalis.app",
+      "emailCta": "Email kami di hello@katalis.app"
+    }
+  },
   "badges": {
     "title": "Lencana Kamu",
     "subtitle": "Lencana yang kamu dapatkan dalam perjalanan kreatifmu!",

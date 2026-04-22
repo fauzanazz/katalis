@@ -750,6 +750,22 @@
       "backHome": "返回仪表板"
     }
   },
+  "legal": {
+    "privacy": {
+      "title": "隐私政策",
+      "stub": "您的隐私对我们很重要。Katalis 的设计以儿童安全为先。我们收集最少的数据，从不出售个人信息，并遵守儿童隐私保护法规。家长可以随时请求删除数据。"
+    },
+    "terms": {
+      "title": "服务条款",
+      "stub": "使用 Katalis，即表示您同意负责任地使用本平台。内容必须适合 6-12 岁儿童。我们保留对违反社区准则的内容进行审核和删除的权利。"
+    },
+    "contact": {
+      "title": "联系我们",
+      "stub": "有问题、反馈或需要帮助？我们很乐意听取您的意见。请联系我们的团队，我们会尽快回复您。",
+      "emailHref": "mailto:hello@katalis.app",
+      "emailCta": "发送邮件至 hello@katalis.app"
+    }
+  },
   "badges": {
     "title": "你的徽章",
     "subtitle": "你在创意旅程中获得的徽章！",

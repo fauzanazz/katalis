@@ -32,11 +32,12 @@ model AccessCode {
 
 model Child {
   id               String         @id @default(cuid())
-  accessCodeId     String
+  accessCodeId     String?
+  name             String?
   locale           String         @default("id")
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
-  accessCode       AccessCode     @relation(fields: [accessCodeId], references: [id])
+  accessCode       AccessCode?    @relation(fields: [accessCodeId], references: [id])
   discoveries      Discovery[]
   quests           Quest[]
   galleryEntries   GalleryEntry[]

@@ -607,6 +607,7 @@
       "subtitle": "跟踪孩子的进步并获取指导建议",
       "loading": "正在加载孩子数据...",
       "addChild": "添加孩子",
+      "linkWithCode": "使用访问码关联",
       "noChildren": "尚未关联孩子",
       "noChildrenHint": "输入孩子的访问码以在此处查看他们的进步。",
       "childTitle": "孩子 {id}",
@@ -614,7 +615,19 @@
       "questCount": "{count, plural, one {# 个任务} other {# 个任务}}",
       "tipPreview": "推荐活动",
       "viewReports": "查看报告",
+      "openAsChild": "以孩子身份登录",
+      "switching": "切换中...",
       "reportError": "生成报告失败，请重试。"
+    },
+    "createChild": {
+      "title": "添加新孩子",
+      "description": "为您的孩子创建个人资料。输入他们的名字以便识别。",
+      "nameLabel": "孩子姓名",
+      "namePlaceholder": "例如：小明",
+      "submit": "创建孩子资料",
+      "cancel": "取消",
+      "creating": "创建中...",
+      "errorDefault": "无法创建孩子资料，请重试。"
     },
     "claim": {
       "title": "关联您的孩子",

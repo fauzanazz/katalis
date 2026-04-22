@@ -87,6 +87,7 @@ export async function getParentChildren(userId: string): Promise<LinkedChild[]> 
 
     return {
       id: child.id,
+      name: child.name ?? undefined,
       locale: child.locale,
       claimedAt: link.claimedAt.toISOString(),
       latestTalents,

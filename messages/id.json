@@ -607,6 +607,7 @@
       "subtitle": "Pantau perkembangan anak dan dapatkan tips bimbingan",
       "loading": "Memuat data anak...",
       "addChild": "Tambah Anak",
+      "linkWithCode": "Hubungkan dengan Kode",
       "noChildren": "Belum ada anak yang terhubung",
       "noChildrenHint": "Masukkan kode akses anak Anda untuk melihat perkembangannya di sini.",
       "childTitle": "Anak {id}",
@@ -614,7 +615,19 @@
       "questCount": "{count, plural, one {# misi} other {# misi}}",
       "tipPreview": "Aktivitas yang Disarankan",
       "viewReports": "Lihat Laporan",
+      "openAsChild": "Masuk sebagai Anak",
+      "switching": "Mengalihkan...",
       "reportError": "Gagal membuat laporan. Silakan coba lagi."
+    },
+    "createChild": {
+      "title": "Tambah Anak Baru",
+      "description": "Buat profil untuk anak Anda. Masukkan nama mereka untuk identifikasi.",
+      "nameLabel": "Nama Anak",
+      "namePlaceholder": "contoh: Sarah",
+      "submit": "Buat Profil Anak",
+      "cancel": "Batal",
+      "creating": "Membuat...",
+      "errorDefault": "Tidak dapat membuat profil anak. Silakan coba lagi."
     },
     "claim": {
       "title": "Hubungkan Anak Anda",

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { ClaimChildDialog } from "@/components/parent/ClaimChildDialog";
+import { AddChildDialog } from "@/components/parent/AddChildDialog";
 import { ChildCard } from "@/components/parent/ChildCard";
 
 interface LinkedChildData {
@@ -24,6 +25,7 @@ export default function ParentDashboardPage() {
   const [children, setChildren] = useState<LinkedChildData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showClaimDialog, setShowClaimDialog] = useState(false);
+  const [showAddDialog, setShowAddDialog] = useState(false);
 
   const fetchChildren = useCallback(async () => {
     setIsLoading(true);
@@ -69,27 +71,43 @@ export default function ParentDashboardPage() {
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{t("title")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <button
-          onClick={() => setShowClaimDialog(true)}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-          {t("addChild")}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowAddDialog(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            {t("addChild")}
+          </button>
+          <button
+            onClick={() => setShowClaimDialog(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-primary bg-transparent px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10"
+          >
+            {t("linkWithCode")}
+          </button>
+        </div>
       </div>
 
       {children.length === 0 ? (
         <div className="rounded-lg border bg-muted/30 p-8 text-center">
           <p className="text-lg font-medium text-muted-foreground">{t("noChildren")}</p>
           <p className="mt-1 text-sm text-muted-foreground">{t("noChildrenHint")}</p>
-          <button
-            onClick={() => setShowClaimDialog(true)}
-            className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            {t("addChild")}
-          </button>
+          <div className="mt-4 flex justify-center gap-2">
+            <button
+              onClick={() => setShowAddDialog(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              {t("addChild")}
+            </button>
+            <button
+              onClick={() => setShowClaimDialog(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-primary bg-transparent px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10"
+            >
+              {t("linkWithCode")}
+            </button>
+          </div>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -102,6 +120,12 @@ export default function ParentDashboardPage() {
       <ClaimChildDialog
         open={showClaimDialog}
         onClose={() => setShowClaimDialog(false)}
+        onSuccess={handleClaimSuccess}
+      />
+
+      <AddChildDialog
+        open={showAddDialog}
+        onClose={() => setShowAddDialog(false)}
         onSuccess={handleClaimSuccess}
       />
     </div>

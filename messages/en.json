@@ -750,6 +750,22 @@
       "backHome": "Go to Dashboard"
     }
   },
+  "legal": {
+    "privacy": {
+      "title": "Privacy Policy",
+      "stub": "Your privacy is important to us. Katalis is designed with children's safety in mind. We collect minimal data, never sell personal information, and comply with COPPA regulations. Parents can request data deletion at any time."
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "stub": "By using Katalis, you agree to use the platform responsibly. Content must be appropriate for children ages 6-12. We reserve the right to moderate and remove content that violates our community guidelines."
+    },
+    "contact": {
+      "title": "Contact Us",
+      "stub": "Have questions, feedback, or need support? We'd love to hear from you. Reach out to our team and we'll get back to you as soon as possible.",
+      "emailHref": "mailto:hello@katalis.app",
+      "emailCta": "Email us at hello@katalis.app"
+    }
+  },
   "badges": {
     "title": "Your Badges",
     "subtitle": "Badges you've earned on your creative journey!",

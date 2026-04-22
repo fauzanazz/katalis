@@ -87,9 +87,9 @@ async function runModeration(
       return moderateText(content);
     default:
       return {
-        allowed: true,
+        allowed: false,
         status: "flagged",
-        reasoning: `Unknown content type: ${contentType}`,
+        reasoning: `Unknown content type — content blocked pending review`,
       };
   }
 }

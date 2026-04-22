@@ -26,14 +26,14 @@ export function mapToModerationResult(raw: unknown): ModerationResult {
   const validated = AiModerationResponseSchema.safeParse(raw);
 
   if (!validated.success) {
-    // AI returned unexpected shape — flag for human review
+    // AI returned unexpected shape — block for safety, flag for human review
     return {
-      allowed: true,
+      allowed: false,
       status: "flagged",
       category: undefined,
       severity: undefined,
       confidence: 0,
-      reasoning: "AI moderation response was invalid, flagged for review",
+      reasoning: "Moderation unavailable — content blocked pending review",
     };
   }
 

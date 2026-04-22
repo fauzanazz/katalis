@@ -58,6 +58,7 @@ export type ParentReport = z.infer<typeof ParentReportSchema>;
 /** Linked child summary for parent dashboard */
 export const LinkedChildSchema = z.object({
   id: z.string(),
+  name: z.string().optional(),
   locale: z.string(),
   claimedAt: z.string(),
   latestTalents: z.array(z.string()).optional(),

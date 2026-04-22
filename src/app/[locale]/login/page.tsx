@@ -42,7 +42,7 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        router.push("/dashboard");
+        router.push("/discover");
         router.refresh();
       } else {
         if (data.error === "expired") {
@@ -81,7 +81,7 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        router.push("/dashboard");
+        router.push("/parent");
         router.refresh();
       } else {
         if (data.error === "rate_limited") {

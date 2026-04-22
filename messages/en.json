@@ -607,6 +607,7 @@
       "subtitle": "Track your child's progress and get mentoring tips",
       "loading": "Loading your children...",
       "addChild": "Add Child",
+      "linkWithCode": "Link with Code",
       "noChildren": "No children linked yet",
       "noChildrenHint": "Enter your child's access code to see their progress here.",
       "childTitle": "Child {id}",
@@ -614,7 +615,19 @@
       "questCount": "{count, plural, one {# quest} other {# quests}}",
       "tipPreview": "Suggested Activities",
       "viewReports": "View Reports",
+      "openAsChild": "Open as Child",
+      "switching": "Switching...",
       "reportError": "Failed to generate report. Please try again."
+    },
+    "createChild": {
+      "title": "Add New Child",
+      "description": "Create a profile for your child. You can enter their name to identify them.",
+      "nameLabel": "Child's Name",
+      "namePlaceholder": "e.g. Sarah",
+      "submit": "Create Child",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "errorDefault": "Could not create child profile. Please try again."
     },
     "claim": {
       "title": "Link Your Child",

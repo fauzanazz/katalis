@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 
 interface ChildCardProps {
   child: {
     id: string;
+    name?: string;
     locale: string;
     claimedAt: string;
     latestTalents?: string[];
@@ -21,6 +23,28 @@ interface ChildCardProps {
 
 export function ChildCard({ child }: ChildCardProps) {
   const t = useTranslations("parent.dashboard");
+  const router = useRouter();
+  const [isSwitching, setIsSwitching] = useState(false);
+
+  const handleOpenAsChild = async () => {
+    setIsSwitching(true);
+    try {
+      const response = await fetch("/api/parent/switch-child", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ childId: child.id }),
+      });
+
+      if (response.ok) {
+        router.push("/discover");
+        router.refresh();
+      }
+    } catch (err) {
+      console.error("Failed to switch to child:", err);
+    } finally {
+      setIsSwitching(false);
+    }
+  };
 
   const talentEmoji: Record<string, string> = {
     Engineering: "🤖",
@@ -37,7 +61,9 @@ export function ChildCard({ child }: ChildCardProps) {
     <div className="rounded-lg border bg-card p-4">
       <div className="flex items-start justify-between">
         <div>
-          <h3 className="font-semibold">{t("childTitle", { id: child.id.slice(-4) })}</h3>
+          <h3 className="font-semibold">
+            {child.name || t("childTitle", { id: child.id.slice(-4) })}
+          </h3>
           <p className="text-xs text-muted-foreground">
             {t("claimedAt", { date: new Date(child.claimedAt).toLocaleDateString() })}
           </p>
@@ -78,7 +104,15 @@ export function ChildCard({ child }: ChildCardProps) {
         </div>
       )}
 
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={handleOpenAsChild}
+          disabled={isSwitching}
+          className="inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        >
+          {isSwitching ? t("switching") : t("openAsChild")}
+        </button>
         <Link
           href={`/parent/reports?childId=${child.id}`}
           className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20"

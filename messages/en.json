@@ -342,6 +342,12 @@
         "tooShort": "Your story needs at least {min} characters. Keep going, you're doing great!",
         "tooLong": "Your story is too long! Maximum {max} characters."
       }
+    },
+    "parentAuth": {
+      "title": "Select a Child First",
+      "message": "To use the Discover feature, you need to open the app as one of your children.",
+      "goToParent": "Go to Parent Dashboard",
+      "hint": "You can switch to your child's account from the Parent Dashboard."
     }
   },
   "quest": {

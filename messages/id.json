@@ -342,6 +342,12 @@
         "tooShort": "Ceritamu perlu minimal {min} karakter. Terus menulis, kamu hebat!",
         "tooLong": "Ceritamu terlalu panjang! Maksimal {max} karakter."
       }
+    },
+    "parentAuth": {
+      "title": "Pilih Anak Terlebih Dahulu",
+      "message": "Untuk menggunakan fitur Discover, Anda perlu membuka aplikasi sebagai salah satu anak Anda.",
+      "goToParent": "Ke Dashboard Orang Tua",
+      "hint": "Anda dapat beralih ke akun anak Anda dari Dashboard Orang Tua."
     }
   },
   "quest": {

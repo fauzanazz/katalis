@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { ImageIcon, Mic, ArrowLeft, Sparkles, BookOpen } from "lucide-react";
+import { ImageIcon, Mic, ArrowLeft, Sparkles, BookOpen, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UploadZone } from "@/components/upload/UploadZone";
 import { AudioRecorder } from "@/components/upload/AudioRecorder";
@@ -18,6 +18,7 @@ import type { AnalysisOutput } from "@/lib/ai/schemas";
 type DiscoveryFlow = "selection" | "image" | "audio" | "story";
 type AnalysisState = "idle" | "analyzing" | "done" | "error";
 type ErrorType = "ai_failure" | "timeout" | "network";
+type AuthState = "loading" | "child" | "parent" | "unauthenticated";
 
 /**
  * Saves discovery results to the database via API.
@@ -46,6 +47,7 @@ export default function DiscoverPage() {
   const t = useTranslations("discover");
   const router = useRouter();
 
+  const [authState, setAuthState] = useState<AuthState>("loading");
   const [flow, setFlow] = useState<DiscoveryFlow>("selection");
   const [analysisState, setAnalysisState] = useState<AnalysisState>("idle");
   const [analysisResults, setAnalysisResults] = useState<AnalysisOutput | null>(null);
@@ -54,6 +56,26 @@ export default function DiscoverPage() {
 
   // Generate random story prompt images once per story flow entry
   const storyImages = useMemo(() => getRandomStoryPrompts(3), []);
+
+  // Check session type on mount
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const res = await fetch("/api/auth/session");
+        const data = await res.json();
+        if (!data.authenticated) {
+          setAuthState("unauthenticated");
+        } else if (data.type === "user") {
+          setAuthState("parent");
+        } else {
+          setAuthState("child");
+        }
+      } catch {
+        setAuthState("unauthenticated");
+      }
+    }
+    checkAuth();
+  }, []);
 
   const runAnalysis = useCallback(async (upload: UploadResultData) => {
     setAnalysisState("analyzing");
@@ -167,6 +189,42 @@ export default function DiscoverPage() {
     },
     [],
   );
+
+  // Loading state while checking auth
+  if (authState === "loading") {
+    return (
+      <div className="mx-auto flex min-h-[50vh] w-full max-w-2xl items-center justify-center px-4">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  // Parent session - needs to select a child first
+  if (authState === "parent") {
+    return (
+      <div className="mx-auto w-full max-w-md px-4 py-12 sm:py-16">
+        <div className="flex flex-col items-center gap-6 text-center">
+          <div className="flex size-16 items-center justify-center rounded-full bg-amber-100">
+            <Users className="size-8 text-amber-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-ink">
+              {t("parentAuth.title")}
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              {t("parentAuth.message")}
+            </p>
+          </div>
+          <Button onClick={() => router.push("/parent")} size="lg">
+            {t("parentAuth.goToParent")}
+          </Button>
+          <p className="text-sm text-muted-foreground">
+            {t("parentAuth.hint")}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12">

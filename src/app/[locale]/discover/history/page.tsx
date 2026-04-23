@@ -80,9 +80,9 @@ export default function DiscoveryHistoryPage() {
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "artifact":
-        return <ImageIcon className="size-5 text-blue-500" />;
+        return <ImageIcon className="size-5 text-amber-500" />;
       case "story":
-        return <BookOpen className="size-5 text-purple-500" />;
+        return <BookOpen className="size-5 text-orange-500" />;
       default:
         return <Mic className="size-5 text-red-500" />;
     }
@@ -104,7 +104,7 @@ export default function DiscoveryHistoryPage() {
   if (loading) {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center justify-center px-4 py-16">
-        <div className="size-12 animate-spin rounded-full border-4 border-zinc-200 border-t-blue-500" />
+        <div className="size-12 animate-spin rounded-full border-4 border-zinc-200 border-t-amber-500" />
         <p className="mt-4 text-muted-foreground">
           {t("results.loading")}
         </p>
@@ -113,7 +113,7 @@ export default function DiscoveryHistoryPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12">
+    <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12 bg-gradient-to-b from-amber-50 to-orange-100 min-h-screen rounded-2xl">
       {/* Header */}
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
@@ -132,8 +132,8 @@ export default function DiscoveryHistoryPage() {
       {/* Empty state */}
       {discoveries.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted px-6 py-16 text-center">
-          <div className="mb-4 flex size-20 items-center justify-center rounded-full bg-gradient-to-r from-blue-100 to-purple-100">
-            <Sparkles className="size-10 text-purple-600" />
+          <div className="mb-4 flex size-20 items-center justify-center rounded-full bg-gradient-to-r from-amber-100 to-orange-100">
+            <Sparkles className="size-10 text-amber-600" />
           </div>
           <h2 className="text-xl font-bold text-ink">
             {t("history.empty")}
@@ -159,7 +159,7 @@ export default function DiscoveryHistoryPage() {
               href={`/discover/results/${discovery.id}`}
             >
               <div
-                className="group rounded-xl border border-border bg-card p-5 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
+                className="group rounded-xl border border-border bg-card p-5 shadow-sm transition-all hover:border-amber-300 hover:shadow-md"
                 role="article"
                 aria-label={`${getTypeLabel(discovery.type)} - ${t("history.talentSummary", { count: discovery.talents.length })}`}
               >
@@ -190,7 +190,7 @@ export default function DiscoveryHistoryPage() {
                         {discovery.talents.slice(0, 3).map((talent, i) => (
                           <span
                             key={`${talent.name}-${i}`}
-                            className="inline-block rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700"
+                            className="inline-block rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700"
                           >
                             {talent.name}
                           </span>
@@ -221,7 +221,7 @@ export default function DiscoveryHistoryPage() {
               >
                 {loadingMore ? (
                   <>
-                    <div className="mr-2 size-4 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600" />
+                    <div className="mr-2 size-4 animate-spin rounded-full border-2 border-amber-200 border-t-amber-600" />
                     {t("history.loadMore")}
                   </>
                 ) : (

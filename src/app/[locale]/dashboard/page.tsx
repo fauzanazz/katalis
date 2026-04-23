@@ -20,14 +20,12 @@ function DashboardContent() {
   const t = useTranslations();
 
   return (
-    <div
-      className="flex flex-1 flex-col items-center justify-center bg-background px-4"
-    >
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-amber-50 to-orange-100 px-4">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-ink">
+        <h1 className="text-3xl font-bold text-amber-900">
           {t("common.appName")}
         </h1>
-        <p className="mt-2 text-muted-foreground">
+        <p className="mt-2 text-amber-700">
           {t("landing.hero.subtitle")}
         </p>
       </div>

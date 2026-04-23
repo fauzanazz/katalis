@@ -144,7 +144,7 @@ export default function QuestCompletePage() {
   if (pageState === "loading") {
     return (
       <div className="mx-auto flex w-full max-w-3xl flex-col items-center justify-center px-4 py-16">
-        <div className="size-12 animate-spin rounded-full border-4 border-zinc-200 border-t-blue-500" />
+        <div className="size-12 animate-spin rounded-full border-4 border-zinc-200 border-t-amber-500" />
         <p className="mt-4 text-muted-foreground">
           {t("loading")}
         </p>
@@ -274,7 +274,7 @@ export default function QuestCompletePage() {
   const topTalent = quest.detectedTalents?.[0]?.name ?? "Creative";
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:py-8">
+    <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:py-8 bg-gradient-to-b from-amber-50 to-orange-100 min-h-screen">
       {/* Screen reader announcement */}
       <div
         role="status"
@@ -339,7 +339,7 @@ export default function QuestCompletePage() {
         {/* Dream */}
         <div className="mb-4 flex items-start gap-2 text-sm text-muted-foreground">
           <Sparkles
-            className="mt-0.5 size-4 shrink-0 text-purple-500"
+            className="mt-0.5 size-4 shrink-0 text-amber-500"
             aria-hidden="true"
           />
           <div>
@@ -363,12 +363,12 @@ export default function QuestCompletePage() {
               })}
             </span>
           </div>
-          <div className="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
+          <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
             <Camera
-              className="size-6 text-blue-600"
+              className="size-6 text-amber-600"
               aria-hidden="true"
             />
-            <span className="text-sm font-medium text-blue-700">
+            <span className="text-sm font-medium text-amber-700">
               {t("photosUploaded", { count: photosUploaded })}
             </span>
           </div>
@@ -423,8 +423,8 @@ export default function QuestCompletePage() {
                   }
                   className={`group relative overflow-hidden rounded-lg border-2 transition-all ${
                     isSelected
-                      ? "border-blue-500 ring-2 ring-blue-300"
-                      : "border-zinc-200 hover:border-blue-300"
+                      ? "border-amber-500 ring-2 ring-amber-300"
+                      : "border-zinc-200 hover:border-amber-300"
                   }`}
                 >
                   <div className="aspect-square overflow-hidden">
@@ -443,7 +443,7 @@ export default function QuestCompletePage() {
                   <div
                     className={`absolute bottom-0 left-0 right-0 px-2 py-1 text-xs font-medium ${
                       isSelected
-                        ? "bg-blue-600 text-white"
+                        ? "bg-amber-600 text-white"
                         : "bg-black/60 text-white"
                     }`}
                   >
@@ -452,7 +452,7 @@ export default function QuestCompletePage() {
 
                   {/* Selection indicator */}
                   {isSelected && (
-                    <div className="absolute right-1 top-1 flex size-6 items-center justify-center rounded-full bg-blue-600 text-white">
+                    <div className="absolute right-1 top-1 flex size-6 items-center justify-center rounded-full bg-amber-600 text-white">
                       <CheckCircle2
                         className="size-4"
                         aria-hidden="true"
@@ -466,7 +466,7 @@ export default function QuestCompletePage() {
 
         {/* Selection label */}
         {selectedDay !== null && (
-          <p className="mt-3 text-sm font-medium text-blue-600">
+          <p className="mt-3 text-sm font-medium text-amber-600">
             {t("selectedPhoto", { day: selectedDay })}
           </p>
         )}

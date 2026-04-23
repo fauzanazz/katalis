@@ -103,7 +103,7 @@ export default function DiscoveryResultsPage() {
   if (loading) {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center justify-center px-4 py-16">
-        <div className="size-12 animate-spin rounded-full border-4 border-zinc-200 border-t-blue-500" />
+        <div className="size-12 animate-spin rounded-full border-4 border-zinc-200 border-t-amber-500" />
         <p className="mt-4 text-muted-foreground">{t("loading")}</p>
       </div>
     );
@@ -129,7 +129,7 @@ export default function DiscoveryResultsPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12">
+    <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12 bg-gradient-to-b from-amber-50 to-orange-100 min-h-screen rounded-2xl">
       {/* Navigation and actions */}
       <div className="mb-6 flex items-center justify-between">
         <Link href="/discover">
@@ -159,8 +159,8 @@ export default function DiscoveryResultsPage() {
 
       {/* Header */}
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-gradient-to-r from-blue-100 to-purple-100">
-          <Sparkles className="size-8 text-purple-600" />
+        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-gradient-to-r from-amber-100 to-orange-100">
+          <Sparkles className="size-8 text-amber-600" />
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
           {t("pageTitle")}
@@ -216,7 +216,7 @@ export default function DiscoveryResultsPage() {
               })}
             >
               <div
-                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500"
+                className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-500"
                 style={{ width: `${talent.confidence * 100}%` }}
               />
             </div>

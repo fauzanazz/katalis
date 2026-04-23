@@ -60,7 +60,7 @@ export default function QuestListPage() {
           <XCircle className="size-5 text-zinc-400" aria-hidden="true" />
         );
       default:
-        return <Clock className="size-5 text-blue-500" aria-hidden="true" />;
+        return <Clock className="size-5 text-amber-500" aria-hidden="true" />;
     }
   };
 
@@ -78,7 +78,7 @@ export default function QuestListPage() {
   if (loading) {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center justify-center px-4 py-16">
-        <div className="size-12 animate-spin rounded-full border-4 border-zinc-200 border-t-blue-500" />
+        <div className="size-12 animate-spin rounded-full border-4 border-zinc-200 border-t-amber-500" />
         <p className="mt-4 text-muted-foreground">
           {t("title")}...
         </p>
@@ -87,7 +87,7 @@ export default function QuestListPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12">
+    <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12 bg-gradient-to-b from-amber-50 to-orange-100 min-h-screen">
       {/* Header */}
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
@@ -101,8 +101,8 @@ export default function QuestListPage() {
       {/* Empty state */}
       {quests.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted px-6 py-16 text-center">
-          <div className="mb-4 flex size-20 items-center justify-center rounded-full bg-gradient-to-r from-purple-100 to-blue-100">
-            <Sparkles className="size-10 text-purple-600" />
+          <div className="mb-4 flex size-20 items-center justify-center rounded-full bg-gradient-to-r from-amber-100 to-orange-100">
+            <Sparkles className="size-10 text-amber-600" />
           </div>
           <h2 className="text-xl font-bold text-ink">
             {t("empty")}
@@ -133,7 +133,7 @@ export default function QuestListPage() {
             return (
               <Link key={quest.id} href={`/quest/${quest.id}`}>
                 <div
-                  className="group rounded-xl border border-border bg-card p-5 shadow-sm transition-all hover:border-blue-300 hover:shadow-md"
+                  className="group rounded-xl border border-border bg-card p-5 shadow-sm transition-all hover:border-amber-300 hover:shadow-md"
                   role="article"
                   aria-label={`${quest.dream} - ${getStatusLabel(quest.status)} - ${t("progress", { completed: quest.completedCount, total: quest.totalMissions })}`}
                 >
@@ -154,7 +154,7 @@ export default function QuestListPage() {
                                 ? "bg-green-50 text-green-700"
                                 : quest.status === "abandoned"
                                   ? "bg-zinc-100 text-zinc-500"
-                                  : "bg-blue-50 text-blue-700"
+                                  : "bg-amber-50 text-amber-700"
                             }`}
                           >
                             {getStatusLabel(quest.status)}
@@ -181,7 +181,7 @@ export default function QuestListPage() {
                             className={`h-full rounded-full transition-all duration-500 ${
                               quest.status === "completed"
                                 ? "bg-green-500"
-                                : "bg-gradient-to-r from-blue-500 to-green-500"
+                                : "bg-gradient-to-r from-amber-400 to-orange-500"
                             }`}
                             style={{ width: `${progressPercent}%` }}
                           />

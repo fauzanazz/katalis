@@ -227,7 +227,7 @@ export default function DiscoverPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12">
+    <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12 bg-gradient-to-b from-amber-50 to-orange-100 min-h-screen rounded-2xl">
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
           {t("title")}
@@ -268,10 +268,10 @@ export default function DiscoverPage() {
             <button
               type="button"
               onClick={() => setFlow("image")}
-              className="flex flex-col items-center gap-3 rounded-xl border-2 border-border bg-card p-6 transition-all hover:border-blue-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="flex flex-col items-center gap-3 rounded-xl border-2 border-border bg-card p-6 transition-all hover:border-amber-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
             >
-              <div className="flex size-14 items-center justify-center rounded-full bg-blue-100">
-                <ImageIcon className="size-7 text-blue-600" />
+              <div className="flex size-14 items-center justify-center rounded-full bg-amber-100">
+                <ImageIcon className="size-7 text-amber-600" />
               </div>
               <h3 className="text-lg font-semibold text-ink">
                 {t("flowSelection.uploadArtifact")}
@@ -302,10 +302,10 @@ export default function DiscoverPage() {
             <button
               type="button"
               onClick={() => setFlow("story")}
-              className="flex flex-col items-center gap-3 rounded-xl border-2 border-border bg-card p-6 transition-all hover:border-purple-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+              className="flex flex-col items-center gap-3 rounded-xl border-2 border-border bg-card p-6 transition-all hover:border-orange-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
             >
-              <div className="flex size-14 items-center justify-center rounded-full bg-purple-100">
-                <BookOpen className="size-7 text-purple-600" />
+              <div className="flex size-14 items-center justify-center rounded-full bg-orange-100">
+                <BookOpen className="size-7 text-orange-600" />
               </div>
               <h3 className="text-lg font-semibold text-ink">
                 {t("flowSelection.storyMode")}

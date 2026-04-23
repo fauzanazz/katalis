@@ -150,7 +150,7 @@ export default function QuestOverviewPage() {
   if (loading) {
     return (
       <div className="mx-auto flex w-full max-w-5xl flex-col items-center justify-center px-4 py-16">
-        <div className="size-12 animate-spin rounded-full border-4 border-zinc-200 border-t-blue-500" />
+        <div className="size-12 animate-spin rounded-full border-4 border-zinc-200 border-t-amber-500" />
         <p className="mt-4 text-muted-foreground">
           {t("loading")}
         </p>
@@ -189,7 +189,7 @@ export default function QuestOverviewPage() {
   const isAllDaysComplete = quest.completedCount === quest.totalMissions;
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:py-8">
+    <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:py-8 bg-gradient-to-b from-amber-50 to-orange-100 min-h-screen">
       {/* Back button */}
       <div className="mb-4">
         <Link href="/quest">
@@ -212,7 +212,7 @@ export default function QuestOverviewPage() {
         {/* Dream */}
         <div className="mt-3 flex items-start gap-2 text-sm text-muted-foreground">
           <Sparkles
-            className="mt-0.5 size-4 shrink-0 text-purple-500"
+            className="mt-0.5 size-4 shrink-0 text-amber-500"
             aria-hidden="true"
           />
           <div>

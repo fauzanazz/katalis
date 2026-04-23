@@ -175,9 +175,9 @@ export default function QuestNewPage() {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-16 sm:py-24">
         <div className="flex flex-col items-center gap-6 text-center">
-          <div className="flex size-20 items-center justify-center rounded-full bg-purple-100">
+          <div className="flex size-20 items-center justify-center rounded-full bg-amber-100">
             <Loader2
-              className="size-10 animate-spin text-purple-600"
+              className="size-10 animate-spin text-amber-600"
               aria-hidden="true"
             />
           </div>
@@ -225,9 +225,9 @@ export default function QuestNewPage() {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-16 sm:py-24">
         <div className="flex flex-col items-center gap-6 text-center">
-          <div className="flex size-20 items-center justify-center rounded-full bg-purple-100">
+          <div className="flex size-20 items-center justify-center rounded-full bg-amber-100">
             <Loader2
-              className="size-10 animate-spin text-purple-600"
+              className="size-10 animate-spin text-amber-600"
               aria-hidden="true"
             />
           </div>
@@ -280,7 +280,7 @@ export default function QuestNewPage() {
 
   // Form state
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12">
+    <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12 bg-gradient-to-b from-amber-50 to-orange-100 min-h-screen">
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
           {t("title")}
@@ -292,15 +292,15 @@ export default function QuestNewPage() {
 
       {/* Talent summary from latest discovery */}
       {latestDiscovery && latestDiscovery.talents.length > 0 && (
-        <div className="mb-8 rounded-xl border border-purple-200 bg-purple-50 p-4">
-          <h2 className="mb-3 text-sm font-semibold text-purple-800">
+        <div className="mb-8 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <h2 className="mb-3 text-sm font-semibold text-amber-800">
             {t("talentSummary")}
           </h2>
           <div className="flex flex-wrap gap-2">
             {latestDiscovery.talents.map((talent) => (
               <span
                 key={talent.name}
-                className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-sm font-medium text-purple-700"
+                className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-700"
               >
                 <Sparkles className="mr-1.5 size-3.5" aria-hidden="true" />
                 {talent.name}
@@ -326,7 +326,7 @@ export default function QuestNewPage() {
             placeholder={t("dreamPlaceholder")}
             maxLength={DREAM_MAX_LENGTH}
             rows={3}
-            className={`w-full resize-none rounded-lg border bg-white px-4 py-3 text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+            className={`w-full resize-none rounded-lg border bg-white px-4 py-3 text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500 ${
               dreamError
                 ? "border-red-400 focus:ring-red-500"
                 : "border-zinc-300"
@@ -387,7 +387,7 @@ export default function QuestNewPage() {
             placeholder={t("contextPlaceholder")}
             maxLength={CONTEXT_MAX_LENGTH}
             rows={3}
-            className={`w-full resize-none rounded-lg border bg-white px-4 py-3 text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+            className={`w-full resize-none rounded-lg border bg-white px-4 py-3 text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500 ${
               contextError
                 ? "border-red-400 focus:ring-red-500"
                 : "border-zinc-300"

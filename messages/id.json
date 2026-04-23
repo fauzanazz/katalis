@@ -130,6 +130,39 @@
       "invalid": "Kode akses tidak valid",
       "expired": "Kode akses ini sudah kedaluwarsa"
     },
+    "choose": {
+      "title": "Siapa yang masuk?",
+      "subtitle": "Pilih jenis akun untuk memulai",
+      "parentTitle": "Saya Orang Tua",
+      "parentDesc": "Kelola perjalanan belajar anakmu",
+      "childTitle": "Saya Anak-Anak",
+      "childDesc": "Lanjutkan petualanganmu!"
+    },
+    "parent": {
+      "title": "Masuk sebagai Orang Tua",
+      "back": "Kembali",
+      "emailLabel": "Email",
+      "emailPlaceholder": "kamu@contoh.com",
+      "passwordLabel": "Kata Sandi",
+      "passwordPlaceholder": "Masukkan kata sandi",
+      "submit": "Masuk",
+      "errors": {
+        "required": "Mohon masukkan email dan kata sandi",
+        "invalid": "Email atau kata sandi salah"
+      }
+    },
+    "child": {
+      "title": "Siap menjelajah?",
+      "subtitle": "Masukkan kode rahasiamu untuk mulai!",
+      "back": "Kembali",
+      "codePlaceholder": "Masukkan kode rahasiamu",
+      "submit": "Ayo Mulai!",
+      "errors": {
+        "empty": "Mohon masukkan kode aksesmu",
+        "invalid": "Kode akses tidak valid",
+        "expired": "Kode akses ini sudah kedaluwarsa"
+      }
+    },
     "emailLogin": {
       "emailLabel": "Email",
       "emailPlaceholder": "kamu@contoh.com",

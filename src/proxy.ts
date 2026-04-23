@@ -7,10 +7,10 @@ import { decrypt, SESSION_COOKIE_NAME } from "@/lib/auth";
 const intlMiddleware = createMiddleware(routing);
 
 /** Routes that do NOT require authentication (locale-prefixed paths without the locale) */
-const publicPagePaths = ["/login", "/register", "", "/gallery", "/privacy", "/terms", "/contact"];
+const publicPagePaths = ["/register", "", "/gallery", "/privacy", "/terms", "/contact"];
 
 /** Path prefixes that are public (matched with startsWith) */
-const publicPathPrefixes = ["/gallery"];
+const publicPathPrefixes = ["/gallery", "/login"];
 
 /** Check if a locale-stripped path is public */
 function isPublicPage(pathnameWithoutLocale: string): boolean {

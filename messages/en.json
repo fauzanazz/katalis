@@ -130,6 +130,39 @@
       "invalid": "Access code is not valid",
       "expired": "This access code has expired"
     },
+    "choose": {
+      "title": "Who's logging in?",
+      "subtitle": "Choose your account type to get started",
+      "parentTitle": "I'm a Parent",
+      "parentDesc": "Manage your child's learning journey",
+      "childTitle": "I'm a Kid",
+      "childDesc": "Continue your adventure!"
+    },
+    "parent": {
+      "title": "Parent Sign In",
+      "back": "Back",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "submit": "Sign In",
+      "errors": {
+        "required": "Please enter your email and password",
+        "invalid": "Invalid email or password"
+      }
+    },
+    "child": {
+      "title": "Ready to explore?",
+      "subtitle": "Enter your secret code to start!",
+      "back": "Back",
+      "codePlaceholder": "Enter your secret code",
+      "submit": "Let's Go!",
+      "errors": {
+        "empty": "Please enter your access code",
+        "invalid": "Access code is not valid",
+        "expired": "This access code has expired"
+      }
+    },
     "emailLogin": {
       "emailLabel": "Email",
       "emailPlaceholder": "you@example.com",

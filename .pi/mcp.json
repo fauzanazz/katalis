@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "vercel": {
+      "url": "https://mcp.vercel.com",
+      "auth": "oauth",
+      "lifecycle": "lazy"
+    }
+  }
+}

@@ -234,26 +234,35 @@ async function chatJSON<T>(
 
 export const nvidiaProvider: AIProvider = {
   async analyzeArtifact(input: AnalysisInput): Promise<AnalysisOutput> {
-    const userContent =
-      input.artifactType === "image"
-        ? [
-            {
-              type: "text" as const,
-              text: "Please analyze this child's artwork and detect their interests and talents. Look beyond surface-level categorization.",
-            },
-            { type: "image_url" as const, image_url: { url: input.artifactUrl } },
-          ]
-        : [
-            {
-              type: "text" as const,
-              text: `Please analyze this child's audio recording (available at: ${input.artifactUrl}) and detect their interests and talents based on vocal patterns, narrative structure, and content themes. Look beyond surface-level categorization.`,
-            },
-          ];
+    console.log("[NVIDIA] analyzeArtifact called for:", input.artifactType);
+    try {
+      const userContent =
+        input.artifactType === "image"
+          ? [
+              {
+                type: "text" as const,
+                text: "Please analyze this child's artwork and detect their interests and talents. Look beyond surface-level categorization.",
+              },
+              { type: "image_url" as const, image_url: { url: input.artifactUrl } },
+            ]
+          : [
+              {
+                type: "text" as const,
+                text: `Please analyze this child's audio recording (available at: ${input.artifactUrl}) and detect their interests and talents based on vocal patterns, narrative structure, and content themes. Look beyond surface-level categorization.`,
+              },
+            ];
 
-    const model = input.artifactType === "image" ? VISION_MODEL : TEXT_MODEL;
-    return chatJSON(ARTIFACT_SYSTEM_PROMPT, userContent, 1500, (raw) =>
-      AnalysisOutputSchema.parse(raw),
-    model);
+      const model = input.artifactType === "image" ? VISION_MODEL : TEXT_MODEL;
+      const result = await chatJSON(ARTIFACT_SYSTEM_PROMPT, userContent, 1500, (raw) =>
+        AnalysisOutputSchema.parse(raw),
+      model);
+      console.log("[NVIDIA] analyzeArtifact success, talents:", result.talents.length);
+      return result;
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error("[NVIDIA] analyzeArtifact error:", msg);
+      throw error;
+    }
   },
 
   async analyzeStory(input: StoryAnalysisInput): Promise<StoryAnalysisOutput> {

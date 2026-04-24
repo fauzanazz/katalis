@@ -97,13 +97,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
-    console.error("Analysis error:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("[Analysis] Error:", errorMessage, error);
 
     // Check for timeout
-    if (
-      error instanceof Error &&
-      error.message.includes("timed out")
-    ) {
+    if (errorMessage.includes("timed out")) {
       return NextResponse.json(
         {
           error: "timeout",

@@ -49,3 +49,4 @@ public/uploads/
 
 # research with credentials
 .factory/research/cloudflare-r2.md
+.env*.local

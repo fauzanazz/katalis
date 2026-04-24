@@ -349,6 +349,7 @@ Design missions that connect their dream with their talents, using materials ava
 
   async moderateImage(imageUrl: string): Promise<ModerationResult> {
     try {
+      console.log("[NVIDIA] moderateImage starting for URL length:", imageUrl.length);
       const userContent: ChatCompletionContentPart[] = [
         { type: "text", text: "Analyze this image for child safety concerns:" },
         { type: "image_url", image_url: { url: imageUrl } },
@@ -361,16 +362,16 @@ Design missions that connect their dream with their talents, using materials ava
         VISION_MODEL,
       );
       const result = mapToModerationResult(parsed);
-      console.log("[Moderation] Image result:", {
+      console.log("[NVIDIA] Image moderation success:", {
         allowed: result.allowed,
         status: result.status,
         category: result.category,
         confidence: result.confidence,
-        reasoning: result.reasoning?.slice(0, 100),
       });
       return result;
     } catch (error) {
-      console.error("[Moderation] Image moderation API error:", error);
+      const errMsg = error instanceof Error ? error.message : String(error);
+      console.error("[NVIDIA] Image moderation error:", errMsg);
       return {
         allowed: true,
         status: "error",

@@ -49,7 +49,9 @@ export async function moderateContent(
 export async function moderateImageContent(
   input: ImageModerationInput,
 ): Promise<ModerationResult & { eventId: string }> {
+  console.log("[Moderation] Starting image moderation for:", input.imageUrl.slice(0, 80));
   const result = await moderateImage(input.imageUrl);
+  console.log("[Moderation] Result:", { allowed: result.allowed, status: result.status });
 
   const event = await prisma.moderationEvent.create({
     data: {

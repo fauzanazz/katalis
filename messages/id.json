@@ -319,6 +319,7 @@
       "errorGeneral": "Ups! Kami belum bisa menganalisis karyamu saat ini.",
       "errorTimeout": "Analisis memakan waktu terlalu lama. Ayo coba lagi!",
       "errorNetwork": "Sepertinya kamu tidak terhubung ke internet. Periksa koneksimu dan coba lagi.",
+      "errorContentBlocked": "Ayo coba membuat sesuatu yang berbeda! Bagaimana kalau menggambar hewan favoritmu atau dunia ajaib?",
       "errorHint": "Jangan khawatir, unggahanmu aman. Cukup ketuk tombol untuk mencoba lagi!",
       "retry": "Coba Lagi",
       "lowConfidence": "Kami masih mempelajari bakat unikmu! Teruslah berkarya dan menjelajah — setiap karyamu membantu kami mengenalmu lebih baik.",

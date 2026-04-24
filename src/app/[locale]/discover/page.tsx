@@ -17,7 +17,7 @@ import type { AnalysisOutput } from "@/lib/ai/schemas";
 
 type DiscoveryFlow = "selection" | "image" | "audio" | "story";
 type AnalysisState = "idle" | "analyzing" | "done" | "error";
-type ErrorType = "ai_failure" | "timeout" | "network";
+type ErrorType = "ai_failure" | "timeout" | "network" | "content_blocked";
 type AuthState = "loading" | "child" | "parent" | "unauthenticated";
 
 /**
@@ -95,6 +95,8 @@ export default function DiscoverPage() {
         const data = await response.json().catch(() => ({}));
         if (response.status === 504 || data.error === "timeout") {
           setErrorType("timeout");
+        } else if (response.status === 403 || data.error === "content_blocked") {
+          setErrorType("content_blocked");
         } else {
           setErrorType("ai_failure");
         }

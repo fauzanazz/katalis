@@ -319,6 +319,7 @@
       "errorGeneral": "Oops! We couldn't analyze your creation right now.",
       "errorTimeout": "The analysis is taking a bit too long. Let's try again!",
       "errorNetwork": "It seems you're not connected. Please check your internet and try again.",
+      "errorContentBlocked": "Let's try something different! How about drawing your favorite animal or a magical world?",
       "errorHint": "Don't worry, your upload is safe. Just tap the button to try again!",
       "retry": "Try Again",
       "lowConfidence": "We're still learning about your unique talents! Keep creating and exploring — every piece helps us understand you better.",

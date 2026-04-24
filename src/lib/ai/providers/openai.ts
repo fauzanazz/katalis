@@ -36,13 +36,19 @@ Be CONSERVATIVE: when in doubt, flag for review rather than allowing. Children's
 
 const IMAGE_MODERATION_PROMPT = `You are a child safety image moderator. Analyze the provided image for any harmful, inappropriate, or unsafe content for children (ages 6-12).
 
-Check for:
-- violence: Graphic violence, weapons, fighting scenes
-- self_harm: Self-injury imagery, concerning symbols
-- sexual: Inappropriate or sexual content
-- hate: Hate symbols, discriminatory imagery
-- harassment: Bullying or targeting imagery
-- other: Any other concerning visual content
+IMPORTANT CONTEXT: This app is for children to upload their OWN creative work (drawings, paintings, crafts). Most uploads will be innocent children's artwork. Do NOT flag normal children's artwork showing:
+- Stick figures, cartoon characters, or simple drawings
+- Animals, nature scenes, houses, vehicles
+- Fantasy elements (dragons, unicorns, superheroes)
+- Abstract art, scribbles, or color experiments
+- Family portraits or self-portraits
+
+Only flag content that is CLEARLY harmful:
+- violence: Realistic graphic violence, real weapons being used harmfully
+- self_harm: Clear depictions of self-injury (not abstract dark themes)
+- sexual: Explicit sexual content (not innocent depictions of people)
+- hate: Clear hate symbols (swastikas, etc.) - not just faces or figures
+- harassment: Targeted bullying imagery with identifiable victims
 
 Respond ONLY with valid JSON:
 {
@@ -53,7 +59,7 @@ Respond ONLY with valid JSON:
   "reasoning": "Brief explanation"
 }
 
-Be CONSERVATIVE: when in doubt, flag for review. Children's safety is paramount.`;
+Default to isHarmful: false for typical children's artwork. Only flag when genuinely concerned.`;
 
 const ARTIFACT_SYSTEM_PROMPT = `You are an expert child development specialist and talent scout. Your job is to analyze children's creative artifacts (drawings, paintings, photos, audio recordings) to detect their deep interests and talents.
 
@@ -299,16 +305,23 @@ Design missions that connect their dream with their talents, using materials ava
         300,
         (raw) => raw as { isHarmful: boolean; category?: string; severity?: string; confidence: number; reasoning: string },
       );
-      return mapToModerationResult(parsed);
+      const result = mapToModerationResult(parsed);
+      console.log("[Moderation] Text result:", {
+        allowed: result.allowed,
+        status: result.status,
+        category: result.category,
+        confidence: result.confidence,
+      });
+      return result;
     } catch (error) {
-      console.error("Text moderation error:", error);
+      console.error("[Moderation] Text moderation API error:", error);
       return {
-        allowed: false,
-        status: "flagged",
+        allowed: true,
+        status: "error",
         category: undefined,
         severity: undefined,
         confidence: 0,
-        reasoning: "Moderation unavailable — content blocked pending review",
+        reasoning: "Moderation service temporarily unavailable — content allowed pending review",
       };
     }
   },
@@ -325,16 +338,26 @@ Design missions that connect their dream with their talents, using materials ava
         300,
         (raw) => raw as { isHarmful: boolean; category?: string; severity?: string; confidence: number; reasoning: string },
       );
-      return mapToModerationResult(parsed);
+      const result = mapToModerationResult(parsed);
+      console.log("[Moderation] Image result:", {
+        allowed: result.allowed,
+        status: result.status,
+        category: result.category,
+        confidence: result.confidence,
+        reasoning: result.reasoning?.slice(0, 100),
+      });
+      return result;
     } catch (error) {
-      console.error("Image moderation error:", error);
+      console.error("[Moderation] Image moderation API error:", error);
+      // Allow content through on API errors - don't block legitimate uploads due to transient failures
+      // The error is logged for monitoring and manual review if needed
       return {
-        allowed: false,
-        status: "flagged",
+        allowed: true,
+        status: "error",
         category: undefined,
         severity: undefined,
         confidence: 0,
-        reasoning: "Moderation unavailable — content blocked pending review",
+        reasoning: "Moderation service temporarily unavailable — content allowed pending review",
       };
     }
   },

@@ -19,6 +19,7 @@ export const ModerationStatusSchema = z.enum([
   "blocked",
   "flagged",
   "redirected",
+  "error",
 ]);
 export type ModerationStatus = z.infer<typeof ModerationStatusSchema>;
 

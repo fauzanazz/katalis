@@ -26,40 +26,40 @@ const POLICY_RULES: PolicyRule[] = [
   {
     category: "violence",
     action: "block",
-    minSeverity: "low",
-    confidenceThreshold: 0.5,
+    minSeverity: "medium",
+    confidenceThreshold: 0.7,
     redirectMessage:
       "Let's create something amazing together! How about drawing something that makes you happy?",
   },
   {
     category: "self_harm",
     action: "block",
-    minSeverity: "low",
-    confidenceThreshold: 0.3,
+    minSeverity: "medium",
+    confidenceThreshold: 0.7,
     redirectMessage:
       "You matter and you're creative! Let's focus on something wonderful. How about a picture of your favorite place?",
   },
   {
     category: "sexual",
     action: "block",
-    minSeverity: "low",
-    confidenceThreshold: 0.3,
+    minSeverity: "medium",
+    confidenceThreshold: 0.7,
     redirectMessage:
       "Let's keep things fun and creative! Try drawing your favorite animal or a magical world.",
   },
   {
     category: "hate",
     action: "block",
-    minSeverity: "low",
-    confidenceThreshold: 0.4,
+    minSeverity: "medium",
+    confidenceThreshold: 0.7,
     redirectMessage:
       "Kindness is a superpower! Let's use your creativity for something positive. What makes you smile?",
   },
   {
     category: "harassment",
     action: "block",
-    minSeverity: "low",
-    confidenceThreshold: 0.5,
+    minSeverity: "medium",
+    confidenceThreshold: 0.7,
     redirectMessage:
       "Let's be kind to everyone! How about creating something that shows what friendship means to you?",
   },
@@ -67,14 +67,14 @@ const POLICY_RULES: PolicyRule[] = [
     category: "spam",
     action: "flag_for_review",
     minSeverity: "medium",
-    confidenceThreshold: 0.6,
+    confidenceThreshold: 0.8,
     redirectMessage: "",
   },
   {
     category: "other",
     action: "flag_for_review",
-    minSeverity: "medium",
-    confidenceThreshold: 0.7,
+    minSeverity: "high",
+    confidenceThreshold: 0.8,
     redirectMessage: "",
   },
 ];

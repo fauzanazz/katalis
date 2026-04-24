@@ -5,7 +5,7 @@ import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface AnalysisErrorProps {
-  errorType: "ai_failure" | "timeout" | "network";
+  errorType: "ai_failure" | "timeout" | "network" | "content_blocked";
   onRetry: () => void;
 }
 
@@ -22,7 +22,9 @@ export function AnalysisError({ errorType, onRetry }: AnalysisErrorProps) {
       ? "errorTimeout"
       : errorType === "network"
         ? "errorNetwork"
-        : "errorGeneral";
+        : errorType === "content_blocked"
+          ? "errorContentBlocked"
+          : "errorGeneral";
 
   return (
     <div

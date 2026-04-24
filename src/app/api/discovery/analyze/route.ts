@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
             "This content cannot be processed. Let's try something else!",
           redirect: true,
         },
-        { status: 200 },
+        { status: 403 },
       );
     }
 

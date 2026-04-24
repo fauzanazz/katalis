@@ -14,6 +14,10 @@ interface AnalysisResultsProps {
 export function AnalysisResults({ results }: AnalysisResultsProps) {
   const t = useTranslations("discover.analysis");
 
+  if (!results.talents || results.talents.length === 0) {
+    return null;
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="text-center">

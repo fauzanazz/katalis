@@ -702,7 +702,25 @@
       "growthLabel": "Peluang Pertumbuhan",
       "tipsLabel": "Aktivitas di Rumah",
       "badgesLabel": "Lencana yang Diperoleh",
-      "generatedAt": "Dibuat pada {date}"
+      "generatedAt": "Dibuat pada {date}",
+      "downloadPdf": "Unduh PDF"
+    },
+    "tips": {
+      "title": "Perpustakaan Tips Orang Tua",
+      "subtitle": "Aktivitas dan ide untuk mengembangkan bakat anak di rumah",
+      "noTips": "Tidak ada tips untuk kategori ini",
+      "materials": "Bahan yang diperlukan"
+    },
+    "quest": {
+      "childQuest": "Quest Anak Anda",
+      "daysCompleted": "hari selesai",
+      "completed": "Selesai",
+      "day": "Hari",
+      "materialsNeeded": "Bahan yang diperlukan",
+      "howToSupport": "Cara Mendukung",
+      "supportTip1": "Ajukan pertanyaan terbuka tentang karya mereka — 'Apa bagian tersulit?' atau 'Apa yang kamu temukan?'",
+      "supportTip2": "Rayakan usaha dan ketekunan, bukan hanya hasil — 'Kamu terus mencoba meskipun sulit!'",
+      "supportTip3": "Biarkan mereka memimpin proyek — tawarkan bantuan hanya saat mereka minta"
     }
   },
   "admin": {

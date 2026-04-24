@@ -702,7 +702,25 @@
       "growthLabel": "Growth Opportunities",
       "tipsLabel": "At-Home Activities",
       "badgesLabel": "Badges Earned",
-      "generatedAt": "Generated on {date}"
+      "generatedAt": "Generated on {date}",
+      "downloadPdf": "Download PDF"
+    },
+    "tips": {
+      "title": "Parenting Tips Library",
+      "subtitle": "Activities and ideas to nurture your child's talents at home",
+      "noTips": "No tips found for this category",
+      "materials": "Materials needed"
+    },
+    "quest": {
+      "childQuest": "Your Child's Quest",
+      "daysCompleted": "days completed",
+      "completed": "Completed",
+      "day": "Day",
+      "materialsNeeded": "Materials needed",
+      "howToSupport": "How to Support",
+      "supportTip1": "Ask open-ended questions about their work — 'What was the hardest part?' or 'What did you discover?'",
+      "supportTip2": "Celebrate effort and persistence, not just results — 'You kept trying even when it was tricky!'",
+      "supportTip3": "Let them lead the project — offer help only when they ask for it"
     }
   },
   "admin": {

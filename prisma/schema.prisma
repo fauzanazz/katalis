@@ -9,15 +9,16 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  email         String         @unique
+  id            String              @id @default(cuid())
+  email         String              @unique
   passwordHash  String
   name          String
-  role          String         @default("user") // "user", "admin", "ai"
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  role          String              @default("user") // "user", "admin", "ai"
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
   children      ParentChild[]
   parentReports ParentReport[]
+  questFollows  ParentQuestFollow[]
 }
 
 model AccessCode {
@@ -31,19 +32,20 @@ model AccessCode {
 }
 
 model Child {
-  id               String         @id @default(cuid())
-  accessCodeId     String?
-  name             String?
-  locale           String         @default("id")
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  accessCode       AccessCode?    @relation(fields: [accessCodeId], references: [id])
-  discoveries      Discovery[]
-  quests           Quest[]
-  galleryEntries   GalleryEntry[]
-  squadMemberships SquadMember[]
-  parentLinks      ParentChild[]
-  parentReports    ParentReport[]
+  id                 String              @id @default(cuid())
+  accessCodeId       String?
+  name               String?
+  locale             String              @default("id")
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  accessCode         AccessCode?         @relation(fields: [accessCodeId], references: [id])
+  discoveries        Discovery[]
+  quests             Quest[]
+  galleryEntries     GalleryEntry[]
+  squadMemberships   SquadMember[]
+  parentLinks        ParentChild[]
+  parentReports      ParentReport[]
+  parentQuestFollows ParentQuestFollow[]
 }
 
 model Discovery {
@@ -60,19 +62,20 @@ model Discovery {
 }
 
 model Quest {
-  id           String        @id @default(cuid())
-  childId      String
-  discoveryId  String?
-  dream        String
-  localContext String
-  status       String        @default("active") // "active", "completed", "abandoned"
-  generatedAt  DateTime?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  child        Child         @relation(fields: [childId], references: [id])
-  discovery    Discovery?    @relation(fields: [discoveryId], references: [id])
-  missions     Mission[]
-  galleryEntry GalleryEntry?
+  id            String              @id @default(cuid())
+  childId       String
+  discoveryId   String?
+  dream         String
+  localContext  String
+  status        String              @default("active") // "active", "completed", "abandoned"
+  generatedAt   DateTime?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  child         Child               @relation(fields: [childId], references: [id])
+  discovery     Discovery?          @relation(fields: [discoveryId], references: [id])
+  missions      Mission[]
+  galleryEntry  GalleryEntry?
+  parentFollows ParentQuestFollow[]
 }
 
 model Mission {
@@ -293,4 +296,24 @@ model ParentReport {
   @@index([parentId])
   @@index([childId])
   @@index([createdAt])
+}
+
+model ParentQuestFollow {
+  id            String   @id @default(cuid())
+  parentId      String
+  childId       String
+  questId       String
+  currentDay    Int      @default(1)
+  lastViewedAt  DateTime @default(now())
+  notifications Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  parent User  @relation(fields: [parentId], references: [id])
+  child  Child @relation(fields: [childId], references: [id])
+  quest  Quest @relation(fields: [questId], references: [id])
+
+  @@unique([parentId, questId])
+  @@index([parentId])
+  @@index([questId])
 }

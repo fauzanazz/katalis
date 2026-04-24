@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
+import { Download, Loader2 } from "lucide-react";
 
 interface ReportData {
   id: string;
@@ -26,21 +29,47 @@ interface ReportViewProps {
 
 export function ReportView({ report }: ReportViewProps) {
   const t = useTranslations("parent.report");
+  const [downloading, setDownloading] = useState(false);
 
   const periodLabel = report.type === "weekly"
     ? t("weeklyReport")
     : t("biweeklyReport");
 
+  async function handleDownloadPdf() {
+    setDownloading(true);
+    try {
+      window.open(`/api/parent/reports/${report.id}/pdf`, "_blank");
+    } finally {
+      setTimeout(() => setDownloading(false), 1000);
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold">{periodLabel}</h2>
-        <p className="text-sm text-muted-foreground">
-          {t("period", {
-            start: new Date(report.period.start).toLocaleDateString(),
-            end: new Date(report.period.end).toLocaleDateString(),
-          })}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold">{periodLabel}</h2>
+          <p className="text-sm text-muted-foreground">
+            {t("period", {
+              start: new Date(report.period.start).toLocaleDateString(),
+              end: new Date(report.period.end).toLocaleDateString(),
+            })}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleDownloadPdf}
+          disabled={downloading}
+          className="shrink-0 gap-1.5"
+        >
+          {downloading ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Download className="size-4" />
+          )}
+          {t("downloadPdf")}
+        </Button>
       </div>
 
       <div className="rounded-lg border bg-primary/5 p-4">

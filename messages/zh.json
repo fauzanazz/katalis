@@ -669,7 +669,25 @@
       "growthLabel": "成长机会",
       "tipsLabel": "家庭活动",
       "badgesLabel": "获得的徽章",
-      "generatedAt": "生成于 {date}"
+      "generatedAt": "生成于 {date}",
+      "downloadPdf": "下载PDF"
+    },
+    "tips": {
+      "title": "育儿技巧库",
+      "subtitle": "在家培养孩子才能的活动和想法",
+      "noTips": "此类别没有技巧",
+      "materials": "所需材料"
+    },
+    "quest": {
+      "childQuest": "您孩子的任务",
+      "daysCompleted": "天已完成",
+      "completed": "已完成",
+      "day": "第",
+      "materialsNeeded": "所需材料",
+      "howToSupport": "如何支持",
+      "supportTip1": "问一些关于他们作品的开放式问题——'最难的部分是什么？'或'你发现了什么？'",
+      "supportTip2": "赞扬努力和坚持，而不仅仅是结果——'即使很难你也坚持尝试了！'",
+      "supportTip3": "让他们主导项目——只在他们要求时提供帮助"
     }
   },
   "admin": {

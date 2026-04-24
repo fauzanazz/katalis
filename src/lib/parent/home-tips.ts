@@ -26,6 +26,18 @@ const HOME_TIPS_LIBRARY: HomeTip[] = [
     materials: ["Egg", "Newspaper", "Tape", "Cotton balls", "Plastic bags"],
     category: "Engineering",
   },
+  {
+    title: "Marble Run Builder",
+    description: "Create a marble run using cardboard tubes, boxes, and tape. Challenge your child to make the marble travel the longest path possible.",
+    materials: ["Cardboard tubes", "Boxes", "Tape", "Marble"],
+    category: "Engineering",
+  },
+  {
+    title: "Paper Airplane Contest",
+    description: "Fold different paper airplane designs and test which flies the farthest. Discuss why some designs work better than others.",
+    materials: ["Paper", "Measuring tape"],
+    category: "Engineering",
+  },
   // Art
   {
     title: "Nature Color Hunt",
@@ -45,6 +57,18 @@ const HOME_TIPS_LIBRARY: HomeTip[] = [
     materials: ["Paper", "Pencil", "Small toys", "Sunny spot"],
     category: "Art",
   },
+  {
+    title: "Collage Self-Portrait",
+    description: "Cut out pictures from old magazines to create a collage self-portrait. Include things that represent your child's interests and personality.",
+    materials: ["Old magazines", "Scissors", "Glue", "Paper"],
+    category: "Art",
+  },
+  {
+    title: "Leaf Printing",
+    description: "Collect leaves of different shapes. Paint one side and press onto paper to create beautiful natural prints.",
+    materials: ["Leaves", "Paint", "Paper", "Brush"],
+    category: "Art",
+  },
   // Narrative
   {
     title: "Finish the Story",
@@ -58,11 +82,35 @@ const HOME_TIPS_LIBRARY: HomeTip[] = [
     materials: ["Hands and feet for making sounds"],
     category: "Narrative",
   },
+  {
+    title: "Comic Strip Creator",
+    description: "Fold paper into panels and create a short comic strip. Start with 4 panels showing a beginning, middle, and end.",
+    materials: ["Paper", "Pencil", "Markers"],
+    category: "Narrative",
+  },
+  {
+    title: "Interview a Family Member",
+    description: "Help your child prepare questions and interview a grandparent or relative about their childhood. Record or write down the answers.",
+    materials: ["Paper", "Pencil", "Optional: phone for recording"],
+    category: "Narrative",
+  },
   // Music
   {
     title: "Kitchen Band",
     description: "Use pots, pans, and utensils to create music. Experiment with different sounds and try to play a simple rhythm together.",
     materials: ["Pots", "Pans", "Wooden spoons"],
+    category: "Music",
+  },
+  {
+    title: "Water Glass Xylophone",
+    description: "Fill glasses with different amounts of water. Tap them with a spoon to create different notes. Can you play a simple tune?",
+    materials: ["Glass cups", "Water", "Spoon"],
+    category: "Music",
+  },
+  {
+    title: "Nature Sound Walk",
+    description: "Take a walk and listen carefully to all the sounds around you. Try to identify and count how many different sounds you hear.",
+    materials: ["None needed — just ears and outdoors"],
     category: "Music",
   },
   // Science
@@ -78,6 +126,24 @@ const HOME_TIPS_LIBRARY: HomeTip[] = [
     materials: ["Food coloring", "Clear cups", "Water"],
     category: "Science",
   },
+  {
+    title: "Kitchen Volcano",
+    description: "Create a mini volcano using baking soda and vinegar. Discuss why the reaction happens and try adding food coloring for lava!",
+    materials: ["Baking soda", "Vinegar", "Container", "Food coloring"],
+    category: "Science",
+  },
+  {
+    title: "Grow a Bean",
+    description: "Plant a bean seed in a clear container against the glass so you can watch it grow roots and sprout. Water it daily and observe changes.",
+    materials: ["Bean seed", "Clear cup", "Cotton balls or soil", "Water"],
+    category: "Science",
+  },
+  {
+    title: "Magnet Explorer",
+    description: "Test different objects around the house to discover what sticks to a magnet and what doesn't. Sort them into two groups.",
+    materials: ["Magnet", "Various household objects"],
+    category: "Science",
+  },
   // Creative (fallback)
   {
     title: "Mystery Box",
@@ -89,6 +155,18 @@ const HOME_TIPS_LIBRARY: HomeTip[] = [
     title: "Treasure Map",
     description: "Draw a treasure map of your home together. Hide a small treasure and mark the spot. Take turns making maps and finding treasure!",
     materials: ["Paper", "Crayons", "Small treasure (sticker, coin, etc.)"],
+    category: "Creative",
+  },
+  {
+    title: "Invention Time",
+    description: "Challenge your child to invent something new using only items from the recycling bin. Have them name it and explain how it works.",
+    materials: ["Recyclable items", "Tape", "Scissors"],
+    category: "Creative",
+  },
+  {
+    title: "Dream Journal",
+    description: "Keep a journal by the bed. Each morning, draw or write about any dreams remembered. Look for patterns over time!",
+    materials: ["Notebook", "Pencil", "Crayons"],
     category: "Creative",
   },
 ];

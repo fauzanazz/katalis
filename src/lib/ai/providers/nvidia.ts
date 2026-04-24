@@ -180,13 +180,20 @@ Respond ONLY with valid JSON in this exact format:
   ]
 }`;
 
-async function getClient() {
+function getApiKey(): string {
   const apiKey = process.env.NVIDIA_API_KEY;
-  console.log("[NVIDIA] API key available:", !!apiKey, "length:", apiKey?.length ?? 0);
-  if (!apiKey) {
-    throw new Error("NVIDIA_API_KEY environment variable is not set");
+  console.log("[NVIDIA] Checking API key - exists:", !!apiKey, "length:", apiKey?.length ?? 0, "type:", typeof apiKey);
+  if (!apiKey || apiKey.trim() === "") {
+    console.error("[NVIDIA] API key is missing or empty!");
+    throw new Error("NVIDIA_API_KEY environment variable is not set or empty");
   }
-  const { default: OpenAI } = await import("openai");
+  return apiKey;
+}
+
+async function getClient() {
+  const apiKey = getApiKey();
+  console.log("[NVIDIA] Creating OpenAI client with base URL:", BASE_URL);
+  const OpenAI = (await import("openai")).default;
   return new OpenAI({
     apiKey,
     baseURL: BASE_URL,
@@ -353,6 +360,8 @@ Design missions that connect their dream with their talents, using materials ava
   },
 
   async moderateImage(imageUrl: string): Promise<ModerationResult> {
+    console.log("[NVIDIA] === moderateImage called ===");
+    console.log("[NVIDIA] NVIDIA_API_KEY env check:", !!process.env.NVIDIA_API_KEY);
     try {
       console.log("[NVIDIA] moderateImage starting for URL length:", imageUrl.length);
       const userContent: ChatCompletionContentPart[] = [

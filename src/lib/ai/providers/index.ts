@@ -2,6 +2,7 @@ import type { AIProvider } from "../types";
 
 export function getProvider(): AIProvider {
   const provider = process.env.AI_PROVIDER ?? "openai";
+  console.log("[AI] Provider:", provider);
 
   if (provider === "anthropic") {
     // eslint-disable-next-line @typescript-eslint/no-require-imports

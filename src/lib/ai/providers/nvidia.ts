@@ -181,9 +181,14 @@ Respond ONLY with valid JSON in this exact format:
 }`;
 
 async function getClient() {
+  const apiKey = process.env.NVIDIA_API_KEY;
+  console.log("[NVIDIA] API key available:", !!apiKey, "length:", apiKey?.length ?? 0);
+  if (!apiKey) {
+    throw new Error("NVIDIA_API_KEY environment variable is not set");
+  }
   const { default: OpenAI } = await import("openai");
   return new OpenAI({
-    apiKey: process.env.NVIDIA_API_KEY,
+    apiKey,
     baseURL: BASE_URL,
     timeout: API_TIMEOUT_MS,
   });

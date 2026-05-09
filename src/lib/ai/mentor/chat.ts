@@ -1,7 +1,7 @@
 /**
  * Quest Buddy mentor chat — Socratic scaffolding engine.
  *
- * Uses Claude to generate question-first guidance that adapts to the
+ * Uses AI providers (configurable via AI_PROVIDER) to generate question-first guidance that adapts to the
  * child's frustration level. The mentor never gives direct answers;
  * instead, it asks questions that lead the child to discover solutions.
  *
@@ -17,6 +17,7 @@ import type {
 } from "../mentor-schemas";
 import { MentorResponseSchema, SimplifiedMissionSchema, ReflectionSummarySchema } from "../mentor-schemas";
 import { getMockMentorChat, getMockSimplifiedMission, getMockReflectionSummary } from "./mock-chat";
+import { getProvider } from "../providers";
 
 const API_TIMEOUT_MS = 30_000;
 
@@ -102,10 +103,10 @@ export async function mentorChat(
     return getMockMentorChat(childMessage, frustrationLevel, isGreeting);
   }
 
-  return callClaudeMentor(childMessage, frustrationLevel, missionContext, chatHistory, isGreeting);
+  return generateMentorResponse(childMessage, frustrationLevel, missionContext, chatHistory, isGreeting);
 }
 
-async function callClaudeMentor(
+async function generateMentorResponse(
   childMessage: string | null,
   frustrationLevel: FrustrationLevel,
   missionContext: {
@@ -118,40 +119,40 @@ async function callClaudeMentor(
   chatHistory: Array<{ role: string; content: string }>,
   isGreeting: boolean,
 ): Promise<MentorResponse> {
-  const Anthropic = (await import("@anthropic-ai/sdk")).default;
-
-  const client = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-    timeout: API_TIMEOUT_MS,
-  });
-
+  const provider = getProvider();
   const userMessage = buildUserMessage(childMessage, frustrationLevel, missionContext, chatHistory, isGreeting);
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
   try {
-    const response = await client.messages.create(
-      {
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 500,
-        system: MENTOR_SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userMessage }],
-      },
-      { signal: controller.signal },
-    );
+    // Use provider's text generation capability for mentor chat
+    // Since AIProvider doesn't have a generic generateText method,
+    // we'll leverage the text moderation or use a workaround
+    // For now, create a lightweight wrapper that calls the provider's API
+    
+    // Get the underlying provider implementation
+    const providerImpl = await (async () => {
+      const providers = {
+        anthropic: () => import("../providers/anthropic").then(m => m.anthropicProvider),
+        openai: () => import("../providers/openai").then(m => m.openaiProvider),
+        google: () => import("../providers/google").then(m => m.googleProvider),
+        "vertex-ai": () => import("../providers/vertex-ai").then(m => m.vertexAiProvider),
+        openrouter: () => import("../providers/openrouter").then(m => m.openrouterProvider),
+        nvidia: () => import("../providers/nvidia").then(m => m.nvidiaProvider),
+        grok: () => import("../providers/grok").then(m => m.grokProvider),
+      };
+      
+      const providerName = (process.env.AI_PROVIDER ?? "openai") as keyof typeof providers;
+      return providers[providerName]?.() ?? import("../providers/openai").then(m => m.openaiProvider);
+    })();
+
+    // This is a fallback - ideally we'd have a generic generateJSON method on AIProvider
+    // For now, we'll use the direct client approach as before but make it provider-aware
+    const response = await callProviderForMentor(userMessage);
 
     clearTimeout(timeoutId);
-
-    const textBlock = response.content.find(
-      (block: { type: string }) => block.type === "text",
-    );
-    if (!textBlock || textBlock.type !== "text") {
-      throw new Error("Empty response from Claude");
-    }
-
-    const parsed = JSON.parse(textBlock.text);
-    return MentorResponseSchema.parse(parsed);
+    return MentorResponseSchema.parse(response);
   } catch (error) {
     clearTimeout(timeoutId);
     if (error instanceof DOMException && error.name === "AbortError") {
@@ -159,6 +160,94 @@ async function callClaudeMentor(
     }
     throw error;
   }
+}
+
+async function callProviderForMentor(userMessage: string): Promise<unknown> {
+  const providerName = process.env.AI_PROVIDER ?? "openai";
+
+  if (providerName === "anthropic") {
+    const Anthropic = (await import("@anthropic-ai/sdk")).default;
+    const client = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+      timeout: API_TIMEOUT_MS,
+    });
+
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 500,
+      system: MENTOR_SYSTEM_PROMPT,
+      messages: [{ role: "user", content: userMessage }],
+    });
+
+    const textBlock = response.content.find((block: { type: string }) => block.type === "text");
+    if (!textBlock || textBlock.type !== "text") {
+      throw new Error("Empty response from Anthropic");
+    }
+    return JSON.parse(textBlock.text);
+  }
+
+  if (providerName === "google" || providerName === "vertex-ai") {
+    const { VertexAI } = await import("@google-cloud/vertexai");
+    const projectId = process.env.GOOGLE_CLOUD_PROJECT;
+    
+    if (!projectId) {
+      throw new Error("GOOGLE_CLOUD_PROJECT environment variable required for Vertex AI");
+    }
+
+    const vertexAI = new VertexAI({
+      project: projectId,
+      location: process.env.GOOGLE_CLOUD_LOCATION ?? "us-central1",
+    });
+
+    const model = vertexAI.getGenerativeModel({
+      model: process.env.VERTEX_AI_MODEL ?? "gemini-2.0-flash",
+    });
+
+    const response = await model.generateContent({
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: MENTOR_SYSTEM_PROMPT },
+            { text: userMessage },
+          ],
+        },
+      ],
+      generationConfig: {
+        maxOutputTokens: 500,
+        temperature: 0.7,
+      },
+    });
+
+    const result = response.response.candidates?.[0]?.content?.parts?.[0];
+    if (!result?.text) {
+      throw new Error("Empty response from Vertex AI");
+    }
+    return JSON.parse(result.text);
+  }
+
+  // Default to OpenAI
+  const { default: OpenAI } = await import("openai");
+  const client = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    timeout: API_TIMEOUT_MS,
+  });
+
+  const response = await client.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      { role: "system", content: MENTOR_SYSTEM_PROMPT },
+      { role: "user", content: userMessage },
+    ],
+    response_format: { type: "json_object" },
+    max_tokens: 500,
+    temperature: 0.7,
+  });
+
+  const content = response.choices[0]?.message?.content;
+  if (!content) throw new Error("Empty response from OpenAI");
+
+  return JSON.parse(content);
 }
 
 const SIMPLIFY_SYSTEM_PROMPT = `You are a children's education specialist. Given mission instructions that are too complex, create a SIMPLIFIED version that:
@@ -187,47 +276,14 @@ export async function simplifyMission(
     return getMockSimplifiedMission();
   }
 
-  const Anthropic = (await import("@anthropic-ai/sdk")).default;
-  const client = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-    timeout: API_TIMEOUT_MS,
-  });
-
   const userMessage = `Mission: "${missionTitle}"
 Original Instructions: ${JSON.stringify(originalInstructions)}
 Available Materials: ${materials.join(", ")}
 
 Create a simplified version of these instructions (3-4 steps max) using the simplest materials.`;
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
-
-  try {
-    const response = await client.messages.create(
-      {
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 400,
-        system: SIMPLIFY_SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userMessage }],
-      },
-      { signal: controller.signal },
-    );
-
-    clearTimeout(timeoutId);
-
-    const textBlock = response.content.find(
-      (block: { type: string }) => block.type === "text",
-    );
-    if (!textBlock || textBlock.type !== "text") {
-      throw new Error("Empty response from Claude");
-    }
-
-    const parsed = JSON.parse(textBlock.text);
-    return SimplifiedMissionSchema.parse(parsed);
-  } catch (error) {
-    clearTimeout(timeoutId);
-    throw error;
-  }
+  const response = await callProviderForJSON(SIMPLIFY_SYSTEM_PROMPT, userMessage, 400);
+  return SimplifiedMissionSchema.parse(response);
 }
 
 const REFLECTION_SYSTEM_PROMPT = `You are a warm children's development specialist. Given a child's daily reflection about their mission, provide:
@@ -256,12 +312,6 @@ export async function summarizeReflection(
     return getMockReflectionSummary();
   }
 
-  const Anthropic = (await import("@anthropic-ai/sdk")).default;
-  const client = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-    timeout: API_TIMEOUT_MS,
-  });
-
   const userMessage = `Day ${missionDay}: "${missionTitle}"
 
 Child's reflection:
@@ -269,33 +319,98 @@ Child's reflection:
 
 Summarize this reflection with encouragement.`;
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  const response = await callProviderForJSON(REFLECTION_SYSTEM_PROMPT, userMessage, 300);
+  return ReflectionSummarySchema.parse(response);
+}
 
-  try {
-    const response = await client.messages.create(
-      {
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 300,
-        system: REFLECTION_SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userMessage }],
-      },
-      { signal: controller.signal },
-    );
+async function callProviderForJSON(
+  systemPrompt: string,
+  userMessage: string,
+  maxTokens: number,
+): Promise<unknown> {
+  const providerName = process.env.AI_PROVIDER ?? "openai";
 
-    clearTimeout(timeoutId);
+  if (providerName === "anthropic") {
+    const Anthropic = (await import("@anthropic-ai/sdk")).default;
+    const client = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+      timeout: API_TIMEOUT_MS,
+    });
 
-    const textBlock = response.content.find(
-      (block: { type: string }) => block.type === "text",
-    );
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: maxTokens,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userMessage }],
+    });
+
+    const textBlock = response.content.find((block: { type: string }) => block.type === "text");
     if (!textBlock || textBlock.type !== "text") {
-      throw new Error("Empty response from Claude");
+      throw new Error("Empty response from Anthropic");
+    }
+    return JSON.parse(textBlock.text);
+  }
+
+  if (providerName === "google" || providerName === "vertex-ai") {
+    const { VertexAI } = await import("@google-cloud/vertexai");
+    const projectId = process.env.GOOGLE_CLOUD_PROJECT;
+    
+    if (!projectId) {
+      throw new Error("GOOGLE_CLOUD_PROJECT environment variable required for Vertex AI");
     }
 
-    const parsed = JSON.parse(textBlock.text);
-    return ReflectionSummarySchema.parse(parsed);
-  } catch (error) {
-    clearTimeout(timeoutId);
-    throw error;
+    const vertexAI = new VertexAI({
+      project: projectId,
+      location: process.env.GOOGLE_CLOUD_LOCATION ?? "us-central1",
+    });
+
+    const model = vertexAI.getGenerativeModel({
+      model: process.env.VERTEX_AI_MODEL ?? "gemini-2.0-flash",
+    });
+
+    const response = await model.generateContent({
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: systemPrompt },
+            { text: userMessage },
+          ],
+        },
+      ],
+      generationConfig: {
+        maxOutputTokens: maxTokens,
+        temperature: 0.7,
+      },
+    });
+
+    const result = response.response.candidates?.[0]?.content?.parts?.[0];
+    if (!result?.text) {
+      throw new Error("Empty response from Vertex AI");
+    }
+    return JSON.parse(result.text);
   }
+
+  // Default to OpenAI
+  const { default: OpenAI } = await import("openai");
+  const client = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    timeout: API_TIMEOUT_MS,
+  });
+
+  const response = await client.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userMessage },
+    ],
+    response_format: { type: "json_object" },
+    max_tokens: maxTokens,
+    temperature: 0.7,
+  });
+
+  const content = response.choices[0]?.message?.content;
+  if (!content) throw new Error("Empty response from OpenAI");
+
+  return JSON.parse(content);
 }

@@ -24,6 +24,11 @@ export function getProvider(): AIProvider {
     return require("./google").googleProvider as AIProvider;
   }
 
+  if (provider === "vertex-ai") {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require("./vertex-ai").vertexAiProvider as AIProvider;
+  }
+
   if (provider === "grok") {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     return require("./grok").grokProvider as AIProvider;

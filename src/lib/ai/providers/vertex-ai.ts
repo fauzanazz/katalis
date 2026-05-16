@@ -5,6 +5,7 @@
  * Requires: GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_LOCATION, GOOGLE_APPLICATION_CREDENTIALS
  */
 
+import type { Part } from "@google-cloud/vertexai";
 import type { AIProvider } from "../types";
 import { AnalysisOutputSchema } from "../schemas";
 import type { AnalysisInput, AnalysisOutput } from "../schemas";
@@ -198,28 +199,15 @@ async function initializeVertexAI() {
   return new VertexAI({ project: PROJECT_ID, location: REGION });
 }
 
-interface Part {
-  text?: string;
-  inline_data?: {
-    mime_type: string;
-    data: string;
-  };
-}
-
-interface Content {
-  role: string;
-  parts: Part[];
-}
-
 async function generateContent<T>(
   systemPrompt: string,
   userMessage: string | Part[],
-  maxOutputTokens: number,
+  max_output_tokens: number,
   parse: (raw: unknown) => T,
 ): Promise<T> {
   try {
     const vertexAI = await initializeVertexAI();
-    const model = vertexAI.getGenerativeModel({ model: MODEL_ID });
+    const model = vertexAI.preview.getGenerativeModel({ model: MODEL_ID });
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
@@ -241,10 +229,10 @@ async function generateContent<T>(
           ],
         },
       ],
-      generationConfig: {
-        maxOutputTokens,
+      generation_config: {
+        max_output_tokens,
         temperature: 0.7,
-        topP: 0.95,
+        top_p: 0.95,
       },
     });
 

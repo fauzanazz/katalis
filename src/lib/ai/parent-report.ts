@@ -126,7 +126,7 @@ async function callProviderForReport(userMessage: string): Promise<string> {
       location: process.env.GOOGLE_CLOUD_LOCATION ?? "us-central1",
     });
 
-    const model = vertexAI.getGenerativeModel({
+    const model = vertexAI.preview.getGenerativeModel({
       model: process.env.VERTEX_AI_MODEL ?? "gemini-2.0-flash",
     });
 
@@ -140,8 +140,8 @@ async function callProviderForReport(userMessage: string): Promise<string> {
           ],
         },
       ],
-      generationConfig: {
-        maxOutputTokens: 1500,
+      generation_config: {
+        max_output_tokens: 1500,
         temperature: 0.7,
       },
     });

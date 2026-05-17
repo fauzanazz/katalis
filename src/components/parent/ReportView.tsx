@@ -4,6 +4,10 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Download, Loader2 } from "lucide-react";
+import { InterestRadarChart, type InterestDimension } from "./report/InterestRadarChart";
+import { GrowthTimeline, type GrowthSnapshot } from "./report/GrowthTimeline";
+import { MissionEngagement, type EngagementData } from "./report/MissionEngagement";
+import { ActionableSuggestions, type Suggestion } from "./report/ActionableSuggestions";
 
 interface ReportData {
   id: string;
@@ -21,6 +25,11 @@ interface ReportData {
   summary: string;
   badgeHighlights: string[];
   createdAt: string;
+  // Visual report data (optional — render sections only when provided)
+  interests?: InterestDimension[];
+  growthSnapshots?: GrowthSnapshot[];
+  engagement?: EngagementData;
+  suggestions?: Suggestion[];
 }
 
 interface ReportViewProps {
@@ -72,23 +81,22 @@ export function ReportView({ report }: ReportViewProps) {
         </Button>
       </div>
 
-      <div className="rounded-lg border bg-primary/5 p-4">
+      <div className="rounded-xl border border-blue-ocean-light/20 bg-blue-ocean-light/5 p-5">
         <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-primary">
           {t("summaryLabel")}
         </h3>
-        <p className="text-sm leading-relaxed">{report.summary}</p>
+        <p className="text-sm leading-relaxed text-foreground">{report.summary}</p>
       </div>
 
       {report.strengths.length > 0 && (
         <div>
-          <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-green-700">
-            <span aria-hidden="true">💪</span>
+          <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-green-leaf-deep">
             {t("strengthsLabel")}
           </h3>
           <ul className="space-y-2">
             {report.strengths.map((strength, i) => (
-              <li key={i} className="flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3">
-                <span className="mt-0.5 text-green-600" aria-hidden="true">✓</span>
+              <li key={i} className="flex items-center gap-3 rounded-xl border border-green-leaf/40 bg-green-leaf-light/20 px-4 py-3">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-leaf-deep/20 text-xs text-green-leaf-deep" aria-hidden="true">✓</span>
                 <span className="text-sm">{strength}</span>
               </li>
             ))}
@@ -98,14 +106,13 @@ export function ReportView({ report }: ReportViewProps) {
 
       {report.growthAreas.length > 0 && (
         <div>
-          <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-amber-700">
-            <span aria-hidden="true">🌱</span>
+          <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-yellow-sun-deep">
             {t("growthLabel")}
           </h3>
           <ul className="space-y-2">
             {report.growthAreas.map((area, i) => (
-              <li key={i} className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
-                <span className="mt-0.5 text-amber-600" aria-hidden="true">→</span>
+              <li key={i} className="flex items-center gap-3 rounded-xl border border-yellow-sun/30 bg-yellow-sun-light/15 px-4 py-3">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-yellow-sun/20 text-xs text-yellow-sun-deep" aria-hidden="true">→</span>
                 <span className="text-sm">{area}</span>
               </li>
             ))}
@@ -115,19 +122,18 @@ export function ReportView({ report }: ReportViewProps) {
 
       {report.tips.length > 0 && (
         <div>
-          <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-blue-700">
-            <span aria-hidden="true">🏠</span>
+          <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-primary">
             {t("tipsLabel")}
           </h3>
           <div className="grid gap-3 sm:grid-cols-2">
             {report.tips.map((tip) => (
-              <div key={tip.title} className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-                <h4 className="text-sm font-semibold text-blue-900">{tip.title}</h4>
-                <p className="mt-1 text-xs text-blue-800">{tip.description}</p>
+              <div key={tip.title} className="rounded-xl border border-blue-ocean-light/30 bg-blue-ocean-light/8 p-4">
+                <h4 className="text-sm font-semibold text-foreground">{tip.title}</h4>
+                <p className="mt-1 text-xs text-muted-foreground">{tip.description}</p>
                 {tip.materials.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
+                  <div className="mt-2.5 flex flex-wrap gap-1">
                     {tip.materials.map((mat) => (
-                      <span key={mat} className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] text-blue-700">
+                      <span key={mat} className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
                         {mat}
                       </span>
                     ))}
@@ -141,18 +147,35 @@ export function ReportView({ report }: ReportViewProps) {
 
       {report.badgeHighlights.length > 0 && (
         <div>
-          <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-purple-700">
-            <span aria-hidden="true">🏆</span>
+          <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-lavender-mist">
             {t("badgesLabel")}
           </h3>
           <div className="flex flex-wrap gap-2">
             {report.badgeHighlights.map((badge) => (
-              <span key={badge} className="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700">
+              <span key={badge} className="inline-flex items-center rounded-full bg-lavender-mist/15 px-3 py-1 text-xs font-medium text-lavender-mist">
                 {badge.replace(/_/g, " ")}
               </span>
             ))}
           </div>
         </div>
+      )}
+
+      {/* ── Visual Report Sections ── */}
+
+      {report.interests && report.interests.length >= 3 && (
+        <InterestRadarChart interests={report.interests} />
+      )}
+
+      {report.growthSnapshots && report.growthSnapshots.length >= 2 && (
+        <GrowthTimeline snapshots={report.growthSnapshots} />
+      )}
+
+      {report.engagement && (
+        <MissionEngagement engagement={report.engagement} />
+      )}
+
+      {report.suggestions && report.suggestions.length > 0 && (
+        <ActionableSuggestions suggestions={report.suggestions} />
       )}
 
       <p className="text-xs text-muted-foreground">

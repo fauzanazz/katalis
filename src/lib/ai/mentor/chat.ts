@@ -9,6 +9,8 @@
  * a simplified version of the mission that avoids failure framing.
  */
 
+import type { AgeGroup } from "@/lib/age";
+
 import type {
   MentorResponse,
   SimplifiedMission,
@@ -18,38 +20,9 @@ import type {
 import { MentorResponseSchema, SimplifiedMissionSchema, ReflectionSummarySchema } from "../mentor-schemas";
 import { getMockMentorChat, getMockSimplifiedMission, getMockReflectionSummary } from "./mock-chat";
 import { getProvider } from "../providers";
+import { getMentorSystemPrompt } from "./age-config";
 
 const API_TIMEOUT_MS = 30_000;
-
-/** System prompt for the Socratic mentor */
-const MENTOR_SYSTEM_PROMPT = `You are a warm, encouraging mentor for children aged 6–12. You guide them through creative missions using SOCRATIC QUESTIONING — you NEVER give direct answers or solutions. Instead, you ask questions that help the child think and discover answers themselves.
-
-CRITICAL RULES:
-1. NEVER say: "fail", "wrong", "mistake", "incorrect", "try again", "that's not right"
-2. ALWAYS say: "small adjustment", "different approach", "interesting idea", "let's explore"
-3. Keep responses SHORT (1–3 sentences max). Children lose attention with long text.
-4. Use simple words. The child may be a pre-reader or early reader.
-5. Be genuinely curious about their ideas. Celebrate their thinking process.
-6. Use emojis sparingly (1–2 per message max) for warmth.
-
-FRUSTRATION ADAPTATION:
-- none: Ask open-ended questions ("What do you think would happen if…?")
-- low: Offer gentle hints ("Have you looked at the materials list?")
-- medium: Give guided hints + offer "Small Adjustment" option
-- high: Strongly suggest a "Small Adjustment" — simplify the mission
-
-When offering a "Small Adjustment", explain it as a SMART choice, not a step back.
-Say things like: "Let's try a Small Adjustment — this is what real engineers do when they want to make progress faster!"
-
-RESPONSE FORMAT — respond ONLY with valid JSON:
-{
-  "message": "Your mentor message (1-3 sentences)",
-  "suggestions": ["Quick reply option 1", "Quick reply option 2", "Quick reply option 3"],
-  "frustrationLevel": "none|low|medium|high",
-  "offerAdjustment": false
-}
-
-Always provide exactly 3 quick reply suggestions that the child can tap.`;
 
 /** Context builder — assembles the conversation context for Claude */
 function buildUserMessage(
@@ -98,12 +71,20 @@ export async function mentorChat(
   },
   chatHistory: Array<{ role: string; content: string }>,
   isGreeting: boolean,
+  ageGroup: AgeGroup | null | undefined = "unknown",
 ): Promise<MentorResponse> {
   if (process.env.USE_MOCK_AI === "true") {
     return getMockMentorChat(childMessage, frustrationLevel, isGreeting);
   }
 
-  return generateMentorResponse(childMessage, frustrationLevel, missionContext, chatHistory, isGreeting);
+  return generateMentorResponse(
+    childMessage,
+    frustrationLevel,
+    missionContext,
+    chatHistory,
+    isGreeting,
+    ageGroup,
+  );
 }
 
 async function generateMentorResponse(
@@ -118,6 +99,7 @@ async function generateMentorResponse(
   },
   chatHistory: Array<{ role: string; content: string }>,
   isGreeting: boolean,
+  ageGroup: AgeGroup | null | undefined,
 ): Promise<MentorResponse> {
   const provider = getProvider();
   const userMessage = buildUserMessage(childMessage, frustrationLevel, missionContext, chatHistory, isGreeting);
@@ -149,7 +131,7 @@ async function generateMentorResponse(
 
     // This is a fallback - ideally we'd have a generic generateJSON method on AIProvider
     // For now, we'll use the direct client approach as before but make it provider-aware
-    const response = await callProviderForMentor(userMessage);
+    const response = await callProviderForMentor(userMessage, ageGroup);
 
     clearTimeout(timeoutId);
     return MentorResponseSchema.parse(response);
@@ -162,8 +144,12 @@ async function generateMentorResponse(
   }
 }
 
-async function callProviderForMentor(userMessage: string): Promise<unknown> {
+async function callProviderForMentor(
+  userMessage: string,
+  ageGroup: AgeGroup | null | undefined,
+): Promise<unknown> {
   const providerName = process.env.AI_PROVIDER ?? "openai";
+  const systemPrompt = getMentorSystemPrompt(ageGroup);
 
   if (providerName === "anthropic") {
     const Anthropic = (await import("@anthropic-ai/sdk")).default;
@@ -175,7 +161,7 @@ async function callProviderForMentor(userMessage: string): Promise<unknown> {
     const response = await client.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 500,
-      system: MENTOR_SYSTEM_PROMPT,
+      system: systemPrompt,
       messages: [{ role: "user", content: userMessage }],
     });
 
@@ -208,7 +194,7 @@ async function callProviderForMentor(userMessage: string): Promise<unknown> {
         {
           role: "user",
           parts: [
-            { text: MENTOR_SYSTEM_PROMPT },
+            { text: systemPrompt },
             { text: userMessage },
           ],
         },
@@ -236,7 +222,7 @@ async function callProviderForMentor(userMessage: string): Promise<unknown> {
   const response = await client.chat.completions.create({
     model: "gpt-4o",
     messages: [
-      { role: "system", content: MENTOR_SYSTEM_PROMPT },
+      { role: "system", content: systemPrompt },
       { role: "user", content: userMessage },
     ],
     response_format: { type: "json_object" },

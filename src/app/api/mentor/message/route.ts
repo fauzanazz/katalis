@@ -5,6 +5,7 @@ import { sanitizeInput } from "@/lib/sanitize";
 import { SendMessageInputSchema } from "@/lib/ai/mentor-schemas";
 import { mentorChat, detectFrustration } from "@/lib/ai/mentor";
 import { buildBadgeContext, evaluateBadges, awardBadges } from "@/lib/badges";
+import { getAgeGroup } from "@/lib/age";
 
 /**
  * POST /api/mentor/message
@@ -119,6 +120,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Resolve age-band from child's DoB (drives prompts + thresholds)
+    const child = await prisma.child.findUnique({
+      where: { id: mentorSession.childId },
+      select: { dateOfBirth: true },
+    });
+    const { band: ageGroup } = getAgeGroup(child?.dateOfBirth);
+
     // Detect frustration
     const childMessages = mentorSession.messages
       .filter((m) => m.role === "child")
@@ -127,12 +135,15 @@ export async function POST(request: NextRequest) {
 
     const sessionDurationMinutes = (Date.now() - mentorSession.createdAt.getTime()) / 60_000;
 
-    const frustrationLevel = detectFrustration({
-      messageCount: mentorSession.messages.length + (isGreeting ? 0 : 1),
-      childMessageCount: childMessages.length,
-      sessionDurationMinutes,
-      recentChildMessages: childMessages.slice(-5),
-    });
+    const frustrationLevel = detectFrustration(
+      {
+        messageCount: mentorSession.messages.length + (isGreeting ? 0 : 1),
+        childMessageCount: childMessages.length,
+        sessionDurationMinutes,
+        recentChildMessages: childMessages.slice(-5),
+      },
+      ageGroup,
+    );
 
     // Get mentor response
     const chatHistory = mentorSession.messages.map((m) => ({
@@ -152,6 +163,7 @@ export async function POST(request: NextRequest) {
       },
       chatHistory,
       isGreeting,
+      ageGroup,
     );
 
     // Save mentor message

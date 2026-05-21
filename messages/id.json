@@ -689,7 +689,17 @@
       "viewReports": "Lihat Laporan",
       "openAsChild": "Masuk sebagai Anak",
       "switching": "Mengalihkan...",
-      "reportError": "Gagal membuat laporan. Silakan coba lagi."
+      "reportError": "Gagal membuat laporan. Silakan coba lagi.",
+      "zpd": {
+        "title": "Lintasan kemampuan",
+        "placeholder": "Kami sedang mempelajari perkembangan anak Anda…",
+        "bands": {
+          "emerging": "Mulai Berkembang",
+          "developing": "Berkembang",
+          "proficient": "Mahir",
+          "extending": "Melampaui"
+        }
+      }
     },
     "createChild": {
       "title": "Tambah Anak Baru",

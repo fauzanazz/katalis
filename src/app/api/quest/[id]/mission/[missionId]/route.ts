@@ -7,6 +7,7 @@ import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 import { buildBadgeContext, evaluateBadges, awardBadges } from "@/lib/badges";
 import { mapMissionCompletionToInterestSignals } from "@/lib/interests/quest-mapper";
 import { ingestInterestSignals } from "@/lib/interests/ingest-service";
+import { recordZpdEvent } from "@/lib/zpd";
 
 /**
  * Zod schema for mission status update requests.
@@ -262,6 +263,17 @@ export async function PATCH(
         }
       } catch (interestError) {
         console.error("Interest ingestion failed for mission completion, continuing:", interestError);
+      }
+
+      // Record ZPD event (fire-and-forget — failure must not break completion)
+      try {
+        await recordZpdEvent({
+          childId: session.childId,
+          outcome: "completion",
+          missionId,
+        });
+      } catch (zpdError) {
+        console.error("ZPD event recording failed for mission completion, continuing:", zpdError);
       }
 
       return NextResponse.json({

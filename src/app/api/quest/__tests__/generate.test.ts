@@ -19,7 +19,25 @@ vi.mock("@/lib/db", () => ({
     discovery: {
       count: vi.fn(),
     },
+    child: {
+      findUnique: vi.fn().mockResolvedValue({ dateOfBirth: null }),
+    },
   },
+}));
+
+vi.mock("@/lib/zpd", () => ({
+  getZpdScore: vi.fn().mockResolvedValue(0.3),
+  recordZpdEvent: vi.fn(),
+  listSnapshots: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock("@/lib/age", () => ({
+  getAgeGroup: vi.fn().mockReturnValue({ band: "unknown", years: null }),
+}));
+
+vi.mock("@/lib/ai/quest/age-caps", () => ({
+  clampOrRejectMissions: vi.fn().mockReturnValue({ ok: true }),
+  buildAgeConstraintPromptFragment: vi.fn().mockReturnValue(""),
 }));
 
 vi.mock("@/lib/moderation", () => ({

@@ -689,7 +689,17 @@
       "viewReports": "View Reports",
       "openAsChild": "Open as Child",
       "switching": "Switching...",
-      "reportError": "Failed to generate report. Please try again."
+      "reportError": "Failed to generate report. Please try again.",
+      "zpd": {
+        "title": "Capability trajectory",
+        "placeholder": "We're learning about your child's progress…",
+        "bands": {
+          "emerging": "Emerging",
+          "developing": "Developing",
+          "proficient": "Proficient",
+          "extending": "Extending"
+        }
+      }
     },
     "createChild": {
       "title": "Add New Child",

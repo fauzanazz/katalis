@@ -6,6 +6,15 @@ import { ClaimChildDialog } from "@/components/parent/ClaimChildDialog";
 import { AddChildDialog } from "@/components/parent/AddChildDialog";
 import { BackfillDoBPrompt } from "@/components/parent/BackfillDoBPrompt";
 import { ChildCard } from "@/components/parent/ChildCard";
+import { CapabilityTrajectoryCard } from "@/components/parent/CapabilityTrajectoryCard";
+import type { ZpdBand } from "@/lib/zpd";
+
+type ZpdSnapshotData = {
+  id: string;
+  score: number;
+  band: string;
+  createdAt: string;
+};
 
 interface LinkedChildData {
   id: string;
@@ -23,10 +32,25 @@ interface LinkedChildData {
     materials: string[];
     category: string;
   }>;
+  zpdSnapshots?: ZpdSnapshotData[];
 }
 
 export default function ParentDashboardPage() {
   const t = useTranslations("parent.dashboard");
+  const tZpd = useTranslations("parent.dashboard.zpd");
+  const zpdLabels = useMemo(
+    () => ({
+      title: tZpd("title"),
+      placeholder: tZpd("placeholder"),
+      bands: {
+        emerging: tZpd("bands.emerging"),
+        developing: tZpd("bands.developing"),
+        proficient: tZpd("bands.proficient"),
+        extending: tZpd("bands.extending"),
+      } satisfies Record<ZpdBand, string>,
+    }),
+    [tZpd],
+  );
   const [children, setChildren] = useState<LinkedChildData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showClaimDialog, setShowClaimDialog] = useState(false);
@@ -130,7 +154,14 @@ export default function ParentDashboardPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {children.map((child) => (
-            <ChildCard key={child.id} child={child} />
+            <div key={child.id} className="flex flex-col gap-3">
+              <ChildCard child={child} />
+              <CapabilityTrajectoryCard
+                childId={child.id}
+                snapshots={child.zpdSnapshots ?? []}
+                labels={zpdLabels}
+              />
+            </div>
           ))}
         </div>
       )}

@@ -21,6 +21,7 @@ import { MentorResponseSchema, SimplifiedMissionSchema, ReflectionSummarySchema 
 import { getMockMentorChat, getMockSimplifiedMission, getMockReflectionSummary } from "./mock-chat";
 import { getProvider } from "../providers";
 import { getMentorSystemPrompt } from "./age-config";
+import type { ZpdBand } from "@/lib/zpd";
 
 const API_TIMEOUT_MS = 30_000;
 
@@ -252,19 +253,29 @@ Respond ONLY with valid JSON:
 
 /**
  * Generate simplified mission instructions via AI.
+ *
+ * Optional `currentZpdBand` enforces a ZPD floor — the simplification should
+ * not drop below the child's current capability band. The AI is instructed
+ * to stay within the band so the simplification remains challenging.
  */
 export async function simplifyMission(
   originalInstructions: string[],
   missionTitle: string,
   materials: string[],
+  currentZpdBand?: ZpdBand,
 ): Promise<SimplifiedMission> {
   if (process.env.USE_MOCK_AI === "true") {
     return getMockSimplifiedMission();
   }
 
+  const zpdFloorLine = currentZpdBand
+    ? `\nIMPORTANT — ZPD floor: this child is currently in the "${currentZpdBand}" capability band. The simplification must stay at or above this band: still requires effort and skill, just with fewer steps or simpler materials. Do NOT regress to a clearly trivial task.`
+    : "";
+
   const userMessage = `Mission: "${missionTitle}"
 Original Instructions: ${JSON.stringify(originalInstructions)}
 Available Materials: ${materials.join(", ")}
+${zpdFloorLine}
 
 Create a simplified version of these instructions (3-4 steps max) using the simplest materials.`;
 

@@ -4,6 +4,7 @@ import { AnalysisOutputSchema } from "../schemas";
 import type { AnalysisInput, AnalysisOutput } from "../schemas";
 import type { StoryAnalysisInput, StoryAnalysisOutput } from "../story-schemas";
 import { QuestGenerationOutputSchema } from "../quest-schemas";
+import { buildZpdPromptBlock } from "../zpd-prompt";
 import type { QuestGenerationInput, QuestGenerationOutput } from "../quest-schemas";
 import { ClusteringOutputSchema } from "../clustering-schemas";
 import type { ClusterEntry, ClusteringOutput } from "../clustering-schemas";
@@ -281,7 +282,8 @@ export const openrouterProvider: AIProvider = {
 **Detected Talents:**
 ${talentSummary}
 
-Design missions that connect their dream with their talents, using materials available in their local environment. Make it practical, fun, and progressively challenging.`;
+Design missions that connect their dream with their talents, using materials available in their local environment. Make it practical, fun, and progressively challenging.
+${buildZpdPromptBlock(input.zpdScore)}`;
 
     return chatJSON(QUEST_SYSTEM_PROMPT, userMessage, 4000, (raw) =>
       QuestGenerationOutputSchema.parse(raw),

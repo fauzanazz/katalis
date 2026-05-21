@@ -666,7 +666,17 @@
       "viewReports": "查看报告",
       "openAsChild": "以孩子身份登录",
       "switching": "切换中...",
-      "reportError": "生成报告失败，请重试。"
+      "reportError": "生成报告失败，请重试。",
+      "zpd": {
+        "title": "能力轨迹",
+        "placeholder": "我们正在了解孩子的进步…",
+        "bands": {
+          "emerging": "萌芽中",
+          "developing": "发展中",
+          "proficient": "熟练",
+          "extending": "拓展"
+        }
+      }
     },
     "createChild": {
       "title": "添加新孩子",

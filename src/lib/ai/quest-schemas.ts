@@ -25,6 +25,10 @@ export const TalentSummarySchema = z.object({
 
 export type TalentSummary = z.infer<typeof TalentSummarySchema>;
 
+/** AgeGroup union — mirrors `src/lib/age` exports. Kept inline here to keep
+ * this leaf schema module free of cross-module runtime imports. */
+export const AgeGroupSchema = z.enum(["3-6", "7-9", "10-12", "unknown"]);
+
 /** Schema for the quest generation request input */
 export const QuestGenerationInputSchema = z.object({
   dream: z
@@ -39,6 +43,9 @@ export const QuestGenerationInputSchema = z.object({
     .array(TalentSummarySchema)
     .optional(),
   discoveryId: z.string().optional(),
+  zpdScore: z.number().min(0).max(1).optional(),
+  /** Optional. Drives per-band mission duration cap. */
+  ageGroup: AgeGroupSchema.optional(),
 });
 
 export type QuestGenerationInput = z.infer<typeof QuestGenerationInputSchema>;
@@ -51,6 +58,11 @@ export const MissionSchema = z.object({
   instructions: z.array(z.string().min(1)).min(1),
   materials: z.array(z.string().min(1)),
   tips: z.array(z.string().min(1)),
+  phase: z.enum(["high", "medium", "low"]).optional(),
+  intensityHint: z.number().min(0).max(1).optional(),
+  intent: z.string().optional(),
+  /** Optional. Upper bound enforced per age band; see `src/lib/ai/quest/age-caps`. */
+  estimatedMinutes: z.number().int().min(1).max(60).optional(),
 });
 
 export type Mission = z.infer<typeof MissionSchema>;

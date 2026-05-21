@@ -10,6 +10,7 @@ import { getMockStoryAnalysis } from "./mock/story-analysis";
 import { getMockQuestGeneration } from "./mock/quest-generation";
 import { getMockClustering } from "./mock/clustering";
 import { getProvider } from "./providers";
+import { fillPhaseMetadata } from "./zpd-prompt";
 import type { AnalysisInput, AnalysisOutput } from "./schemas";
 import type { StoryAnalysisInput, StoryAnalysisOutput } from "./story-schemas";
 import type { QuestGenerationInput, QuestGenerationOutput } from "./quest-schemas";
@@ -28,8 +29,10 @@ export async function analyzeStory(input: StoryAnalysisInput): Promise<StoryAnal
 }
 
 export async function generateQuest(input: QuestGenerationInput): Promise<QuestGenerationOutput> {
-  if (isMock()) return getMockQuestGeneration(input.dream);
-  return getProvider().generateQuest(input);
+  const raw = isMock()
+    ? await getMockQuestGeneration(input.dream)
+    : await getProvider().generateQuest(input);
+  return fillPhaseMetadata(raw, input.zpdScore);
 }
 
 export async function clusterGalleryEntries(entries: ClusterEntry[]): Promise<ClusteringOutput> {

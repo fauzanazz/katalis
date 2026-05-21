@@ -101,6 +101,7 @@ model Mission {
   phase            String?           // ZPD scaffold phase: "high" | "medium" | "low"
   intensityHint    Float?            // ZPD anchor score used to calibrate this day's task
   intent           String?           // short text intent (e.g., "stretch", "stabilize", "consolidate")
+  estimatedMinutes Int?              // Upper bound enforced per age band; see src/lib/ai/quest/age-caps.
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   quest            Quest             @relation(fields: [questId], references: [id])

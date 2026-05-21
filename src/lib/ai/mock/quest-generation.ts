@@ -9,6 +9,9 @@
  * using locally available materials referenced from the child's context.
  */
 
+import type { AgeGroup } from "@/lib/age";
+
+import { getMissionDurationCap } from "../quest/age-caps";
 import type { QuestGenerationOutput } from "../quest-schemas";
 
 /** Default 7-day robotics quest — for a child who dreams of building robots */
@@ -369,6 +372,7 @@ const artQuestResponse: QuestGenerationOutput = {
  */
 export async function getMockQuestGeneration(
   dream: string,
+  ageGroup?: AgeGroup | null,
 ): Promise<QuestGenerationOutput> {
   // Simulate API latency (1500–3000ms for quest generation)
   const delay = 1500 + Math.random() * 1500;
@@ -376,12 +380,28 @@ export async function getMockQuestGeneration(
 
   const dreamLower = dream.toLowerCase();
   const engineeringKeywords = ["robot", "build", "engineer", "machine", "mechanic", "invent", "construct"];
+  const base = engineeringKeywords.some((kw) => dreamLower.includes(kw))
+    ? roboticsQuestResponse
+    : artQuestResponse;
 
-  if (engineeringKeywords.some((kw) => dreamLower.includes(kw))) {
-    return roboticsQuestResponse;
-  }
+  return applyAgeBandDurations(base, ageGroup);
+}
 
-  return artQuestResponse;
+function applyAgeBandDurations(
+  output: QuestGenerationOutput,
+  ageGroup?: AgeGroup | null,
+): QuestGenerationOutput {
+  const cap = getMissionDurationCap(ageGroup);
+  return {
+    missions: output.missions.map((mission, index) => ({
+      ...mission,
+      // Progressively scale 50% → 100% of cap across days 1-7.
+      estimatedMinutes: Math.min(
+        cap,
+        Math.max(1, Math.round(cap * (0.5 + (index / 6) * 0.5))),
+      ),
+    })),
+  };
 }
 
 /** Exported for direct testing of individual responses */

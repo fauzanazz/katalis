@@ -41,13 +41,21 @@ export default function QuestNewPage() {
   const [latestDiscovery, setLatestDiscovery] =
     useState<LatestDiscovery | null>(null);
 
-  // Fetch latest discovery talents on mount — redirect if none found
+  // Fetch latest discovery talents on mount — fall back to guest_talents if unauthenticated
   useEffect(() => {
     async function fetchLatestDiscovery() {
       try {
         const res = await fetch("/api/discovery/history?limit=1");
         if (!res.ok) {
-          setPageState("no-discovery");
+          // Unauthenticated or error — check for guest session data
+          const raw = sessionStorage.getItem("guest_talents");
+          if (raw) {
+            const parsed = JSON.parse(raw) as TalentSummary[];
+            setLatestDiscovery({ id: "guest", talents: parsed });
+            setPageState("form");
+          } else {
+            setPageState("no-discovery");
+          }
           return;
         }
         const data = await res.json();
@@ -61,12 +69,30 @@ export default function QuestNewPage() {
           });
           setPageState("form");
         } else {
-          // No discoveries — block quest creation
-          setPageState("no-discovery");
+          // No discoveries — check for guest session data
+          const raw = sessionStorage.getItem("guest_talents");
+          if (raw) {
+            const parsed = JSON.parse(raw) as TalentSummary[];
+            setLatestDiscovery({ id: "guest", talents: parsed });
+            setPageState("form");
+          } else {
+            setPageState("no-discovery");
+          }
         }
       } catch {
-        // Can't determine discovery status — show no-discovery state
-        setPageState("no-discovery");
+        // Can't determine discovery status — check guest session data
+        const raw = sessionStorage.getItem("guest_talents");
+        if (raw) {
+          try {
+            const parsed = JSON.parse(raw) as TalentSummary[];
+            setLatestDiscovery({ id: "guest", talents: parsed });
+            setPageState("form");
+          } catch {
+            setPageState("no-discovery");
+          }
+        } else {
+          setPageState("no-discovery");
+        }
       }
     }
     fetchLatestDiscovery();
@@ -155,7 +181,16 @@ export default function QuestNewPage() {
         }
 
         const data = await response.json();
-        // Redirect to quest overview
+        // Guest path: store preview in sessionStorage and go to preview page
+        if (data.guest === true) {
+          sessionStorage.setItem(
+            "guest_quest",
+            JSON.stringify({ dream: dream.trim(), localContext: localContext.trim(), missions: data.missions }),
+          );
+          router.push("/quest/preview");
+          return;
+        }
+        // Authenticated path: redirect to quest overview
         router.push(`/quest/${data.id}`);
       } catch {
         setErrorType("network");

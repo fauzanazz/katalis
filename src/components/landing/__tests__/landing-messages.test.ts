@@ -11,7 +11,6 @@ const requiredLandingPaths = [
   "landing.hero.title",
   "landing.hero.subtitle",
   "landing.hero.cta",
-  "landing.hero.meta",
   "landing.problem.eyebrow",
   "landing.problem.body",
   "landing.stats.centerValue",

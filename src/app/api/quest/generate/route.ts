@@ -5,6 +5,8 @@ import { QuestGenerationInputSchema } from "@/lib/ai/quest-schemas";
 import { generateQuest } from "@/lib/ai/client";
 import { prisma } from "@/lib/db";
 import { moderateContent } from "@/lib/moderation";
+import { mapQuestToInterestSignals } from "@/lib/interests/quest-mapper";
+import { ingestInterestSignals } from "@/lib/interests/ingest-service";
 
 /**
  * POST /api/quest/generate
@@ -18,14 +20,8 @@ import { moderateContent } from "@/lib/moderation";
  */
 export async function POST(request: NextRequest) {
   try {
-    // Require authentication
+    // Auth is optional — guests get a preview without DB persistence
     const session = await getChildSession();
-    if (!session) {
-      return NextResponse.json(
-        { error: "unauthorized", message: "Authentication required" },
-        { status: 401 },
-      );
-    }
 
     // Parse request body
     const body = await request.json().catch(() => null);
@@ -63,7 +59,7 @@ export async function POST(request: NextRequest) {
       content: combinedText,
       contentType: "text",
       sourceType: "quest",
-      childId: session.childId,
+      childId: session?.childId,
     });
 
     if (!moderationResult.allowed) {
@@ -79,7 +75,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify child has at least one discovery (no quest without discovery)
+    // Generate quest via Claude AI
+    const result = await generateQuest({
+      dream,
+      localContext,
+      talents,
+      discoveryId,
+    });
+
+    // Guest path: skip DB and return preview only
+    if (!session) {
+      const guestMissions = result.missions.map((mission) => ({
+        day: mission.day,
+        title: mission.title,
+        description: mission.description,
+        instructions: mission.instructions,
+        materials: mission.materials,
+        tips: mission.tips,
+        status: mission.day === 1 ? "available" : "locked",
+      }));
+      return NextResponse.json(
+        { missions: guestMissions, guest: true },
+        { status: 200 },
+      );
+    }
+
+    // Authenticated path: verify discovery exists then persist
     const discoveryCount = await prisma.discovery.count({
       where: { childId: session.childId },
     });
@@ -94,14 +115,6 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
-
-    // Generate quest via Claude AI
-    const result = await generateQuest({
-      dream,
-      localContext,
-      talents,
-      discoveryId,
-    });
 
     // Create Quest and Mission records in database
     const quest = await prisma.quest.create({
@@ -141,6 +154,21 @@ export async function POST(request: NextRequest) {
       tips: JSON.parse(m.tips) as string[],
       status: m.status,
     }));
+
+    // Ingest quest-started interest signals (fire-and-forget)
+    try {
+      const signals = mapQuestToInterestSignals({ dream, localContext, talents });
+      if (signals.length > 0) {
+        await ingestInterestSignals({
+          childId: session.childId,
+          source: "quest_started",
+          questId: quest.id,
+          signals,
+        });
+      }
+    } catch (interestError) {
+      console.error("Interest ingestion failed for quest generation, continuing:", interestError);
+    }
 
     return NextResponse.json(
       { id: quest.id, missions },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface AnalysisErrorProps {
@@ -9,11 +9,6 @@ interface AnalysisErrorProps {
   onRetry: () => void;
 }
 
-/**
- * Error state shown when AI analysis fails.
- * Displays a friendly message with a retry button.
- * Differentiates between AI failure, timeout, and network errors.
- */
 export function AnalysisError({ errorType, onRetry }: AnalysisErrorProps) {
   const t = useTranslations("discover.analysis");
 
@@ -28,22 +23,36 @@ export function AnalysisError({ errorType, onRetry }: AnalysisErrorProps) {
 
   return (
     <div
-      className="flex flex-col items-center gap-4 rounded-xl border border-red-200 bg-red-50 p-6"
+      className="flex flex-col items-center gap-5 rounded-2xl bg-muted px-6 py-12 text-center"
       role="alert"
     >
-      <AlertCircle className="size-10 text-red-500" />
-      <div className="text-center">
-        <p className="text-lg font-medium text-red-700">
-          {t(messageKey)}
-        </p>
-        <p className="mt-1 text-sm text-red-600">
-          {t("errorHint")}
-        </p>
+      <svg
+        width="52"
+        height="52"
+        viewBox="0 0 52 52"
+        fill="none"
+        aria-hidden="true"
+        className="text-muted-foreground opacity-60"
+      >
+        <circle cx="26" cy="26" r="23" stroke="currentColor" strokeWidth="2" />
+        <circle cx="19" cy="22" r="2.5" fill="currentColor" />
+        <circle cx="33" cy="22" r="2.5" fill="currentColor" />
+        <path
+          d="M18 35 Q26 29 34 35"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
+      </svg>
+
+      <div>
+        <p className="text-lg font-bold text-ink">{t(messageKey)}</p>
+        <p className="mt-1.5 text-sm text-muted-foreground">{t("errorHint")}</p>
       </div>
+
       <Button
         onClick={onRetry}
-        variant="outline"
-        className="border-red-300 text-red-700 hover:bg-red-100"
+        className="bg-yellow-sun-deep font-bold text-white hover:bg-yellow-sun"
       >
         <RefreshCw className="mr-2 size-4" />
         {t("retry")}

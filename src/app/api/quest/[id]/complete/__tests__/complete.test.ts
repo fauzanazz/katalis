@@ -20,16 +20,29 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
+vi.mock("@/lib/interests/quest-mapper", () => ({
+  mapQuestToInterestSignals: vi.fn().mockReturnValue([
+    { interestKey: "science", strength: 0.8, confidence: 0.8, dimension: "engagement" },
+  ]),
+}));
+
+vi.mock("@/lib/interests/ingest-service", () => ({
+  ingestInterestSignals: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { POST } from "../../complete/route";
 import { getChildSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { ingestInterestSignals } from "@/lib/interests/ingest-service";
 
 const mockedGetSession = vi.mocked(getChildSession);
 const mockedQuestFindUnique = vi.mocked(prisma.quest.findUnique);
+const mockedQuestUpdate = vi.mocked(prisma.quest.update);
 const mockedTransaction = vi.mocked(prisma.$transaction);
 const mockedGalleryEntryFindUnique = vi.mocked(
   prisma.galleryEntry.findUnique,
 );
+const mockedIngestSignals = vi.mocked(ingestInterestSignals);
 
 const validSession = {
   childId: "child-1",
@@ -217,6 +230,7 @@ describe("POST /api/quest/[id]/complete", () => {
     const quest = createQuest();
     mockedGetSession.mockResolvedValue(validSession);
     mockedQuestFindUnique.mockResolvedValue(quest as never);
+    mockedQuestUpdate.mockResolvedValue(quest as never);
 
     const request = makeRequest({ skipGallery: true });
     const response = await POST(request, {
@@ -228,6 +242,41 @@ describe("POST /api/quest/[id]/complete", () => {
     expect(data.success).toBe(true);
     expect(data.galleryEntry).toBeNull();
     expect(data.skipped).toBe(true);
+  });
+
+  it("skipGallery updates quest status to completed", async () => {
+    const quest = createQuest({ status: "active" });
+    mockedGetSession.mockResolvedValue(validSession);
+    mockedQuestFindUnique.mockResolvedValue(quest as never);
+    mockedQuestUpdate.mockResolvedValue(quest as never);
+
+    await POST(makeRequest({ skipGallery: true }), {
+      params: Promise.resolve({ id: "quest-1" }),
+    });
+
+    expect(mockedQuestUpdate).toHaveBeenCalledWith({
+      where: { id: "quest-1" },
+      data: { status: "completed" },
+    });
+  });
+
+  it("skipGallery runs quest_completed interest ingestion", async () => {
+    const quest = createQuest();
+    mockedGetSession.mockResolvedValue(validSession);
+    mockedQuestFindUnique.mockResolvedValue(quest as never);
+    mockedQuestUpdate.mockResolvedValue(quest as never);
+
+    await POST(makeRequest({ skipGallery: true }), {
+      params: Promise.resolve({ id: "quest-1" }),
+    });
+
+    expect(mockedIngestSignals).toHaveBeenCalledWith(
+      expect.objectContaining({
+        childId: "child-1",
+        source: "quest_completed",
+        questId: "quest-1",
+      }),
+    );
   });
 
   it("returns 400 when selectedPhotoUrl is not from quest missions", async () => {

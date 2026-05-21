@@ -28,10 +28,9 @@
     "navSheetTitle": "Jelajahi Katalis AI",
     "hero": {
       "safePill": "Aman · Privat · Bebas iklan",
-      "title": "Temukan bakat terpendam anak Anda",
+      "title": "Temukan <accent>bakat terpendam</accent> anak Anda",
       "subtitle": "Mentor AI yang mengubah rasa ingin tahu menjadi karya nyata hanya dalam 7 hari.",
       "cta": "Mulai petualangan",
-      "meta": "Untuk usia 6-12 tahun · Tanpa kartu kredit",
       "imageAlt": "Anak-anak sedang mengeksplorasi proyek kreatif bersama"
     },
     "problem": {
@@ -47,7 +46,7 @@
       "donutAria": "anak kesulitan menemukan minat sejatinya",
       "leftCaption": "anak kesulitan menemukan minat sejatinya",
       "rightTitle": "identitas",
-      "rightCaption": "lorem ipsum dolor sit amet"
+      "rightCaption": "anak yang mengeksplorasi ekspresi kreatif membangun rasa diri yang lebih kuat"
     },
     "journey": {
       "eyebrow": "Perjalanan",
@@ -55,24 +54,24 @@
       "titleEmphasis": "bakat",
       "titleAfter": "",
       "step1": {
-        "title": "Penemuan bakat",
-        "body": "Unggah foto hasil karya anak"
+        "title": "Ceritakan kisahmu",
+        "body": "Anak bercerita tentang minat mereka melalui aktivitas bercerita yang menyenangkan. AI kami membaca di balik kata-kata untuk mengungkap minat tersembunyi dan gaya belajar."
       },
       "step2": {
-        "title": "Pilih misi 7 hari",
-        "body": "AI mengecek bahan yang tersedia di rumah"
+        "title": "Pilih misimu",
+        "body": "Dapatkan petualangan 7 hari yang dipersonalisasi sesuai minat unik anak — hanya menggunakan bahan yang sudah ada di rumah."
       },
       "step3": {
         "title": "Pendampingan harian",
-        "body": "Chat interaktif & refleksi suara"
+        "body": "Setiap hari mentor AI membimbing anak melalui tantangan kreatif, merayakan kemajuan, dan beradaptasi lembut dengan kecepatan serta suasana hati mereka."
       },
       "step4": {
         "title": "Pameran global",
-        "body": "Bergabung dengan Squad dari seluruh dunia"
+        "body": "Bagikan misi yang selesai dengan anak-anak di seluruh dunia. Temukan perspektif berbeda, vote favorit, dan temukan Squad-mu."
       },
       "step5": {
         "title": "Pertumbuhan berkelanjutan",
-        "body": "Dari percikan minat menjadi hobi jangka panjang"
+        "body": "Saksikan anak berkembang dari penjelajah penasaran menjadi pencipta percaya diri — dengan wawasan personal dan rekomendasi petualangan berikutnya."
       }
     },
     "features": {
@@ -80,19 +79,23 @@
       "title": "Satu ekosistem, <accent>empat peran</accent>",
       "talentScout": {
         "title": "Talent Scout",
-        "body": "Unggah foto hasil karya"
+        "body": "Unggah foto hasil karya",
+        "imageAlt": "Anak-anak dengan bangga menunjukkan karya kepada pendamping AI"
       },
       "questBuddy": {
         "title": "Quest Buddy",
-        "body": "Mentor chat untuk misi 7 hari"
+        "body": "Mentor chat untuk misi 7 hari",
+        "imageAlt": "Anak menjalani petualangan misi bersama mentor AI"
       },
       "squadGallery": {
         "title": "Squad Gallery",
-        "body": "Pameran aman lintas negara"
+        "body": "Pameran aman lintas negara",
+        "imageAlt": "Anak-anak dari berbagai negara mengagumi galeri karya bersama"
       },
       "parentBridge": {
         "title": "Parent Bridge",
-        "body": "Laporan & tips yang realistis"
+        "body": "Laporan & tips yang realistis",
+        "imageAlt": "Orang tua dan anak membaca laporan progres yang hangat di rumah"
       }
     },
     "community": {
@@ -103,16 +106,14 @@
       "tagStory": "#StoryMakers",
       "tagMini": "#MiniScientists",
       "tagDesign": "#SmallDesigners",
-      "boxArtAlt": "Palet kreatif dan alat seni",
-      "boxScienceAlt": "Ikon eksperimen dan penemuan sains",
-      "boxMobilityAlt": "Ikon proyek mobilitas dan engineering"
+      "boxArtAlt": "Ikon topi wisuda untuk pencapaian belajar",
+      "boxScienceAlt": "Ikon atom untuk eksplorasi sains",
+      "boxMobilityAlt": "Ikon pesawat untuk proyek mobilitas"
     },
     "closing": {
       "freeBadge": "Gratis Selamanya",
       "title": "Siap menyalakan bakat anak Anda?",
-      "sub": "Tanpa kartu kredit · Bisa batal kapan saja",
-      "primaryCta": "Unduh Katalis AI",
-      "secondaryCta": "Tonton demo 30 detik",
+      "primaryCta": "Coba sekarang",
       "footerLine1": "© 2026 Katalis AI",
       "footerNavLabel": "Navigasi footer",
       "footerPrivacy": "Privasi",
@@ -133,10 +134,21 @@
     "choose": {
       "title": "Siapa yang masuk?",
       "subtitle": "Pilih jenis akun untuk memulai",
+      "parentKicker": "Mode orang tua",
       "parentTitle": "Saya Orang Tua",
       "parentDesc": "Kelola perjalanan belajar anakmu",
+      "parentBoardTitle": "Ringkasan belajar minggu ini",
+      "parentSignal1": "Laporan",
+      "parentSignal2": "Privasi",
+      "parentSignal3": "Panduan",
+      "parentCta": "Masuk orang tua",
+      "childKicker": "Zona anak",
       "childTitle": "Saya Anak-Anak",
-      "childDesc": "Lanjutkan petualanganmu!"
+      "childDesc": "Lanjutkan petualanganmu!",
+      "childSignal1": "Misi",
+      "childSignal2": "Badge",
+      "childSignal3": "Kode rahasia",
+      "childCta": "Masuk petualangan"
     },
     "parent": {
       "title": "Masuk sebagai Orang Tua",
@@ -149,6 +161,18 @@
       "errors": {
         "required": "Mohon masukkan email dan kata sandi",
         "invalid": "Email atau kata sandi salah"
+      },
+      "features": {
+        "heading": "Wujudkan masa depan anakmu",
+        "vision": "Anak-anak akan mengetahui passion mereka dan dapat mencoba sejak dini dalam bereksplorasi minat dan bakat.",
+        "feature1Title": "Pantau perkembangan",
+        "feature1Desc": "Ikuti perjalanan belajar anakmu setiap saat secara real-time",
+        "feature2Title": "Temukan bakat",
+        "feature2Desc": "Kenali minat dan kekuatan anak sejak dini",
+        "feature3Title": "Laporan mingguan",
+        "feature3Desc": "Dapatkan laporan eksplorasi lengkap setiap minggu",
+        "feature4Title": "Panduan terarah",
+        "feature4Desc": "Quest yang disesuaikan dengan potensi anakmu"
       }
     },
     "child": {
@@ -226,6 +250,7 @@
     "results": "Hasil",
     "new": "Misi Baru",
     "complete": "Selesai",
+    "login": "Masuk",
     "admin": "Admin",
     "users": "Pengguna",
     "codes": "Kode Akses",
@@ -245,6 +270,7 @@
       "back": "Kembali ke pilihan"
     },
     "upload": {
+      "hint": "Taruh karyamu di sini!",
       "dropzone": "Seret dan lepas gambar di sini",
       "dropzoneActive": "Lepaskan gambar di sini!",
       "tapToUpload": "Ketuk untuk mengunggah",
@@ -293,13 +319,17 @@
     },
     "history": {
       "title": "Penemuanmu",
-      "empty": "Kamu belum membuat penemuan apa pun. Mulai yang pertama!",
+      "subtitle": "Lihat semua bakat menakjubkan yang sudah kamu temukan!",
+      "empty": "Belum ada penemuan!",
+      "emptyDesc": "Mulai penemuan pertamamu untuk mengungkap bakat luar biasamu. Unggah gambar, rekam suaramu, atau ceritakan sebuah kisah!",
       "startFirst": "Mulai Menemukan",
-      "viewAll": "Lihat Semua",
       "loadMore": "Muat Lebih Banyak",
+      "talentSummary": "{count} bakat ditemukan",
       "artifact": "Penemuan Gambar",
       "story": "Penemuan Cerita",
-      "audio": "Penemuan Suara"
+      "audio": "Penemuan Suara",
+      "viewDetails": "Lihat Detail",
+      "totalDiscoveries": "{count} penemuan sejauh ini"
     },
     "sessionRecovery": {
       "title": "Lanjutkan Unggahan?",
@@ -316,6 +346,11 @@
       "talentCardLabel": "Bakat: {name}",
       "confidenceLabel": "Keyakinan {name}: {percent}%",
       "discoverAgain": "Temukan Lebih Banyak Bakat",
+      "createQuestCta": "Buat Questmu!",
+      "createQuestHint": "Lihat petualangan 7 harimu — belum perlu akun.",
+      "loginToSave": "Simpan hasilmu dan mulai petualangan!",
+      "loginToSaveHint": "Buat akun gratis untuk menyimpan penemuanmu dan membuka quest yang dipersonalisasi.",
+      "loginCta": "Login untuk Simpan",
       "errorGeneral": "Ups! Kami belum bisa menganalisis karyamu saat ini.",
       "errorTimeout": "Analisis memakan waktu terlalu lama. Ayo coba lagi!",
       "errorNetwork": "Sepertinya kamu tidak terhubung ke internet. Periksa koneksimu dan coba lagi.",
@@ -347,24 +382,11 @@
       "audioType": "Penemuan Suara",
       "dateLabel": "Ditemukan pada {date}"
     },
-    "history": {
-      "title": "Penemuanmu",
-      "subtitle": "Lihat semua bakat menakjubkan yang sudah kamu temukan!",
-      "empty": "Belum ada penemuan!",
-      "emptyDesc": "Mulai penemuan pertamamu untuk mengungkap bakat luar biasamu. Unggah gambar, rekam suaramu, atau ceritakan sebuah kisah!",
-      "startFirst": "Mulai Menemukan",
-      "loadMore": "Muat Lebih Banyak",
-      "talentSummary": "{count} bakat ditemukan",
-      "artifact": "Penemuan Gambar",
-      "story": "Penemuan Cerita",
-      "audio": "Penemuan Suara",
-      "viewDetails": "Lihat Detail",
-      "totalDiscoveries": "{count} penemuan sejauh ini"
-    },
     "story": {
       "imagePromptTitle": "Lihat gambar-gambar ini!",
       "imagePromptSubtitle": "Buat cerita yang terinspirasi dari apa yang kamu lihat",
       "imageGroupLabel": "Gambar untuk cerita",
+      "imageExpandLabel": "klik untuk perbesar",
       "writeStory": "Tulis Cerita",
       "recordStory": "Rekam Cerita",
       "textLabel": "Ceritamu",
@@ -497,6 +519,16 @@
       "proofPhotoAlt": "Foto bukti untuk Hari {day}: {title}",
       "viewCompletedProof": "Lihat bukti yang sudah dikirim",
       "viewCompletion": "Lihat Perayaan"
+    },
+    "preview": {
+      "title": "Preview Quest 7 Hari Kamu",
+      "subtitle": "Ini sekilas petualanganmu!",
+      "loginBanner": "Login untuk menyimpan quest ini dan melacak progres nyatamu",
+      "loginCta": "Login untuk Mulai Questmu",
+      "discoverAgain": "Coba Penemuan Lain",
+      "dayLabel": "Hari {day}",
+      "missionCount": "{count} misi direncanakan",
+      "dreamLabel": "Mimpimu"
     },
     "complete": {
       "title": "Misi Selesai!",

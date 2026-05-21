@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db";
 import { sanitizeInput } from "@/lib/sanitize";
 import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 import { geocodeLocationText } from "@/lib/geocoding";
+import { mapQuestToInterestSignals } from "@/lib/interests/quest-mapper";
+import { ingestInterestSignals } from "@/lib/interests/ingest-service";
 
 /**
  * Zod schema for quest completion requests.
@@ -125,8 +127,26 @@ export async function POST(
       (data as { selectedPhotoUrl: string }).selectedPhotoUrl = sanitized;
     }
 
-    // Handle skip gallery
+    // Handle skip gallery — still marks quest completed and ingests signals
     if ("skipGallery" in data && data.skipGallery) {
+      await prisma.quest.update({
+        where: { id: questId },
+        data: { status: "completed" },
+      });
+
+      await runQuestCompletedSignals({
+        childId: session.childId,
+        questId,
+        dream: quest.dream,
+        localContext: quest.localContext,
+        detectedTalents: quest.discovery?.detectedTalents
+          ? safeParseJSON<Array<{ name: string; confidence: number }>>(
+              quest.discovery.detectedTalents,
+              [],
+            )
+          : [],
+      });
+
       return NextResponse.json({
         success: true,
         galleryEntry: null,
@@ -223,6 +243,15 @@ export async function POST(
       return entry;
     });
 
+    // Ingest quest-completed interest signals (fire-and-forget)
+    await runQuestCompletedSignals({
+      childId: session.childId,
+      questId,
+      dream: quest.dream,
+      localContext: quest.localContext,
+      detectedTalents,
+    });
+
     return NextResponse.json({
       success: true,
       galleryEntry: {
@@ -240,6 +269,44 @@ export async function POST(
       { error: "server_error", message: "Failed to complete quest" },
       { status: 500 },
     );
+  }
+}
+
+async function runQuestCompletedSignals({
+  childId,
+  questId,
+  dream,
+  localContext,
+  detectedTalents,
+}: {
+  childId: string;
+  questId: string;
+  dream: string;
+  localContext: string;
+  detectedTalents: Array<{ name: string; confidence: number }>;
+}): Promise<void> {
+  try {
+    const completionSignals = mapQuestToInterestSignals({
+      dream,
+      localContext,
+      detectedTalents,
+    });
+    const persistenceSignals = completionSignals.map((s) => ({
+      ...s,
+      dimension: "persistence" as const,
+      strength: 0.7,
+      confidence: 0.75,
+    }));
+    if (persistenceSignals.length > 0) {
+      await ingestInterestSignals({
+        childId,
+        source: "quest_completed",
+        questId,
+        signals: persistenceSignals,
+      });
+    }
+  } catch (interestError) {
+    console.error("Interest ingestion failed for quest completion, continuing:", interestError);
   }
 }
 

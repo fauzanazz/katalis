@@ -16,9 +16,10 @@ model User {
   role          String              @default("user") // "user", "admin", "ai"
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
-  children      ParentChild[]
-  parentReports ParentReport[]
-  questFollows  ParentQuestFollow[]
+  children             ParentChild[]
+  parentReports        ParentReport[]
+  questFollows         ParentQuestFollow[]
+  interestAuditEvents  InterestAuditEvent[]
 }
 
 model AccessCode {
@@ -46,6 +47,9 @@ model Child {
   parentLinks        ParentChild[]
   parentReports      ParentReport[]
   parentQuestFollows ParentQuestFollow[]
+  interestSignals    InterestSignal[]
+  interestProfiles   ChildInterestProfile[]
+  interestAssessments MissionInterestAssessment[]
 }
 
 model Discovery {
@@ -59,6 +63,7 @@ model Discovery {
   updatedAt       DateTime @updatedAt
   child           Child    @relation(fields: [childId], references: [id])
   quests          Quest[]
+  interestSignals InterestSignal[]
 }
 
 model Quest {
@@ -73,9 +78,10 @@ model Quest {
   updatedAt     DateTime            @updatedAt
   child         Child               @relation(fields: [childId], references: [id])
   discovery     Discovery?          @relation(fields: [discoveryId], references: [id])
-  missions      Mission[]
-  galleryEntry  GalleryEntry?
-  parentFollows ParentQuestFollow[]
+  missions        Mission[]
+  galleryEntry    GalleryEntry?
+  parentFollows   ParentQuestFollow[]
+  interestSignals InterestSignal[]
 }
 
 model Mission {
@@ -92,8 +98,10 @@ model Mission {
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   quest            Quest             @relation(fields: [questId], references: [id])
-  mentorSession    MentorSession?
-  adjustmentEvents AdjustmentEvent[]
+  mentorSession       MentorSession?
+  adjustmentEvents    AdjustmentEvent[]
+  interestAssessments MissionInterestAssessment[]
+  interestSignals     InterestSignal[]
 
   @@unique([questId, day])
 }
@@ -111,8 +119,9 @@ model GalleryEntry {
   talentTags     String? // JSON array: [{ name: "Engineering", confidence: 0.95 }, ...]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  child          Child    @relation(fields: [childId], references: [id])
-  quest          Quest    @relation(fields: [questId], references: [id])
+  child           Child    @relation(fields: [childId], references: [id])
+  quest           Quest    @relation(fields: [questId], references: [id])
+  interestSignals InterestSignal[]
 }
 
 model RateLimit {
@@ -124,6 +133,92 @@ model RateLimit {
 
   @@unique([identifier, endpoint])
   @@index([resetAt])
+}
+
+model InterestSignal {
+  id                String   @id @default(cuid())
+  childId           String
+  child             Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  taxonomyVersion   String   @default("v1")
+  interestKey       String
+  source            String
+  dimension         String
+  strength          Float
+  confidence        Float    @default(1)
+  discoveryId       String?
+  questId           String?
+  missionId         String?
+  reflectionEntryId String?
+  galleryEntryId    String?
+  metadataJson      String?  // JSON stored as text for SQLite
+  observedAt        DateTime @default(now())
+  createdAt         DateTime @default(now())
+  discovery         Discovery?      @relation(fields: [discoveryId], references: [id])
+  quest             Quest?          @relation(fields: [questId], references: [id])
+  mission           Mission?        @relation(fields: [missionId], references: [id])
+  reflectionEntry   ReflectionEntry? @relation(fields: [reflectionEntryId], references: [id])
+  galleryEntry      GalleryEntry?   @relation(fields: [galleryEntryId], references: [id])
+
+  @@index([childId, interestKey])
+  @@index([childId, observedAt])
+  @@index([source])
+}
+
+model ChildInterestProfile {
+  id              String    @id @default(cuid())
+  childId         String
+  child           Child     @relation(fields: [childId], references: [id], onDelete: Cascade)
+  taxonomyVersion String    @default("v1")
+  interestKey     String
+  score           Float     @default(0)
+  confidence      Float     @default(0)
+  signalCount     Int       @default(0)
+  lastSignalAt    DateTime?
+  trend           String    @default("stable")
+  summary         String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([childId, taxonomyVersion, interestKey])
+  @@index([childId, score])
+}
+
+model MissionInterestAssessment {
+  id                 String   @id @default(cuid())
+  childId            String
+  child              Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  missionId          String
+  mission            Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  taxonomyVersion    String   @default("v1")
+  interestKey        String
+  explicitRating     Int?
+  parentRating       Int?
+  childRating        Int?
+  observedEngagement Int?
+  notes              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([childId, missionId, interestKey])
+  @@index([childId, missionId])
+}
+
+model InterestAuditEvent {
+  id           String   @id @default(cuid())
+  childId      String?
+  actorUserId  String?
+  eventType    String
+  entityType   String
+  entityId     String?
+  beforeJson   String?  // JSON stored as text for SQLite
+  afterJson    String?  // JSON stored as text for SQLite
+  metadataJson String?  // JSON stored as text for SQLite
+  createdAt    DateTime @default(now())
+  actorUser    User?    @relation(fields: [actorUserId], references: [id])
+
+  @@index([childId])
+  @@index([eventType])
+  @@index([createdAt])
 }
 
 model ModerationEvent {
@@ -193,15 +288,16 @@ model AdjustmentEvent {
 }
 
 model ReflectionEntry {
-  id         String   @id @default(cuid())
-  childId    String
-  questId    String
-  missionDay Int // Which day the reflection is for (1-7)
-  type       String // "text" or "voice"
-  content    String // Text content or transcription
-  fileUrl    String? // Voice recording URL if type is "voice"
-  aiSummary  String? // AI-generated summary of the reflection
-  createdAt  DateTime @default(now())
+  id              String   @id @default(cuid())
+  childId         String
+  questId         String
+  missionDay      Int // Which day the reflection is for (1-7)
+  type            String // "text" or "voice"
+  content         String // Text content or transcription
+  fileUrl         String? // Voice recording URL if type is "voice"
+  aiSummary       String? // AI-generated summary of the reflection
+  createdAt       DateTime @default(now())
+  interestSignals InterestSignal[]
 
   @@index([childId])
   @@index([questId])

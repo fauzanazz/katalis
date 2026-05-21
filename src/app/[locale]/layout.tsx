@@ -25,7 +25,7 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-dvh flex-col">
         <LocaleShell isAuthenticated={isAuthenticated} isAdmin={isAdmin}>{children}</LocaleShell>
       </div>
     </NextIntlClientProvider>

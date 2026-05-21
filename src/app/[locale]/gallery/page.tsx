@@ -11,6 +11,11 @@ import { SquadBrowseView } from "@/components/gallery/SquadBrowseView";
 import type { GalleryEntryFeatureCollection } from "@/types/gallery";
 
 // Dynamic import with SSR disabled to avoid WebGL hydration mismatch
+const Galaxy = dynamic(() => import("@/components/gallery/Galaxy"), {
+  ssr: false,
+  loading: () => null,
+});
+
 const GalleryMap = dynamic(
   () => import("@/components/map/GalleryMap").then((mod) => mod.GalleryMap),
   {
@@ -38,6 +43,14 @@ export default function GalleryPage() {
   const urlCluster = searchParams.get("cluster");
   const urlView = searchParams.get("view") as ViewMode | null;
   const urlSquad = searchParams.get("squad");
+
+  // Apply dark theme to entire page (including Header/Footer) while on gallery
+  useEffect(() => {
+    document.documentElement.classList.add("gallery-dark");
+    return () => {
+      document.documentElement.classList.remove("gallery-dark");
+    };
+  }, []);
 
   const [data, setData] = useState<GalleryEntryFeatureCollection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -161,7 +174,21 @@ export default function GalleryPage() {
   );
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="relative min-h-screen">
+      {/* Galaxy background — z-0 so it's above html canvas bg but below content */}
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[#06090f]">
+        <Galaxy
+          hueShift={220}
+          saturation={0.15}
+          glowIntensity={0.22}
+          density={0.9}
+          twinkleIntensity={0.25}
+          rotationSpeed={0.03}
+          mouseInteraction={false}
+          transparent={true}
+        />
+      </div>
+    <div className="relative z-10 container mx-auto px-4 py-6">
       {/* Page header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
@@ -308,6 +335,7 @@ export default function GalleryPage() {
           onSquadSelect={handleSquadSelect}
         />
       )}
+    </div>
     </div>
   );
 }

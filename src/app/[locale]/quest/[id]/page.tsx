@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
-import { useRouter } from "@/i18n/navigation";
+import { useRouter, usePathname } from "@/i18n/navigation";
 import {
   ArrowLeft,
   Sparkles,
@@ -50,6 +50,7 @@ export default function QuestOverviewPage() {
   const t = useTranslations("quest.overview");
   const params = useParams();
   const router = useRouter();
+  const pathname = usePathname();
   const questId = params.id as string;
 
   const [quest, setQuest] = useState<QuestData | null>(null);

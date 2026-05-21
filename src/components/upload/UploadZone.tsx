@@ -351,7 +351,41 @@ export function UploadZone({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="relative flex flex-col gap-4 pt-12">
+      {/* Hint arrow — floats above top-right of dropzone */}
+      {!disabled && uploadState === "idle" && (
+        <div
+          className="pointer-events-none absolute right-6 top-0 z-10 flex animate-bounce flex-col items-end gap-1"
+          aria-hidden
+        >
+          <span className="rounded-full bg-yellow-100 px-3 py-1.5 text-xs font-semibold text-yellow-800 shadow ring-1 ring-yellow-200">
+            {t("hint")}
+          </span>
+          <svg
+            width="36"
+            height="44"
+            viewBox="0 0 36 44"
+            fill="none"
+            className="mr-3"
+            aria-hidden
+          >
+            <path
+              d="M30 3 C34 16 20 34 7 40"
+              stroke="#ca8a04"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            />
+            <path
+              d="M3 36 L7 42 L12 37"
+              stroke="#ca8a04"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+      )}
+
       {/* Drop zone */}
       <div
         role="button"
@@ -368,21 +402,21 @@ export function UploadZone({
         }}
         onKeyDown={handleKeyDown}
         className={`
-          relative flex min-h-[200px] cursor-pointer flex-col items-center justify-center 
-          rounded-lg border-2 border-dashed p-6 transition-all duration-200
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+          relative flex min-h-[240px] cursor-pointer flex-col items-center justify-center
+          rounded-2xl border-2 border-dashed p-8 transition-all duration-200
+          focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2
           ${
             isDragOver
-              ? "border-blue-500 bg-blue-50"
-              : "border-zinc-300 bg-zinc-50 hover:border-zinc-400 hover:bg-zinc-100"
+              ? "scale-[1.01] border-blue-400 bg-blue-50"
+              : "border-yellow-300 bg-gradient-to-br from-yellow-50/70 to-amber-50/40 hover:border-yellow-400 hover:from-yellow-100/60 hover:to-amber-100/40"
           }
           ${(disabled || uploadState === "uploading") ? "cursor-not-allowed opacity-50" : ""}
         `}
       >
         {uploadState === "uploading" ? (
           <div className="flex flex-col items-center gap-3">
-            <div className="animate-pulse">
-              <Upload className="size-10 text-blue-500" />
+            <div className="flex size-[72px] animate-pulse items-center justify-center rounded-2xl bg-blue-100">
+              <Upload className="size-9 text-blue-500" />
             </div>
             <p className="text-sm font-medium text-foreground">
               {t("uploading")}
@@ -419,28 +453,55 @@ export function UploadZone({
             </Button>
           </div>
         ) : (
-          <div className="flex flex-col items-center gap-3">
+          <div className="flex flex-col items-center gap-4">
             {isDragOver ? (
               <>
-                <ImageIcon className="size-10 text-blue-500" />
-                <p className="text-sm font-medium text-blue-600">
+                <div className="flex size-[72px] items-center justify-center rounded-2xl bg-blue-100">
+                  <ImageIcon className="size-9 text-blue-500" />
+                </div>
+                <p className="text-base font-semibold text-blue-600">
                   {t("dropzoneActive")}
                 </p>
               </>
             ) : (
               <>
-                <Upload className="size-10 text-zinc-400" />
+                {/* Decorated icon with sparkles */}
+                <div className="relative">
+                  <span
+                    className="absolute -left-5 -top-3 animate-pulse text-lg text-yellow-400"
+                    aria-hidden
+                  >
+                    ✦
+                  </span>
+                  <span
+                    className="absolute -right-4 -top-2 animate-pulse text-sm text-pink-400 delay-300"
+                    aria-hidden
+                  >
+                    ✦
+                  </span>
+                  <span
+                    className="absolute -bottom-3 -left-3 animate-pulse text-xs text-blue-400 delay-150"
+                    aria-hidden
+                  >
+                    ✦
+                  </span>
+                  <div className="flex size-[72px] items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-200/80 to-amber-200/60 shadow-inner ring-1 ring-yellow-300/50">
+                    <Upload className="size-9 text-yellow-700" />
+                  </div>
+                </div>
                 {/* Desktop text */}
-                <p className="hidden text-sm font-medium text-foreground sm:block">
-                  {t("dropzone")}
-                </p>
-                <p className="hidden text-xs text-muted-foreground sm:block">
-                  {t("clickToUpload")}
-                </p>
-                {/* Mobile text */}
-                <p className="text-sm font-medium text-foreground sm:hidden">
-                  {t("tapToUpload")}
-                </p>
+                <div className="flex flex-col items-center gap-1">
+                  <p className="hidden text-base font-bold text-foreground sm:block">
+                    {t("dropzone")}
+                  </p>
+                  <p className="hidden text-sm text-muted-foreground sm:block">
+                    {t("clickToUpload")}
+                  </p>
+                  {/* Mobile text */}
+                  <p className="text-base font-bold text-foreground sm:hidden">
+                    {t("tapToUpload")}
+                  </p>
+                </div>
               </>
             )}
             <p className="text-xs text-zinc-400">

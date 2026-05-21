@@ -6,13 +6,16 @@ import { decrypt, SESSION_COOKIE_NAME } from "@/lib/auth";
 
 const intlMiddleware = createMiddleware(routing);
 
-/** Routes that do NOT require authentication (locale-prefixed paths without the locale) */
-const publicPagePaths = ["/register", "", "/gallery", "/privacy", "/terms", "/contact"];
+function countryToLocale(country: string | undefined): string | null {
+  if (!country) return null;
+  if (country === "ID") return "id";
+  if (["CN", "TW", "HK", "MO"].includes(country)) return "zh";
+  return "en";
+}
 
-/** Path prefixes that are public (matched with startsWith) */
-const publicPathPrefixes = ["/gallery", "/login"];
+const publicPagePaths = ["/register", "", "/gallery", "/privacy", "/terms", "/contact", "/discover", "/quest/new", "/quest/preview"];
+const publicPathPrefixes = ["/gallery", "/login", "/discover"];
 
-/** Check if a locale-stripped path is public */
 function isPublicPage(pathnameWithoutLocale: string): boolean {
   const exactMatch = publicPagePaths.some(
     (path) =>
@@ -20,7 +23,6 @@ function isPublicPage(pathnameWithoutLocale: string): boolean {
       pathnameWithoutLocale === path + "/",
   );
   if (exactMatch) return true;
-
   return publicPathPrefixes.some((prefix) =>
     pathnameWithoutLocale.startsWith(prefix),
   );
@@ -29,17 +31,8 @@ function isPublicPage(pathnameWithoutLocale: string): boolean {
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
-  // Let API auth routes through without i18n handling
-  if (pathname.startsWith("/api/auth")) {
-    return NextResponse.next();
-  }
-
-  // Let all other API routes through
-  if (pathname.startsWith("/api/")) {
-    return NextResponse.next();
-  }
-
-  // Skip static assets and Next.js internals
+  if (pathname.startsWith("/api/auth")) return NextResponse.next();
+  if (pathname.startsWith("/api/")) return NextResponse.next();
   if (
     pathname.startsWith("/_next/") ||
     pathname.startsWith("/favicon.ico") ||
@@ -48,54 +41,50 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
-  // Run intl middleware first to handle locale routing
   const intlResponse = intlMiddleware(request);
 
-  // Build locale regex dynamically from routing config
   const localePattern = new RegExp(`^/(${routing.locales.join("|")})(/|$)`);
   const localeMatch = pathname.match(localePattern);
   const locale = localeMatch ? localeMatch[1] : null;
 
-  // If no locale in path, the intl middleware will redirect — let it
   if (!locale) {
+    const cookieLocale = request.cookies.get("NEXT_LOCALE")?.value;
+    if (cookieLocale && (routing.locales as readonly string[]).includes(cookieLocale)) {
+      return intlResponse;
+    }
+    const country = request.headers.get("x-vercel-ip-country") ?? undefined;
+    const geoLocale = countryToLocale(country);
+    if (geoLocale) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/${geoLocale}${pathname === "/" ? "" : pathname}`;
+      return NextResponse.redirect(url);
+    }
     return intlResponse;
   }
 
-  // Get the path without the locale prefix
-  const pathnameWithoutLocale = pathname.replace(new RegExp(`^/(${routing.locales.join("|")})`), "") || "/";
+  const pathnameWithoutLocale =
+    pathname.replace(new RegExp(`^/(${routing.locales.join("|")})`), "") || "/";
 
-  // Check session
   const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
   const session = await decrypt(sessionCookie);
 
   const isPublic = isPublicPage(pathnameWithoutLocale);
   const isAuthenticated = !!(session?.childId || session?.userId);
 
-  // Redirect authenticated users away from login/register pages to dashboard
   if (isAuthenticated && (pathnameWithoutLocale === "/login" || pathnameWithoutLocale === "/register")) {
-    return NextResponse.redirect(
-      new URL(`/${locale}/dashboard`, request.url),
-    );
+    return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url));
   }
 
-  // Redirect unauthenticated users to login for protected routes
   if (!isAuthenticated && !isPublic) {
-    return NextResponse.redirect(
-      new URL(`/${locale}/login`, request.url),
-    );
+    return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
   }
 
-  // Admin routes require admin role
   if (pathnameWithoutLocale.startsWith("/admin")) {
     if (!isAuthenticated) {
-      return NextResponse.redirect(
-        new URL(`/${locale}/login`, request.url),
-      );
+      return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
     }
     if (session?.type !== "user" || session?.role !== "admin") {
-      return NextResponse.redirect(
-        new URL(`/${locale}/dashboard`, request.url),
-      );
+      return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url));
     }
   }
 
@@ -104,7 +93,6 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
 export const config = {
   matcher: [
-    // Match all paths except static files, Next.js internals
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

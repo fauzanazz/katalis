@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
+import { gsap } from "gsap";
 import { Drama, Menu } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
@@ -14,115 +15,83 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
+import { AtomIcon } from "@/components/ui/atom";
+import { AirplaneIcon } from "@/components/ui/airplane";
+import { GraduationCapIcon } from "@/components/ui/graduation-cap";
 import { cn } from "@/lib/utils";
 import { getNextHeaderHiddenState } from "./stickyHeader";
+import { PillTag } from "./PillTag";
+import MagicBento, { type MagicBentoItem } from "./MagicBento";
 
 const STEP_ACCENTS = [
-  { circle: "bg-[#619bf7]", label: "1" },
-  { circle: "bg-[#f3b835]", label: "2" },
-  { circle: "bg-[#c9e094]", label: "3" },
-  { circle: "bg-[#e3a8d2]", label: "4" },
-  { circle: "bg-[#ff9dc4]", label: "5" },
+  { circle: "bg-blue-ocean", label: "1" },
+  { circle: "bg-yellow-sun", label: "2" },
+  { circle: "bg-green-leaf", label: "3" },
+  { circle: "bg-pink-bloom", label: "4" },
+  { circle: "bg-lavender-mist", label: "5" },
+] as const;
+
+const JOURNEY_STEP_STYLES = [
+  { panel: "bg-blue-ocean", text: "text-ink", muted: "!text-ink/60" },
+  { panel: "bg-yellow-sun-deep", text: "text-ink", muted: "!text-ink/60" },
+  { panel: "bg-green-leaf", text: "text-ink", muted: "!text-ink/60" },
+  { panel: "bg-pink-bloom", text: "text-ink", muted: "!text-ink/60" },
+  { panel: "bg-lavender-mist", text: "text-ink", muted: "!text-ink/60" },
+] as const;
+
+const JOURNEY_IMAGES = [
+  "/images/journey/step1.png",
+  "/images/journey/step2.png",
+  "/images/journey/step3.png",
+  "/images/journey/step4.png",
+  "/images/journey/step5.png",
 ] as const;
 
 const TAG_STYLES = [
-  "bg-[#f6a926]",
-  "bg-[#f7ce4f]",
-  "bg-[#c9e094]",
-  "bg-[#70a5f5]",
-  "bg-[#f6a926]",
+  "bg-yellow-sun-deep",
+  "bg-yellow-sun-light",
+  "bg-green-leaf",
+  "bg-blue-ocean-light",
+  "bg-yellow-sun-deep",
 ] as const;
 
-/** Figma Key Features — 2×2 diagonal blue / yellow */
-const FEATURE_CARDS = [
-  { id: "talentScout" as const, variant: "blue" as const, bodyTone: "soft" as const },
-  { id: "questBuddy" as const, variant: "yellow" as const, bodyTone: "white" as const },
-  { id: "squadGallery" as const, variant: "yellow" as const, bodyTone: "white" as const },
-  { id: "parentBridge" as const, variant: "blue" as const, bodyTone: "soft" as const },
+/** Key Features bento — hero + wide + 2 squares, with brand accent bars */
+const FEATURE_BENTO_LAYOUT = [
+  {
+    id: "talentScout" as const,
+    image: "/images/features/talent-scout.png",
+    accentClassName: "text-yellow-sun-deep",
+    size: "hero" as const,
+    imageSizes: "(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 50vw",
+  },
+  {
+    id: "questBuddy" as const,
+    image: "/images/features/quest-buddy.png",
+    accentClassName: "text-blue-ocean-light",
+    size: "wide" as const,
+    imageSizes: "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 50vw",
+  },
+  {
+    id: "squadGallery" as const,
+    image: "/images/features/squad-gallery.png",
+    accentClassName: "text-pink-bloom",
+    size: "square" as const,
+    imageSizes: "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw",
+  },
+  {
+    id: "parentBridge" as const,
+    image: "/images/features/parent-bridge.png",
+    accentClassName: "text-lavender-mist",
+    size: "square" as const,
+    imageSizes: "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw",
+  },
 ];
-
-function FeatureSpotlightCard({
-  variant,
-  bodyTone,
-  title,
-  body,
-}: {
-  variant: "blue" | "yellow";
-  bodyTone: "soft" | "white";
-  title: string;
-  body: string;
-}) {
-  const bodyClass =
-    bodyTone === "soft" ? "text-white/90" : "text-[#fffaf0]";
-
-  return (
-    <li
-      className={cn(
-        "relative isolate flex min-h-[148px] flex-col overflow-hidden rounded-2xl p-4 sm:min-h-[160px] sm:p-5",
-        variant === "blue" &&
-          "bg-gradient-to-br from-[#6c9ef0] via-[#6295ea] to-[#5a8ce2] shadow-[inset_0_1px_0_rgb(255_255_255_/_0.12)]",
-        variant === "yellow" &&
-          "bg-gradient-to-br from-[#ffe99a] via-[#f5c843] to-[#eba414] shadow-[inset_0_1px_0_rgb(255_255_255_/_0.14)]",
-      )}
-    >
-      {variant === "blue" ? (
-        <>
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -left-6 -top-8 size-[6rem] rounded-full bg-white/10 blur-xl"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -bottom-10 -right-4 size-[8rem] rounded-[40%] bg-[#4f81d9]/28 blur-2xl"
-          />
-        </>
-      ) : (
-        <>
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -left-4 -top-6 size-[6.5rem] rounded-full bg-[#fff6d7]/22 blur-xl"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -bottom-10 -right-3 size-[7.5rem] rounded-[42%] bg-[#f0b61e]/24 blur-2xl"
-          />
-        </>
-      )}
-      <div
-        aria-hidden
-        className={cn(
-          "absolute inset-0",
-          variant === "blue" ? "bg-[rgba(21,44,86,0.08)]" : "bg-[rgba(120,74,0,0.06)]",
-        )}
-      />
-      <div className="relative z-10 flex min-h-0 flex-1 flex-col gap-3">
-        <span
-          className={cn(
-            "inline-flex w-fit max-w-full rounded-md px-3 py-1.5 text-base font-semibold leading-tight",
-            variant === "blue"
-              ? "bg-white/24 text-white"
-              : "bg-white/26 text-[#fffdf7]",
-          )}
-        >
-          {title}
-        </span>
-        <p
-          className={cn(
-            "max-w-[18rem] text-sm leading-snug tracking-tight sm:text-[14px] sm:leading-[1.35]",
-            bodyClass,
-          )}
-        >
-          {body}
-        </p>
-      </div>
-    </li>
-  );
-}
 
 export function HomeLanding() {
   const t = useTranslations("landing");
   const tNav = useTranslations("nav");
   const [isHeaderHidden, setIsHeaderHidden] = useState(false);
+  const landingRef = useRef<HTMLDivElement>(null);
   const lastScrollYRef = useRef(0);
 
   useEffect(() => {
@@ -146,6 +115,39 @@ export function HomeLanding() {
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  useEffect(() => {
+    const landingElement = landingRef.current;
+    const prefersReducedMotion =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (!landingElement || prefersReducedMotion) {
+      return;
+    }
+
+    const animationContext = gsap.context(() => {
+      gsap.from("[data-hero-copy]", {
+        autoAlpha: 0,
+        y: 20,
+        duration: 0.72,
+        ease: "power3.out",
+        stagger: 0.1,
+      });
+      gsap.from("[data-hero-visual]", {
+        autoAlpha: 0,
+        y: 28,
+        scale: 0.98,
+        duration: 0.86,
+        ease: "power3.out",
+        delay: 0.12,
+      });
+    }, landingElement);
+
+    return () => {
+      animationContext.revert();
     };
   }, []);
 
@@ -174,37 +176,47 @@ export function HomeLanding() {
 
   const communityBoxes = [
     {
-      src: "/images/community/palette.png",
+      key: "art",
+      Icon: GraduationCapIcon,
       bg: "bg-yellow-sun-deep",
+      iconClass: "text-white",
       alt: t("community.boxArtAlt"),
     },
     {
-      src: "/images/community/science.png",
+      key: "science",
+      Icon: AtomIcon,
       bg: "bg-yellow-sun-light",
+      iconClass: "text-white",
       alt: t("community.boxScienceAlt"),
     },
     {
-      src: "/images/community/mobility.png",
+      key: "mobility",
+      Icon: AirplaneIcon,
       bg: "bg-blue-ocean-light",
+      iconClass: "text-white",
       alt: t("community.boxMobilityAlt"),
     },
   ] as const;
 
   const navLinkClass =
-    "inline-flex min-h-[44px] min-w-[44px] max-w-full items-center justify-center rounded-lg px-3 text-xs font-medium text-foreground transition-colors hover:bg-zinc-100 md:px-3 md:text-sm";
+    "inline-flex min-h-[44px] min-w-[44px] max-w-full items-center justify-center rounded-lg px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted md:px-3 md:text-sm";
 
   /** Centered reading column — matches page gutters */
   const shell =
     "mx-auto w-full max-w-6xl px-4 sm:px-6 md:px-8 lg:px-10 xl:max-w-6xl";
+  const heroShell = "mx-auto w-full px-4 sm:px-6 lg:px-0";
   const shellNarrow =
     "mx-auto w-full max-w-2xl px-4 sm:px-6 md:px-8 lg:px-10";
 
   return (
-    <div className="landing-light min-h-screen bg-background text-foreground">
+    <div
+      ref={landingRef}
+      className="landing-light min-h-screen bg-background font-sans text-foreground"
+    >
       {/* Top bar — sheet on small screens; inline nav md+ */}
       <header
         className={cn(
-          "sticky top-0 z-40 w-full border-b border-border/60 bg-background/95 pt-4 pb-2 backdrop-blur-sm transition-transform duration-300 sm:pt-5",
+          "sticky top-0 z-40 w-full border-b border-border/60 bg-background/95 py-3 backdrop-blur-sm transition-transform duration-300 sm:py-3.5",
           isHeaderHidden && "-translate-y-full",
         )}
       >
@@ -273,7 +285,7 @@ export function HomeLanding() {
                   <Link href="/login" className={navLinkClass}>
                     {tNav("login")}
                   </Link>
-                  <div className="mt-4 border-t border-zinc-200 pt-4">
+                  <div className="mt-4 border-t border-border pt-4">
                     <LanguageSwitcher />
                   </div>
                 </nav>
@@ -283,79 +295,86 @@ export function HomeLanding() {
         </div>
       </header>
 
-        {/* Hero background — Figma hero stack (Rectangle 411, Vector 5, Groups 307–309) */}
         <section
-          className="relative w-full overflow-hidden pb-10 pt-2 sm:pb-12 sm:pt-4 lg:pb-14 lg:pt-8"
+          className="relative min-h-[calc(100svh-65px)] w-full overflow-hidden bg-blue-ocean-light/15 pb-10 pt-2 sm:min-h-[calc(100svh-73px)] sm:pb-12 sm:pt-4 lg:pb-0 lg:pt-0"
           aria-labelledby="hero-heading"
         >
-          <HeroFigmaDecor />
-          <div
-            className={`${shell} relative z-10 lg:grid lg:min-h-[420px] lg:grid-cols-2 lg:items-center lg:gap-10 lg:pb-4 lg:pt-4 xl:gap-14`}
-          >
-            <div className="px-4 pb-6 pt-6 text-center sm:px-6 lg:px-0 lg:pb-6 lg:pt-4 lg:text-left">
-              <div className="mx-auto w-fit rounded-full bg-yellow-sun-deep px-4 py-1.5 lg:mx-0">
-                <p className="text-[12.5px] font-bold leading-none tracking-wide text-white sm:text-sm">
-                  {t("hero.safePill")}
+          <div className="relative z-10 min-h-[calc(100svh-65px)] sm:min-h-[calc(100svh-73px)]">
+            <div
+              className={`${heroShell} relative z-10 lg:grid lg:min-h-[calc(100svh-73px)] lg:grid-cols-2 lg:items-center lg:gap-0 lg:pb-0 lg:pt-0`}
+            >
+              <div className="mx-auto w-full max-w-[430px] pb-6 pt-6 text-center sm:max-w-[520px] lg:max-w-[540px] lg:px-10 lg:pb-0 lg:pt-0 lg:text-left xl:px-12">
+                <h1
+                  id="hero-heading"
+                  data-hero-copy
+                  className="type-h1 mx-auto max-w-[18rem] [text-wrap:wrap] lg:mx-0 lg:max-w-none lg:[text-wrap:balance]"
+                >
+                  {t.rich("hero.title", {
+                    accent: (chunks) => (
+                      <span className="text-yellow-sun-deep">{chunks}</span>
+                    ),
+                  })}
+                </h1>
+                <p
+                  data-hero-copy
+                  className="type-lede mx-auto mt-4 max-w-[280px] sm:max-w-md lg:mx-0 lg:max-w-none"
+                >
+                  {t("hero.subtitle")}
                 </p>
+                <Link
+                  href="/discover"
+                  data-hero-copy
+                  className="group/button relative z-20 mx-auto mt-6 inline-flex h-[56px] w-full max-w-[430px] items-center justify-center overflow-hidden rounded-full bg-yellow-sun-deep px-6 text-xl font-bold text-primary-foreground shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-sun-deep lg:mx-0 lg:max-w-[360px]"
+                >
+                  <span>{t("hero.cta")}</span>
+                  <div className="absolute inset-0 flex h-full w-full justify-center transition-transform duration-300 ease-in-out [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
+                    <div className="relative h-full w-10 bg-white/30" />
+                  </div>
+                </Link>
               </div>
-              <h1
-                id="hero-heading"
-                className="mt-5 text-[clamp(1.5rem,4.5vw,2.5rem)] font-medium leading-[1.25] text-ink sm:mt-6 sm:leading-[1.3]"
-              >
-                {t("hero.title")}
-              </h1>
-              <p className="mx-auto mt-3 max-w-[280px] text-sm leading-[1.35] text-muted-foreground sm:mt-4 sm:max-w-md sm:text-base lg:mx-0 lg:max-w-xl">
-                {t("hero.subtitle")}
-              </p>
             </div>
 
-            {/* Hero image + CTA */}
-            <div className="relative pb-8 lg:pb-0">
-              <div className="relative mx-auto max-w-[430px] overflow-hidden rounded-2xl lg:mx-0 lg:max-w-none">
-                <div className="relative aspect-[3/4] w-full sm:aspect-[4/5] lg:aspect-[3/4]">
+            {/* Hero image */}
+            <div className="relative z-10 mx-auto w-[calc(100%-2rem)] max-w-[430px] pb-8 sm:w-[calc(100%-3rem)] sm:max-w-[640px] lg:absolute lg:inset-y-0 lg:right-0 lg:mx-0 lg:w-1/2 lg:max-w-none lg:pb-0">
+              <div
+                className="relative overflow-hidden rounded-2xl lg:h-full lg:rounded-none lg:rounded-bl-3xl"
+                data-hero-visual
+              >
+                <div className="relative aspect-[4/3] w-full sm:aspect-[16/11] lg:h-full lg:min-h-[calc(100svh-73px)] lg:aspect-auto">
                   <Image
-                    src="/images/landing-hero.png"
+                    src="/images/landing-hero-generated.png"
                     alt={t("hero.imageAlt")}
                     fill
-                    className="object-cover object-[center_32%]"
-                    sizes="(max-width: 1024px) min(100vw, 430px), (max-width: 1280px) 45vw, 600px"
+                    className="object-cover object-[center_58%]"
+                    sizes="(max-width: 640px) calc(100vw - 2rem), (max-width: 1024px) calc(100vw - 3rem), 50vw"
                     priority
                   />
                 </div>
               </div>
-              <Button
-                asChild
-                className="mx-auto mt-4 flex h-[52px] w-full max-w-[430px] rounded-full border-0 bg-gradient-to-r from-[#f6a926] via-[#f3b835] to-[#f7ce4f] text-lg font-bold !text-white shadow-none hover:opacity-95 lg:mx-0 lg:mt-5"
-              >
-                <Link href="/login">{t("hero.cta")}</Link>
-              </Button>
-              <p className="mt-4 text-center text-[14px] leading-[1.3] text-[#444444] lg:text-left">
-                {t("hero.meta")}
-              </p>
             </div>
           </div>
         </section>
 
         {/* Problem + supporting stats (layout seperti mockup) */}
         <section
-          className="w-full border-t border-border/60 pb-12 pt-10 sm:pb-16 sm:pt-12"
+          className="w-full bg-blue-ocean-light/15 pb-12 pt-10 sm:pb-16 sm:pt-12"
           aria-labelledby="problem-heading"
         >
-          <div className={`${shell} max-w-3xl lg:max-w-4xl`}>
+          <div className={`${shell} !max-w-2xl`}>
             <h2
               id="problem-heading"
-              className="text-left text-2xl font-medium leading-snug text-ink sm:text-3xl"
+              className="type-h2 text-left [text-wrap:balance]"
             >
-              <span className="block text-left text-xl font-bold text-yellow-sun-deep sm:text-2xl">
+              <span className="type-kicker block text-left">
                 {t("problem.eyebrow")}
               </span>
               <span className="mt-3 block">
                 {t("problem.titleBefore")}
-                <strong className="font-semibold">{t("problem.titleEmphasis")}</strong>
+                <strong className="font-normal">{t("problem.titleEmphasis")}</strong>
                 {t("problem.titleAfter")}
               </span>
             </h2>
-            <p className="mt-4 text-left text-base leading-relaxed text-muted-foreground sm:text-lg">
+            <p className="type-lede mt-4 text-left">
               {t("problem.body")}
             </p>
           </div>
@@ -369,31 +388,35 @@ export function HomeLanding() {
           >
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6 lg:gap-8">
               {/* Kartu biru: chart → angka besar → caption */}
-              <div className="flex flex-col items-center rounded-2xl bg-[#d4e5ff]/55 px-6 py-10 sm:py-12">
-                <StatDonut
-                  valueLabel={t("stats.centerValue")}
-                  ariaLabel={`${t("stats.centerValue")}. ${t("stats.donutAria")}`}
-                  showValueInCenter={false}
-                />
-                <p className="mt-8 text-4xl font-bold tracking-tight text-[#5794f6] sm:text-5xl">
+              <div className="flex flex-col items-center rounded-2xl bg-blue-ocean-light/20 px-6 py-10 sm:py-12">
+                <div className="flex min-h-[145px] items-center justify-center">
+                  <StatDonut
+                    valueLabel={t("stats.centerValue")}
+                    ariaLabel={`${t("stats.centerValue")}. ${t("stats.donutAria")}`}
+                    showValueInCenter={false}
+                  />
+                </div>
+                <p className="mt-8 text-4xl font-bold tracking-normal text-primary sm:text-5xl">
                   {t("stats.centerValue")}
                 </p>
-                <p className="mt-4 max-w-sm text-center text-base font-medium leading-snug text-[#5794f6]/95 sm:text-lg">
+                <p className="type-p mt-4 max-w-sm text-center text-lg font-medium text-primary sm:text-xl">
                   {t("stats.leftCaption")}
                 </p>
               </div>
 
               {/* Kartu hijau: ikon → judul → caption */}
-              <div className="flex flex-col items-center justify-center rounded-2xl bg-[#cfeadb]/55 px-6 py-10 sm:py-12">
-                <Drama
-                  className="size-[4.5rem] shrink-0 text-[#6d9260] sm:size-24"
-                  strokeWidth={1.15}
-                  aria-hidden
-                />
-                <p className="mt-8 text-4xl font-semibold tracking-tight text-[#5c7d52] sm:text-5xl">
+              <div className="flex flex-col items-center justify-center rounded-2xl bg-green-leaf-light/55 px-6 py-10 sm:py-12">
+                <div className="flex min-h-[145px] items-center justify-center">
+                  <Drama
+                    className="size-[4.5rem] shrink-0 text-foreground sm:size-24"
+                    strokeWidth={1.15}
+                    aria-hidden
+                  />
+                </div>
+                <p className="mt-8 text-4xl font-semibold text-ink sm:text-5xl">
                   {t("stats.rightTitle")}
                 </p>
-                <p className="mt-4 max-w-sm text-center text-base leading-snug text-[#6d9260] sm:text-lg">
+                <p className="type-p mt-4 max-w-sm text-center text-lg text-foreground sm:text-xl">
                   {t("stats.rightCaption")}
                 </p>
               </div>
@@ -401,167 +424,228 @@ export function HomeLanding() {
           </div>
         </section>
 
-        {/* Journey — Figma 3084:12817 (ungu gede): #FCF9EF, Vector 5 + Groups 307–309, step frames 355–359 */}
+        {/* Journey — full-vw sticky sections (image left, text right) */}
         <section
-          className="relative w-full overflow-hidden bg-[linear-gradient(180deg,#fffdf7_0%,#fff8df_48%,#fff0b8_100%)] py-12 sm:py-14"
+          className="relative w-full"
           aria-labelledby="journey-heading"
         >
-          <JourneyFigmaDecor />
-          <div className={`${shell} relative z-10`}>
-            <div className="mx-auto max-w-[430px] text-center font-sans">
-              <p
-                id="journey-eyebrow"
-                className="text-[20px] font-bold leading-[1.3] text-[#f6a926]"
-              >
+          {/* Cloud-shaped header — scrolls away before stickies begin */}
+          {/* Cloud content — top SVG pokes upward into previous section (no gray band) */}
+          <div className="relative bg-white py-10 sm:py-14">
+            <svg
+              viewBox="0 0 1440 80"
+              preserveAspectRatio="none"
+              className="absolute inset-x-0 top-0 h-10 w-full -translate-y-full sm:h-16"
+              aria-hidden
+            >
+              <path
+                d="M0,80 L0,52 C90,12 180,72 270,46 C360,20 450,70 540,46 C630,22 720,70 810,46 C900,22 990,70 1080,46 C1170,22 1260,66 1440,46 L1440,80 Z"
+                fill="white"
+              />
+            </svg>
+            <div className={cn(shell, "text-center")}>
+              <p id="journey-eyebrow" className="type-kicker">
                 {t("journey.eyebrow")}
               </p>
-              <h2
-                id="journey-heading"
-                className="mt-2 text-[24px] font-normal leading-[1.3] tracking-normal text-[#030914]"
-              >
+              <h2 id="journey-heading" className="type-h2 mt-2">
                 {t("journey.titleBefore")}
-                <strong className="font-semibold">{t("journey.titleEmphasis")}</strong>
+                <strong className="font-normal">{t("journey.titleEmphasis")}</strong>
                 {t("journey.titleAfter")}
               </h2>
             </div>
-            <ul className="relative z-10 mx-auto mt-8 flex max-w-[430px] flex-col gap-4 sm:mt-9">
-              {journeySteps.map((title, i) => (
-                <li
-                  key={title}
-                  className="flex min-h-[68px] w-full max-w-[347px] shrink-0 items-center gap-4 self-center rounded-2xl bg-white py-2 pl-5 pr-4 shadow-sm shadow-black/[0.03]"
-                >
-                  <div
-                    className={cn(
-                      "flex size-[30px] shrink-0 items-center justify-center rounded-full text-base font-medium leading-none text-white",
-                      STEP_ACCENTS[i]?.circle,
-                    )}
+          </div>
+
+          {/* Bottom cloud edge: white cloud hangs down into bg-blue-ocean */}
+          <div className="bg-white">
+            <svg
+              viewBox="0 0 1440 80"
+              preserveAspectRatio="none"
+              className="block h-10 w-full sm:h-16"
+              aria-hidden
+            >
+              <path
+                d="M0,80 L0,36 C90,74 180,18 270,46 C360,74 450,18 540,44 C630,70 720,16 810,44 C900,72 990,18 1080,44 C1170,70 1260,22 1440,44 L1440,80 Z"
+                fill="#619bf7"
+              />
+            </svg>
+          </div>
+
+          {/* Each step is sticky; higher z-index steps slide up and cover lower ones */}
+          {journeySteps.map((title, i) => {
+            const styles = JOURNEY_STEP_STYLES[i];
+            return (
+              <div
+                key={title}
+                className="sticky top-0 grid h-screen w-full overflow-hidden grid-rows-[1fr_1fr] lg:grid-cols-2 lg:grid-rows-1"
+                style={{ zIndex: 10 + i }}
+              >
+                {/* Image — top on mobile, left on desktop */}
+                <div className="relative overflow-hidden">
+                  <Image
+                    src={JOURNEY_IMAGES[i] ?? ""}
+                    alt=""
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 1024px) 100vw, 50vw"
                     aria-hidden
-                  >
-                    {STEP_ACCENTS[i]?.label}
-                  </div>
-                  <div className="min-w-0 flex-1 text-left">
-                    <p className="text-base font-medium leading-[1.3] text-[#030914]">
-                      {title}
-                    </p>
-                    <p className="mt-0.5 text-sm font-normal leading-[1.3] text-[#444444]">
-                      {journeyBodies[i]}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                  />
+                </div>
+
+                {/* Text — bottom on mobile, right on desktop */}
+                <div
+                  className={cn(
+                    "flex flex-col justify-center px-8 py-8 lg:px-16 lg:py-20",
+                    styles?.panel,
+                    styles?.text,
+                  )}
+                >
+                  <p className={cn("type-kicker mb-3", styles?.muted)}>
+                    {t("journey.eyebrow")} · 0{i + 1}
+                  </p>
+                  <h3 className="type-h2 leading-tight">{title}</h3>
+                  <p className={cn("type-lede mt-4 max-w-sm", styles?.muted)}>
+                    {journeyBodies[i]}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Thin cloud strip: lavender-mist → bg-background. z-[25] paints above features (z-20) */}
+          <div className="relative z-[25] h-10 sm:h-14 bg-background" aria-hidden>
+            <svg
+              viewBox="0 0 1440 56"
+              preserveAspectRatio="none"
+              className="absolute inset-0 h-full w-full"
+            >
+              <path
+                d="M0,0 L0,28 C120,50 240,6 360,28 C480,52 600,6 720,28 C840,52 960,6 1080,28 C1200,52 1320,8 1440,28 L1440,0 Z"
+                fill="#a5a0ca"
+              />
+            </svg>
           </div>
         </section>
 
-        {/* Key features — Figma: 2×2 gradient cards, Instrument Sans */}
-        <section className="w-full border-t border-border py-12 sm:py-14">
-          <div className={shell}>
-          <div className="mx-auto max-w-xl text-center">
-            <p className="text-xl font-bold leading-tight text-[#f6a926] sm:text-[20px]">
-              {t("features.eyebrow")}
-            </p>
-            <h2 className="mt-2 text-2xl font-normal leading-snug tracking-tight text-ink sm:text-2xl">
-              {t.rich("features.title", {
-                accent: (chunks) => (
-                  <strong className="font-bold text-ink">{chunks}</strong>
-                ),
-              })}
-            </h2>
-          </div>
+        {/* Key features — MagicBento (image-led, max 1 viewport on lg+) */}
+        <section className="relative z-20 w-full bg-background py-10 sm:py-12 lg:flex lg:h-screen lg:max-h-screen lg:flex-col lg:overflow-hidden lg:py-8">
+          <div className={cn(shell, "flex h-full min-h-0 flex-col")}>
+            <div className="mx-auto max-w-xl text-center">
+              <p className="type-kicker">{t("features.eyebrow")}</p>
+              <h2 className="type-h2 mt-2">
+                {t.rich("features.title", {
+                  accent: (chunks) => (
+                    <strong className="font-normal text-ink">{chunks}</strong>
+                  ),
+                })}
+              </h2>
+            </div>
 
-          <ul className="mx-auto mt-8 grid max-w-xl grid-cols-1 gap-3 sm:max-w-none sm:grid-cols-2 sm:gap-4 lg:max-w-3xl lg:gap-5">
-            {FEATURE_CARDS.map(({ id, variant, bodyTone }) => (
-              <FeatureSpotlightCard
-                key={id}
-                variant={variant}
-                bodyTone={bodyTone}
-                title={t(`features.${id}.title`)}
-                body={t(`features.${id}.body`)}
-              />
-            ))}
-          </ul>
+            <div className="mt-6 flex min-h-0 flex-1 sm:mt-8">
+              {(() => {
+                const items: MagicBentoItem[] = FEATURE_BENTO_LAYOUT.map((entry) => ({
+                  id: entry.id,
+                  image: entry.image,
+                  imageAlt: t(`features.${entry.id}.imageAlt`),
+                  title: t(`features.${entry.id}.title`),
+                  description: t(`features.${entry.id}.body`),
+                  accentClassName: entry.accentClassName,
+                  size: entry.size,
+                  imageSizes: entry.imageSizes,
+                }));
+                return (
+                  <MagicBento
+                    items={items}
+                    textAutoHide
+                    enableStars
+                    enableSpotlight
+                    enableBorderGlow
+                    enableTilt
+                    enableMagnetism
+                    clickEffect
+                    spotlightRadius={320}
+                    particleCount={10}
+                    glowColor="246, 169, 38"
+                  />
+                );
+              })()}
+            </div>
           </div>
         </section>
 
         {/* Community */}
-        <section className="w-full border-t border-border py-12 sm:py-14">
+        <section className="relative z-20 w-full bg-background py-12 sm:py-14">
           <div className={shell}>
-          <p className="text-center text-xl font-bold text-yellow-sun-deep sm:text-2xl">
+          <p className="type-kicker text-center">
             {t("community.eyebrow")}
           </p>
-          <h2 className="mt-2 text-center text-2xl text-ink sm:text-3xl md:mx-auto md:max-w-2xl">
+          <h2 className="type-h2 mt-2 text-center md:mx-auto md:max-w-2xl">
             {t("community.title")}
           </h2>
           <div className="mt-8 flex flex-wrap justify-center gap-2 sm:gap-3">
             {tags.map((tag, i) => (
-              <span
+              <PillTag
                 key={tag}
+                label={tag}
                 className={cn(
-                  "rounded-md px-3 py-1.5 text-[11.5px] font-bold text-white sm:text-xs md:text-sm",
+                  "text-primary-foreground",
                   TAG_STYLES[i % TAG_STYLES.length],
                 )}
-              >
-                {tag}
-              </span>
+              />
             ))}
           </div>
           <div className="mx-auto mt-8 flex max-w-[360px] flex-wrap justify-center gap-3 sm:max-w-none sm:gap-4 md:gap-6 lg:mt-10">
-            {communityBoxes.map((box) => (
-              <div
-                key={box.src}
-                className={cn(
-                  "flex size-[100px] items-center justify-center rounded-2xl sm:size-[110px] md:size-32 lg:size-36",
-                  box.bg,
-                )}
-              >
-                <Image
-                  src={box.src}
-                  alt={box.alt}
-                  width={112}
-                  height={112}
-                  className="size-[72px] object-contain sm:size-20 md:size-24 lg:size-[104px]"
-                />
-              </div>
-            ))}
+            {communityBoxes.map((box) => {
+              const Icon = box.Icon;
+              return (
+                <div
+                  key={box.key}
+                  role="img"
+                  aria-label={box.alt}
+                  className={cn(
+                    "flex size-[100px] items-center justify-center rounded-2xl sm:size-[110px] md:size-32 lg:size-36",
+                    box.bg,
+                  )}
+                >
+                  <Icon
+                    size={88}
+                    className={cn(
+                      "[&_svg]:size-[64px] sm:[&_svg]:size-[72px] md:[&_svg]:size-[88px] lg:[&_svg]:size-[104px]",
+                      box.iconClass,
+                    )}
+                  />
+                </div>
+              );
+            })}
           </div>
           </div>
         </section>
 
         {/* Closing CTA */}
-        <section className="w-full bg-[#fff2c7] py-14 sm:py-16">
+        <section className="relative z-20 w-full bg-yellow-sun-light/30 py-14 sm:py-16">
           <div className={`${shellNarrow} flex flex-col items-center text-center`}>
-            <p className="inline-flex items-center justify-center rounded-full bg-white px-3 py-2 text-[13px] font-bold text-yellow-sun-deep shadow-[0_8px_24px_rgb(246_169_38_/_0.08)] sm:text-sm">
-              <span className="flex size-8 items-center justify-center rounded-full bg-yellow-sun-deep px-1 text-[10px] font-bold leading-none text-white">
-                <span aria-hidden>✨</span>
-              </span>
-              <span className="ml-3">{t("closing.freeBadge")}</span>
-            </p>
-            <h2 className="mt-6 max-w-[min(100%,320px)] text-2xl font-normal leading-snug text-ink sm:max-w-none sm:text-3xl">
+            <h2 className="type-h2 max-w-[min(100%,320px)] sm:max-w-none">
               {t("closing.title")}
             </h2>
-            <p className="mt-3 text-sm text-muted-foreground sm:text-base">{t("closing.sub")}</p>
             <div className="mt-8 flex w-full max-w-[420px] flex-col gap-3 sm:max-w-lg sm:flex-row sm:justify-center md:max-w-2xl">
               <Button
                 asChild
-                className="h-[52px] w-full shrink-0 rounded-2xl border-0 bg-gradient-to-r from-[#f6a926] to-[#f7ce4f] text-lg font-bold !text-white hover:opacity-95 sm:flex-1 sm:text-xl md:max-w-[280px]"
+                className="group/button relative h-[52px] w-full shrink-0 overflow-hidden rounded-2xl border-0 bg-gradient-to-r from-yellow-sun-deep to-yellow-sun-light text-lg font-bold !text-primary-foreground sm:flex-1 sm:text-xl md:max-w-[280px]"
               >
-                <Link href="/login">{t("closing.primaryCta")}</Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="h-[52px] w-full shrink-0 rounded-2xl border border-zinc-200/80 bg-white text-lg font-medium text-[#030914] hover:bg-zinc-50 sm:flex-1 sm:text-xl md:max-w-[280px]"
-              >
-                <Link href="/login">{t("closing.secondaryCta")}</Link>
+                <Link href="/discover">
+                  <span>{t("closing.primaryCta")}</span>
+                  <div className="absolute inset-0 flex h-full w-full justify-center transition-transform duration-300 ease-in-out [transform:skew(-13deg)_translateX(-100%)] group-hover/button:duration-1000 group-hover/button:[transform:skew(-13deg)_translateX(100%)]">
+                    <div className="relative h-full w-10 bg-white/30" />
+                  </div>
+                </Link>
               </Button>
             </div>
           </div>
         </section>
 
         {/* Footer strip */}
-        <footer className="w-full bg-[#13203c] py-10 text-center sm:py-12">
+        <footer className="relative z-20 w-full border-t border-border bg-white py-10 text-center sm:py-12">
           <div className={shell}>
-          <p className="mx-auto max-w-md text-sm leading-relaxed text-zinc-400 sm:text-base">
+          <p className="type-p mx-auto max-w-md text-sm text-muted-foreground sm:text-base">
             {t("closing.footerLine1")}
           </p>
           <nav
@@ -570,25 +654,25 @@ export function HomeLanding() {
           >
             <Link
               href="/privacy"
-              className="text-zinc-400 underline-offset-4 transition-colors hover:text-zinc-300 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
             >
               {t("closing.footerPrivacy")}
             </Link>
-            <span className="text-zinc-600" aria-hidden>
+            <span className="text-border" aria-hidden>
               ·
             </span>
             <Link
               href="/terms"
-              className="text-zinc-400 underline-offset-4 transition-colors hover:text-zinc-300 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
             >
               {t("closing.footerTerms")}
             </Link>
-            <span className="text-zinc-600" aria-hidden>
+            <span className="text-border" aria-hidden>
               ·
             </span>
             <Link
               href="/contact"
-              className="text-zinc-400 underline-offset-4 transition-colors hover:text-zinc-300 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
             >
               {t("closing.footerContact")}
             </Link>
@@ -596,18 +680,6 @@ export function HomeLanding() {
           </div>
         </footer>
 
-    </div>
-  );
-}
-
-/** Journey band — full-bleed atmosphere + scaled blurs (not clip 430px; desktop fills width). */
-function JourneyFigmaDecor() {
-  return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.96)_0%,rgba(255,255,255,0.74)_28%,transparent_60%)]" />
-      <div className="absolute inset-x-0 bottom-0 h-[58%] bg-[radial-gradient(circle_at_bottom,rgba(246,169,38,0.2)_0%,rgba(247,206,79,0.12)_32%,transparent_72%)]" />
-      <div className="absolute left-[-8%] top-[24%] h-48 w-48 rounded-full bg-white/55 blur-3xl sm:h-64 sm:w-64" />
-      <div className="absolute bottom-[-10%] right-[-6%] h-56 w-56 rounded-full bg-[#f7ce4f]/20 blur-3xl sm:h-72 sm:w-72" />
     </div>
   );
 }
@@ -620,42 +692,41 @@ function HeroFigmaDecor() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
       {/* Base wash — always on */}
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,#ffffff_0%,#f4faff_38%,#dcefff_100%)]" />
-      <div className="absolute inset-y-0 left-0 w-[min(74%,560px)] bg-gradient-to-r from-[rgba(134,181,255,0.2)] via-[rgba(179,211,255,0.1)] to-transparent lg:w-[52%]" />
-      <div className="absolute inset-y-0 right-0 w-[min(82%,640px)] bg-gradient-to-l from-[rgba(92,158,245,0.22)] via-[rgba(196,226,255,0.12)] to-transparent lg:w-[58%]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_88%_58%_at_50%_-8%,rgba(164,204,255,0.3),transparent_58%)] opacity-90" />
-      <div className="absolute inset-x-0 bottom-0 h-[min(52%,440px)] bg-gradient-to-t from-[rgba(255,255,255,0.72)] to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-b from-plain-surface via-blue-ocean-light/15 to-blue-ocean-light/25" />
+      <div className="absolute inset-y-0 left-0 w-[min(74%,560px)] bg-gradient-to-r from-blue-ocean-light/20 via-blue-ocean-light/10 to-transparent lg:w-[52%]" />
+      <div className="absolute inset-y-0 right-0 w-[min(82%,640px)] bg-gradient-to-l from-blue-ocean/20 via-blue-ocean-light/15 to-transparent lg:w-[58%]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_88%_58%_at_50%_-8%,var(--blue-ocean-light),transparent_58%)] opacity-30" />
 
       {/* Soft sun-warm accent behind illustration side (desktop) */}
-      <div className="absolute bottom-[-20%] right-[-10%] h-[min(380px,48vh)] w-[min(420px,55vw)] rounded-full bg-[rgba(134,181,255,0.18)] blur-3xl sm:right-0 lg:bottom-[-12%] lg:right-[2%] lg:h-[min(440px,52vh)] lg:w-[min(520px,42vw)]" />
+      <div className="absolute bottom-[-20%] right-[-10%] h-[min(380px,48vh)] w-[min(420px,55vw)] rounded-full bg-blue-ocean-light/20 blur-3xl sm:right-0 lg:bottom-[-12%] lg:right-[2%] lg:h-[min(440px,52vh)] lg:w-[min(520px,42vw)]" />
 
       {/* Blur ornaments: centered ~430 on small screens; full section width on lg+ */}
       <div className="absolute inset-y-0 left-1/2 w-full max-w-[430px] -translate-x-1/2 overflow-hidden sm:max-w-[min(480px,94vw)] lg:left-0 lg:max-w-none lg:translate-x-0">
         <div className="absolute inset-0 overflow-hidden motion-reduce:hidden">
           {/* Vector 5 — widens with viewport on lg */}
           <div className="absolute inset-x-0 top-[-18%] flex justify-center lg:inset-x-[6%] lg:top-[-15%]">
-            <div className="h-[min(524px,78vh)] w-full max-w-[min(430px,92vw)] rounded-[42%] bg-[rgb(171,210,255)] blur-[100px] sm:blur-[160px] md:blur-[200px] lg:max-w-[min(1040px,88vw)] lg:blur-[220px]" />
+            <div className="h-[min(524px,78vh)] w-full max-w-[min(430px,92vw)] rounded-[42%] bg-blue-ocean-light/45 blur-[100px] sm:blur-[160px] md:blur-[200px] lg:max-w-[min(1040px,88vw)] lg:blur-[220px]" />
           </div>
 
           {/* Group 309 — kiri bawah */}
           <div className="absolute bottom-[-10%] left-[-14%] sm:left-[-8%] md:left-0 lg:left-[max(0.5rem,calc((100%-72rem)/2-2rem))]">
-            <div className="absolute left-0 top-0 h-[312px] w-[171px] rounded-full bg-[rgba(192,225,255,0.55)] blur-3xl lg:h-[340px] lg:w-[200px]" />
-            <div className="absolute left-0 top-[52px] h-[261px] w-[120px] rounded-full bg-[rgba(164,210,255,0.82)] blur-2xl lg:h-[288px] lg:w-[140px]" />
-            <div className="absolute left-0 top-[99px] h-[213px] w-[73px] rounded-full bg-[rgba(164,210,255,0.82)] blur-xl opacity-95 lg:h-[236px] lg:w-[86px]" />
+            <div className="absolute left-0 top-0 h-[312px] w-[171px] rounded-full bg-blue-ocean-light/55 blur-3xl lg:h-[340px] lg:w-[200px]" />
+            <div className="absolute left-0 top-[52px] h-[261px] w-[120px] rounded-full bg-blue-ocean-light/80 blur-2xl lg:h-[288px] lg:w-[140px]" />
+            <div className="absolute left-0 top-[99px] h-[213px] w-[73px] rounded-full bg-blue-ocean-light/80 blur-xl opacity-95 lg:h-[236px] lg:w-[86px]" />
           </div>
 
           {/* Group 307 — kanan atas */}
           <div className="absolute right-[-8%] top-[5%] sm:right-0 md:right-[2%] lg:right-[max(0.5rem,calc((100%-72rem)/2-0.5rem))]">
-            <div className="absolute right-0 top-0 h-[336px] w-[118px] rounded-full bg-[rgba(174,214,255,0.24)] blur-3xl lg:h-[380px] lg:w-[140px]" />
-            <div className="absolute right-[22px] top-[24px] h-[289px] w-[70px] rounded-full bg-[rgba(174,214,255,0.22)] blur-2xl" />
-            <div className="absolute right-[48px] top-[48px] h-[241px] w-[23px] rounded-full bg-[rgba(174,214,255,0.22)] blur-xl" />
+            <div className="absolute right-0 top-0 h-[336px] w-[118px] rounded-full bg-blue-ocean-light/25 blur-3xl lg:h-[380px] lg:w-[140px]" />
+            <div className="absolute right-[22px] top-[24px] h-[289px] w-[70px] rounded-full bg-blue-ocean-light/20 blur-2xl" />
+            <div className="absolute right-[48px] top-[48px] h-[241px] w-[23px] rounded-full bg-blue-ocean-light/20 blur-xl" />
           </div>
 
           {/* Group 308 — kanan tengah */}
           <div className="absolute right-[-6%] top-[12%] sm:right-[2%] md:right-[4%] lg:right-[max(1rem,calc((100%-72rem)/2+1rem))]">
-            <div className="absolute right-0 top-0 h-[338px] w-[100px] rounded-full bg-[rgba(196,230,255,0.5)] blur-3xl lg:h-[380px] lg:w-[120px]" />
-            <div className="absolute right-[26px] top-[26px] h-[290px] w-[53px] rounded-full bg-[rgba(115,182,255,0.36)] blur-2xl" />
-            <div className="absolute right-[52px] top-[52px] h-[242px] w-[5px] rounded-full bg-[rgba(115,182,255,0.38)] blur-lg opacity-90" />
+            <div className="absolute right-0 top-0 h-[338px] w-[100px] rounded-full bg-blue-ocean-light/50 blur-3xl lg:h-[380px] lg:w-[120px]" />
+            <div className="absolute right-[26px] top-[26px] h-[290px] w-[53px] rounded-full bg-blue-ocean/35 blur-2xl" />
+            <div className="absolute right-[52px] top-[52px] h-[242px] w-[5px] rounded-full bg-blue-ocean/40 blur-lg opacity-90" />
           </div>
         </div>
       </div>
@@ -680,10 +751,10 @@ function StatDonut({
       className="relative mx-auto size-[115px] shrink-0 rounded-full p-3 sm:size-[135px] sm:p-[14px] md:size-[145px] md:p-4"
       style={{
         background:
-          "conic-gradient(from -90deg, #5794f6 0 75%, #e5e7eb 75% 100%)",
+          "conic-gradient(from -90deg, var(--primary) 0 75%, var(--border) 75% 100%)",
       }}
     >
-      <div className="flex size-full items-center justify-center rounded-full bg-white">
+      <div className="flex size-full items-center justify-center rounded-full bg-plain-surface">
         {showValueInCenter ? (
           <p
             className="text-xl font-medium text-primary sm:text-2xl md:text-[1.75rem]"
@@ -696,4 +767,3 @@ function StatDonut({
     </div>
   );
 }
-

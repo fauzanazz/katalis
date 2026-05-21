@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { ImageIcon, Mic, ArrowLeft, Sparkles, BookOpen, Users } from "lucide-react";
+import { ImageIcon, Mic, Sparkles, BookOpen, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { UploadZone } from "@/components/upload/UploadZone";
 import { AudioRecorder } from "@/components/upload/AudioRecorder";
@@ -10,20 +11,18 @@ import { AnalysisResults } from "@/components/discovery/AnalysisResults";
 import { AnalysisLoading } from "@/components/discovery/AnalysisLoading";
 import { AnalysisError } from "@/components/discovery/AnalysisError";
 import { StoryPrompt } from "@/components/discovery/StoryPrompt";
+import { DiscoverIdleScene } from "@/components/discovery/DiscoverIdleScene";
+import Image from "next/image";
 import { getRandomStoryPrompts } from "@/lib/story-prompts";
-import { useRouter } from "@/i18n/navigation";
+import { useRouter, Link } from "@/i18n/navigation";
 import type { UploadResultData } from "@/types/upload";
 import type { AnalysisOutput } from "@/lib/ai/schemas";
 
-type DiscoveryFlow = "selection" | "image" | "audio" | "story";
+type DiscoveryFlow = "image" | "audio" | "story";
 type AnalysisState = "idle" | "analyzing" | "done" | "error";
 type ErrorType = "ai_failure" | "timeout" | "network" | "content_blocked";
 type AuthState = "loading" | "child" | "parent" | "unauthenticated";
 
-/**
- * Saves discovery results to the database via API.
- * Returns the discovery ID on success, or null on failure.
- */
 async function saveDiscoveryResults(
   type: "artifact" | "story",
   talents: AnalysisOutput["talents"],
@@ -48,16 +47,14 @@ export default function DiscoverPage() {
   const router = useRouter();
 
   const [authState, setAuthState] = useState<AuthState>("loading");
-  const [flow, setFlow] = useState<DiscoveryFlow>("selection");
+  const [flow, setFlow] = useState<DiscoveryFlow | null>(null);
   const [analysisState, setAnalysisState] = useState<AnalysisState>("idle");
   const [analysisResults, setAnalysisResults] = useState<AnalysisOutput | null>(null);
   const [errorType, setErrorType] = useState<ErrorType>("ai_failure");
   const [currentUpload, setCurrentUpload] = useState<UploadResultData | null>(null);
 
-  // Generate random story prompt images once per story flow entry
   const storyImages = useMemo(() => getRandomStoryPrompts(3), []);
 
-  // Check session type on mount
   useEffect(() => {
     async function checkAuth() {
       try {
@@ -106,18 +103,12 @@ export default function DiscoverPage() {
 
       const data: AnalysisOutput = await response.json();
 
-      // Save to DB and redirect to results page
-      const discoveryId = await saveDiscoveryResults(
-        "artifact",
-        data.talents,
-        upload.url,
-      );
+      const discoveryId = await saveDiscoveryResults("artifact", data.talents, upload.url);
       if (discoveryId) {
         router.push(`/discover/results/${discoveryId}`);
         return;
       }
 
-      // Fallback: show inline results if save fails
       setAnalysisResults(data);
       setAnalysisState("done");
     } catch {
@@ -126,52 +117,40 @@ export default function DiscoverPage() {
     }
   }, [router]);
 
-  const handleUploadComplete = useCallback(
-    (result: UploadResultData) => {
-      setCurrentUpload(result);
-    },
-    [],
-  );
+  const handleUploadComplete = useCallback((result: UploadResultData) => {
+    setCurrentUpload(result);
+  }, []);
 
   const handleAnalyze = useCallback(() => {
-    if (currentUpload) {
-      runAnalysis(currentUpload);
-    }
+    if (currentUpload) runAnalysis(currentUpload);
   }, [currentUpload, runAnalysis]);
 
   const handleRetry = useCallback(() => {
-    if (currentUpload) {
-      runAnalysis(currentUpload);
-    } else {
-      // For story flow retry, go back to idle so user can resubmit
-      setAnalysisState("idle");
-    }
+    if (currentUpload) runAnalysis(currentUpload);
+    else setAnalysisState("idle");
   }, [currentUpload, runAnalysis]);
 
-  const handleBack = useCallback(() => {
-    setFlow("selection");
+  const handleSwitchFlow = useCallback((next: DiscoveryFlow | null) => {
+    setFlow(next);
     setAnalysisState("idle");
     setAnalysisResults(null);
     setCurrentUpload(null);
   }, []);
 
   const handleNewDiscovery = useCallback(() => {
-    setFlow("selection");
+    setFlow(null);
     setAnalysisState("idle");
     setAnalysisResults(null);
     setCurrentUpload(null);
   }, []);
 
-  // Story flow callbacks
   const handleStoryAnalysisComplete = useCallback(
     (results: AnalysisOutput) => {
-      // Save story analysis results to DB and redirect
       saveDiscoveryResults("story", results.talents).then((discoveryId) => {
         if (discoveryId) {
           router.push(`/discover/results/${discoveryId}`);
           return;
         }
-        // Fallback: show inline if save fails
         setAnalysisResults(results);
         setAnalysisState("done");
       });
@@ -184,219 +163,215 @@ export default function DiscoverPage() {
     setAnalysisResults(null);
   }, []);
 
-  const handleStoryError = useCallback(
-    (type: ErrorType) => {
-      setErrorType(type);
-      setAnalysisState("error");
-    },
-    [],
-  );
+  const handleStoryError = useCallback((type: ErrorType) => {
+    setErrorType(type);
+    setAnalysisState("error");
+  }, []);
 
-  // Loading state while checking auth
+  const handleCreateGuestQuest = useCallback(() => {
+    if (analysisResults) {
+      sessionStorage.setItem("guest_talents", JSON.stringify(analysisResults.talents));
+      router.push("/quest/new");
+    }
+  }, [analysisResults, router]);
+
   if (authState === "loading") {
     return (
       <div className="mx-auto flex min-h-[50vh] w-full max-w-2xl items-center justify-center px-4">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <div className="flex items-end gap-2" aria-hidden="true">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="size-3 rounded-full bg-yellow-sun-deep animate-bounce"
+              style={{ animationDelay: `${i * 130}ms` }}
+            />
+          ))}
+        </div>
       </div>
     );
   }
 
-  // Parent session - needs to select a child first
   if (authState === "parent") {
     return (
       <div className="mx-auto w-full max-w-md px-4 py-12 sm:py-16">
         <div className="flex flex-col items-center gap-6 text-center">
-          <div className="flex size-16 items-center justify-center rounded-full bg-amber-100">
-            <Users className="size-8 text-amber-600" />
+          <div className="flex size-16 items-center justify-center rounded-full bg-yellow-sun/20">
+            <Users className="size-8 text-yellow-sun-deep" />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-ink">
               {t("parentAuth.title")}
             </h1>
-            <p className="mt-2 text-muted-foreground">
-              {t("parentAuth.message")}
-            </p>
+            <p className="mt-2 text-muted-foreground">{t("parentAuth.message")}</p>
           </div>
           <Button onClick={() => router.push("/parent")} size="lg">
             {t("parentAuth.goToParent")}
           </Button>
-          <p className="text-sm text-muted-foreground">
-            {t("parentAuth.hint")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("parentAuth.hint")}</p>
         </div>
       </div>
     );
   }
 
+  const flowTabs: { id: DiscoveryFlow; icon: React.ReactNode; label: string; activeColor: string; activeBg: string }[] = [
+    {
+      id: "story",
+      icon: <BookOpen className="size-5 shrink-0" strokeWidth={1.5} />,
+      label: t("flowSelection.storyMode"),
+      activeColor: "text-blue-ocean-deep",
+      activeBg: "bg-[#eef4ff] ring-1 ring-blue-ocean/20",
+    },
+    {
+      id: "image",
+      icon: <ImageIcon className="size-5 shrink-0" strokeWidth={1.5} />,
+      label: t("flowSelection.uploadArtifact"),
+      activeColor: "text-yellow-sun-deep",
+      activeBg: "bg-[#fff9e6] ring-1 ring-yellow-sun/30",
+    },
+    {
+      id: "audio",
+      icon: <Mic className="size-5 shrink-0" strokeWidth={1.5} />,
+      label: t("flowSelection.recordAudio"),
+      activeColor: "text-mint-cloud",
+      activeBg: "bg-[#f0f9f7] ring-1 ring-mint-cloud/30",
+    },
+  ];
+
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12 bg-gradient-to-b from-amber-50 to-orange-100 min-h-screen rounded-2xl">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
-          {t("title")}
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          {t("subtitle")}
-        </p>
+    <div className="relative isolate mx-auto w-full max-w-6xl overflow-hidden px-4 py-10 lg:flex lg:min-h-[calc(100svh-4rem)] lg:items-center lg:gap-16 lg:py-0">
+      {/* Left column: title + persistent flow tabs */}
+      <div className="mb-8 shrink-0 lg:mb-0 lg:w-5/12">
+        <div className="text-center lg:text-left">
+          <h1 className="type-h1 mb-3">{t("title")}</h1>
+          <p className="type-lede mx-auto max-w-md lg:mx-0">{t("subtitle")}</p>
+        </div>
+
+        {/* Flow tab nav — horizontal on mobile, vertical on desktop */}
+        <nav className="mt-8 flex gap-2 lg:flex-col" aria-label={t("flowSelection.title")}>
+          {flowTabs.map((tab) => {
+            const isActive = flow === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleSwitchFlow(tab.id)}
+                className={cn(
+                  "flex flex-1 items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition-all duration-150",
+                  isActive
+                    ? `${tab.activeBg} ${tab.activeColor}`
+                    : "text-muted-foreground hover:bg-muted hover:text-ink",
+                )}
+              >
+                {tab.icon}
+                <span className="hidden sm:block lg:block">{tab.label}</span>
+              </button>
+            );
+          })}
+        </nav>
       </div>
 
-      {/* Results display */}
-      {analysisState === "done" && analysisResults && (
-        <div className="flex flex-col gap-6">
-          <AnalysisResults results={analysisResults} />
-          <div className="flex justify-center">
-            <Button onClick={handleNewDiscovery} variant="outline">
-              {t("analysis.discoverAgain")}
-            </Button>
+      {/* Right column: active flow content */}
+      <div className="min-w-0 flex-1 lg:pb-72">
+        {analysisState === "done" && analysisResults && (
+          <div className="flex flex-col gap-6">
+            <AnalysisResults results={analysisResults} />
+            {authState === "unauthenticated" && (
+              <div className="rounded-2xl bg-yellow-sun/10 px-6 py-8 text-center">
+                <p className="mb-4 font-bold text-ink">{t("analysis.createQuestHint")}</p>
+                <Button
+                  onClick={handleCreateGuestQuest}
+                  size="lg"
+                  className="mb-4 w-full bg-yellow-sun-deep font-bold text-white hover:bg-yellow-sun sm:w-auto"
+                >
+                  <Sparkles className="mr-2 size-5" />
+                  {t("analysis.createQuestCta")}
+                </Button>
+                <p className="text-sm text-muted-foreground">
+                  <Link href="/login" className="underline underline-offset-2">
+                    {t("analysis.loginCta")}
+                  </Link>
+                </p>
+              </div>
+            )}
+            <div className="flex justify-center">
+              <Button onClick={handleNewDiscovery} variant="outline">
+                {t("analysis.discoverAgain")}
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Loading state */}
-      {analysisState === "analyzing" && <AnalysisLoading />}
+        {analysisState === "analyzing" && <AnalysisLoading />}
 
-      {/* Error state */}
-      {analysisState === "error" && (
-        <AnalysisError errorType={errorType} onRetry={handleRetry} />
-      )}
+        {analysisState === "error" && (
+          <AnalysisError errorType={errorType} onRetry={handleRetry} />
+        )}
 
-      {/* Flow selection */}
-      {analysisState === "idle" && flow === "selection" && (
-        <div className="flex flex-col gap-4">
-          <h2 className="text-center text-lg font-semibold text-ink">
-            {t("flowSelection.title")}
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {/* Image upload option */}
-            <button
-              type="button"
-              onClick={() => setFlow("image")}
-              className="flex flex-col items-center gap-3 rounded-xl border-2 border-border bg-card p-6 transition-all hover:border-amber-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
-            >
-              <div className="flex size-14 items-center justify-center rounded-full bg-amber-100">
-                <ImageIcon className="size-7 text-amber-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-ink">
-                {t("flowSelection.uploadArtifact")}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {t("flowSelection.uploadArtifactDesc")}
-              </p>
-            </button>
+        {analysisState === "idle" && flow === null && (
+          <DiscoverIdleScene />
+        )}
 
-            {/* Audio recording option */}
-            <button
-              type="button"
-              onClick={() => setFlow("audio")}
-              className="flex flex-col items-center gap-3 rounded-xl border-2 border-border bg-card p-6 transition-all hover:border-red-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-            >
-              <div className="flex size-14 items-center justify-center rounded-full bg-red-100">
-                <Mic className="size-7 text-red-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-ink">
-                {t("flowSelection.recordAudio")}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {t("flowSelection.recordAudioDesc")}
-              </p>
-            </button>
-
-            {/* Story mode option */}
-            <button
-              type="button"
-              onClick={() => setFlow("story")}
-              className="flex flex-col items-center gap-3 rounded-xl border-2 border-border bg-card p-6 transition-all hover:border-orange-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
-            >
-              <div className="flex size-14 items-center justify-center rounded-full bg-orange-100">
-                <BookOpen className="size-7 text-orange-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-ink">
-                {t("flowSelection.storyMode")}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {t("flowSelection.storyModeDesc")}
-              </p>
-            </button>
+        {analysisState === "idle" && flow === "image" && (
+          <div className="flex flex-col gap-6">
+            <UploadZone onUploadComplete={handleUploadComplete} />
+            {currentUpload && (
+              <Button
+                onClick={handleAnalyze}
+                size="lg"
+                className="w-full bg-yellow-sun-deep font-bold text-white hover:bg-yellow-sun"
+              >
+                <Sparkles className="mr-2 size-5" />
+                {t("analysis.analyzeButton")}
+              </Button>
+            )}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Image upload flow */}
-      {analysisState === "idle" && flow === "image" && (
-        <div className="flex flex-col gap-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBack}
-            type="button"
-            className="self-start"
-          >
-            <ArrowLeft className="mr-1 size-4" />
-            {t("flowSelection.back")}
-          </Button>
-          <UploadZone onUploadComplete={handleUploadComplete} />
-          {currentUpload && (
-            <Button
-              onClick={handleAnalyze}
-              disabled={analysisState !== "idle"}
-              className="w-full"
-              size="lg"
-            >
-              <Sparkles className="mr-2 size-5" />
-              {t("analysis.analyzeButton")}
-            </Button>
-          )}
-        </div>
-      )}
+        {analysisState === "idle" && flow === "audio" && (
+          <div className="flex flex-col gap-6">
+            <AudioRecorder onUploadComplete={handleUploadComplete} />
+            {currentUpload && (
+              <Button
+                onClick={handleAnalyze}
+                size="lg"
+                className="w-full bg-yellow-sun-deep font-bold text-white hover:bg-yellow-sun"
+              >
+                <Sparkles className="mr-2 size-5" />
+                {t("analysis.analyzeButton")}
+              </Button>
+            )}
+          </div>
+        )}
 
-      {/* Audio recording flow */}
-      {analysisState === "idle" && flow === "audio" && (
-        <div className="flex flex-col gap-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBack}
-            type="button"
-            className="self-start"
-          >
-            <ArrowLeft className="mr-1 size-4" />
-            {t("flowSelection.back")}
-          </Button>
-          <AudioRecorder onUploadComplete={handleUploadComplete} />
-          {currentUpload && (
-            <Button
-              onClick={handleAnalyze}
-              disabled={analysisState !== "idle"}
-              className="w-full"
-              size="lg"
-            >
-              <Sparkles className="mr-2 size-5" />
-              {t("analysis.analyzeButton")}
-            </Button>
-          )}
-        </div>
-      )}
-
-      {/* Story prompting flow */}
-      {analysisState === "idle" && flow === "story" && (
-        <div className="flex flex-col gap-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBack}
-            type="button"
-            className="self-start"
-          >
-            <ArrowLeft className="mr-1 size-4" />
-            {t("flowSelection.back")}
-          </Button>
+        {analysisState === "idle" && flow === "story" && (
           <StoryPrompt
             images={storyImages}
             onAnalysisComplete={handleStoryAnalysisComplete}
             onAnalysisStart={handleStoryAnalysisStart}
             onError={handleStoryError}
           />
-        </div>
-      )}
+        )}
+      </div>
+
+      {/* Permanent bottom-corner garden decorations — always visible on desktop */}
+      <div className="-z-10 pointer-events-none absolute bottom-0 left-0 hidden overflow-hidden lg:block" aria-hidden="true">
+        <Image
+          src="/images/discover/garden-strip.png"
+          alt=""
+          width={1792}
+          height={1024}
+          className="h-72 w-72 object-cover object-left-bottom"
+        />
+      </div>
+      <div className="-z-10 pointer-events-none absolute bottom-0 right-0 hidden overflow-hidden lg:block" aria-hidden="true">
+        <Image
+          src="/images/discover/garden-strip.png"
+          alt=""
+          width={1792}
+          height={1024}
+          className="h-72 w-72 object-cover object-right-bottom"
+        />
+      </div>
     </div>
   );
 }

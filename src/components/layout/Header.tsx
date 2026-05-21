@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { GooeyNav } from "./GooeyNav";
 
 interface HeaderProps {
   isAuthenticated: boolean;
@@ -35,6 +36,11 @@ export function Header({ isAuthenticated, isAdmin }: HeaderProps) {
   const navLinkClass =
     "inline-flex min-h-[44px] min-w-[44px] max-w-full items-center justify-center rounded-lg px-3 text-xs font-medium text-foreground transition-colors hover:bg-zinc-100 md:px-3 md:text-sm";
 
+  const gooeyItems = NAV_LINKS.map((link) => ({
+    label: tNav(link.labelKey),
+    href: link.href,
+  }));
+
   async function handleLogout() {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
@@ -48,7 +54,7 @@ export function Header({ isAuthenticated, isAdmin }: HeaderProps) {
   return (
     <header
       role="banner"
-      className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/95 pt-4 pb-2 backdrop-blur-sm"
+      className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/95 py-3 backdrop-blur-sm"
     >
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 md:px-8 lg:px-10 xl:max-w-6xl">
         <Link
@@ -74,18 +80,7 @@ export function Header({ isAuthenticated, isAdmin }: HeaderProps) {
           aria-label="Main navigation"
           className="hidden min-w-0 flex-1 items-center justify-end gap-1 md:flex lg:gap-2"
         >
-          {NAV_LINKS.map((link) => {
-            const isActive = pathname.startsWith(link.href);
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(navLinkClass, isActive && "bg-zinc-100")}
-              >
-                {tNav(link.labelKey)}
-              </Link>
-            );
-          })}
+          <GooeyNav items={gooeyItems} particleCount={12} />
           {isAdmin && (
             <Link
               href="/admin"

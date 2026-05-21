@@ -22,7 +22,7 @@ const AREA_LABELS: Record<string, string> = {
   results: "results",
   new: "new",
   complete: "complete",
-  login: "home",
+  login: "login",
   dashboard: "home",
 };
 

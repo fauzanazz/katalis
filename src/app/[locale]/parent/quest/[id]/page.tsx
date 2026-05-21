@@ -3,6 +3,8 @@ import { getUserSession } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { verifyParentChildLink } from "@/lib/parent/link";
+import { mapQuestToInterestSignals } from "@/lib/interests/quest-mapper";
+import { MissionInterestRating } from "@/components/parent/MissionInterestRating";
 import {
   CheckCircle2,
   Lock,
@@ -28,6 +30,7 @@ export default async function ParentQuestViewPage({
     include: {
       child: { select: { id: true, name: true } },
       missions: { orderBy: { day: "asc" } },
+      discovery: { select: { detectedTalents: true } },
     },
   });
 
@@ -56,6 +59,22 @@ export default async function ParentQuestViewPage({
   const completedCount = quest.missions.filter(
     (m) => m.status === "completed",
   ).length;
+
+  let detectedTalents: Array<{ name: string; confidence?: number }> = [];
+  if (quest.discovery?.detectedTalents) {
+    try {
+      detectedTalents = JSON.parse(quest.discovery.detectedTalents);
+    } catch {
+      detectedTalents = [];
+    }
+  }
+
+  const mappedSignals = mapQuestToInterestSignals({
+    dream: quest.dream,
+    localContext: quest.localContext,
+    talents: detectedTalents,
+  });
+  const topInterestKey = mappedSignals[0]?.interestKey ?? "science";
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
@@ -138,6 +157,17 @@ export default async function ParentQuestViewPage({
               </div>
             </div>
           )}
+
+          <div className="border-t pt-4">
+            <p className="mb-2 text-sm font-medium text-foreground">
+              Rate interest for this mission
+            </p>
+            <MissionInterestRating
+              childId={quest.child.id}
+              missionId={currentMission.id}
+              interestKey={topInterestKey}
+            />
+          </div>
         </section>
       )}
 

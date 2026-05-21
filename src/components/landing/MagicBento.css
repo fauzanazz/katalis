@@ -1,0 +1,236 @@
+/* MagicBento — image-led cards with spotlight, border glow, particles, tilt, magnetism */
+
+.card-grid {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.magic-bento-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  width: 100%;
+  border-radius: 20px;
+  border: 1px solid rgba(47, 41, 58, 0.6);
+  background: #120F17;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  font-weight: 300;
+  isolation: isolate;
+
+  --glow-x: 50%;
+  --glow-y: 50%;
+  --glow-intensity: 0;
+  --glow-radius: 200px;
+  --glow-color: 246, 169, 38;
+}
+
+.magic-bento-card:hover {
+  box-shadow: 0 12px 32px rgba(20, 16, 30, 0.35);
+}
+
+.magic-bento-card__image {
+  object-fit: cover;
+  transition: transform 0.6s ease-out;
+  z-index: 0;
+}
+
+.magic-bento-card:hover .magic-bento-card__image {
+  transform: scale(1.05);
+}
+
+.magic-bento-card__shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(15, 12, 23, 0.88) 0%,
+    rgba(15, 12, 23, 0.55) 28%,
+    rgba(15, 12, 23, 0.18) 55%,
+    transparent 78%
+  );
+  z-index: 1;
+  pointer-events: none;
+}
+
+.magic-bento-card__content {
+  position: relative;
+  z-index: 2;
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.95rem 1.1rem;
+}
+
+.magic-bento-card__title {
+  color: white;
+  font-family: var(--font-luckiest-guy, "Luckiest Guy"), system-ui, sans-serif;
+  font-size: clamp(1rem, 0.85rem + 0.5vw, 1.35rem);
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  margin: 0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+}
+
+.magic-bento-card__accent {
+  display: block;
+  width: 1.75rem;
+  height: 3px;
+  border-radius: 999px;
+  margin-bottom: 0.15rem;
+  background: currentColor;
+  opacity: 0.95;
+  box-shadow: 0 0 12px currentColor;
+}
+
+.magic-bento-card__description {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 0.85rem;
+  line-height: 1.35;
+  max-width: 22rem;
+  margin: 0;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+}
+
+/* Auto-hide overflow text */
+.magic-bento-card--text-autohide .magic-bento-card__description {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+/* Layout — mobile first */
+@media (max-width: 599px) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+  .magic-bento-card {
+    aspect-ratio: 4 / 3;
+    min-height: 200px;
+  }
+}
+
+/* Tablet — 2x2 */
+@media (min-width: 600px) and (max-width: 1023px) {
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .magic-bento-card {
+    aspect-ratio: 4 / 3;
+    min-height: 240px;
+  }
+}
+
+/* Desktop — asymmetric bento, fills parent height */
+@media (min-width: 1024px) {
+  .card-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+  .magic-bento-card {
+    aspect-ratio: auto;
+    height: 100%;
+    min-height: 0;
+  }
+  .magic-bento-card[data-size="hero"] {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+  .magic-bento-card[data-size="wide"] {
+    grid-column: span 2;
+    grid-row: span 1;
+  }
+  .magic-bento-card[data-size="tall"] {
+    grid-column: span 1;
+    grid-row: span 2;
+  }
+  .magic-bento-card[data-size="square"] {
+    grid-column: span 1;
+    grid-row: span 1;
+  }
+  .magic-bento-card[data-size="hero"] .magic-bento-card__title {
+    font-size: clamp(1.4rem, 1rem + 0.9vw, 2rem);
+  }
+  .magic-bento-card[data-size="hero"] .magic-bento-card__description {
+    font-size: 1rem;
+    max-width: 28rem;
+  }
+}
+
+/* Border glow follows cursor (controlled by JS via CSS vars) */
+.magic-bento-card--border-glow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  background: radial-gradient(
+    var(--glow-radius) circle at var(--glow-x) var(--glow-y),
+    rgba(var(--glow-color), calc(var(--glow-intensity) * 0.9)) 0%,
+    rgba(var(--glow-color), calc(var(--glow-intensity) * 0.4)) 30%,
+    transparent 60%
+  );
+  border-radius: inherit;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 3;
+  transition: opacity 0.3s ease;
+}
+
+.magic-bento-card--border-glow:hover {
+  box-shadow:
+    0 10px 28px rgba(20, 16, 30, 0.35),
+    0 0 32px rgba(var(--glow-color), 0.45);
+}
+
+/* Particle effect — already styled via inline JS; just constrain container */
+.particle-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.particle::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: rgba(var(--glow-color, 246, 169, 38), 0.2);
+  border-radius: 50%;
+  z-index: -1;
+}
+
+/* Global spotlight — set in inline styles by JS, with screen blend mode */
+.global-spotlight {
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+  z-index: 200 !important;
+  pointer-events: none;
+}
+
+.bento-section {
+  position: relative;
+  user-select: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .magic-bento-card,
+  .magic-bento-card__image {
+    transition: none !important;
+  }
+  .magic-bento-card:hover .magic-bento-card__image {
+    transform: none;
+  }
+}

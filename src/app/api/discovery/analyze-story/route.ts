@@ -17,14 +17,8 @@ import { moderateContent, getUncertaintyFallback } from "@/lib/moderation";
  */
 export async function POST(request: NextRequest) {
   try {
-    // Require authentication
+    // Auth is optional — guests can analyze without a session
     const session = await getChildSession();
-    if (!session) {
-      return NextResponse.json(
-        { error: "unauthorized", message: "Authentication required" },
-        { status: 401 },
-      );
-    }
 
     // Parse request body
     const body = await request.json().catch(() => null);
@@ -56,7 +50,7 @@ export async function POST(request: NextRequest) {
       content: parsed.data.storyText,
       contentType: "text",
       sourceType: "discovery",
-      childId: session.childId,
+      childId: session?.childId,
     });
 
     if (!moderationResult.allowed) {

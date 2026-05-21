@@ -1,5 +1,10 @@
 import type { Metadata } from "next";
-import { Instrument_Sans, Montserrat } from "next/font/google";
+import {
+  Instrument_Sans,
+  Luckiest_Guy,
+  Montserrat,
+  Schoolbell,
+} from "next/font/google";
 import "./globals.css";
 
 const instrumentSans = Instrument_Sans({
@@ -10,6 +15,18 @@ const instrumentSans = Instrument_Sans({
 const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],
+});
+
+const luckiestGuy = Luckiest_Guy({
+  variable: "--font-luckiest-guy",
+  subsets: ["latin"],
+  weight: "400",
+});
+
+const schoolbell = Schoolbell({
+  variable: "--font-schoolbell",
+  subsets: ["latin"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -25,7 +42,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${instrumentSans.variable} ${montserrat.variable} h-full antialiased`}
+      className={`${instrumentSans.variable} ${montserrat.variable} ${luckiestGuy.variable} ${schoolbell.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">{children}</body>
     </html>

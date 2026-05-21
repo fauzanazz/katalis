@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db";
 import { sanitizeInput } from "@/lib/sanitize";
 import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 import { buildBadgeContext, evaluateBadges, awardBadges } from "@/lib/badges";
+import { mapMissionCompletionToInterestSignals } from "@/lib/interests/quest-mapper";
+import { ingestInterestSignals } from "@/lib/interests/ingest-service";
 
 /**
  * Zod schema for mission status update requests.
@@ -242,6 +244,25 @@ export async function PATCH(
         trigger: "mission_complete",
         questId,
       });
+
+      // Ingest mission-completed interest signals (fire-and-forget)
+      try {
+        const missionSignals = mapMissionCompletionToInterestSignals({
+          quest: { dream: quest.dream, localContext: quest.localContext },
+          mission: { title: mission.title, description: mission.description },
+        });
+        if (missionSignals.length > 0) {
+          await ingestInterestSignals({
+            childId: session.childId,
+            source: "mission_completed",
+            questId,
+            missionId,
+            signals: missionSignals,
+          });
+        }
+      } catch (interestError) {
+        console.error("Interest ingestion failed for mission completion, continuing:", interestError);
+      }
 
       return NextResponse.json({
         success: true,

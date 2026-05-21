@@ -28,10 +28,9 @@
     "navSheetTitle": "Explore Katalis AI",
     "hero": {
       "safePill": "Safe · Private · Ad-Free",
-      "title": "Discover your child's hidden talents",
+      "title": "Discover your child's <accent>hidden talents</accent>",
       "subtitle": "An AI mentor that turns curiosity into real creations in just 7 days.",
       "cta": "Start the adventure",
-      "meta": "For ages 6-12 · No credit needed",
       "imageAlt": "Children exploring creative projects together"
     },
     "problem": {
@@ -47,7 +46,7 @@
       "donutAria": "children struggle to find their true interest",
       "leftCaption": "children struggle to find their true interest",
       "rightTitle": "identity",
-      "rightCaption": "lorem ipsum dolor sit amet"
+      "rightCaption": "children who explore creative expression develop a stronger sense of who they are"
     },
     "journey": {
       "eyebrow": "The Journey",
@@ -55,24 +54,24 @@
       "titleEmphasis": "talent",
       "titleAfter": "",
       "step1": {
-        "title": "Talent discovery",
-        "body": "Upload a photo of your creation"
+        "title": "Tell your story",
+        "body": "Your child describes their passions through a fun storytelling activity. Our AI reads between the lines to reveal hidden interests and learning styles."
       },
       "step2": {
-        "title": "Pick a 7-day mission",
-        "body": "AI checks materials at home"
+        "title": "Pick your mission",
+        "body": "Get a personalised 7-day adventure tailored to your child's unique interests — using only what you already have at home."
       },
       "step3": {
         "title": "Daily mentorship",
-        "body": "Interactive chat & voice reflection"
+        "body": "Each day an AI mentor guides your child through creative challenges, celebrates progress, and gently adapts to their pace and mood."
       },
       "step4": {
         "title": "Global showcase",
-        "body": "Join a worldwide Squad"
+        "body": "Share completed missions with children worldwide. Discover different perspectives, vote on favourites, and find your Squad."
       },
       "step5": {
         "title": "Continued growth",
-        "body": "From spark to long-term hobby"
+        "body": "Watch your child evolve from curious explorer to confident creator — with personalised insights and recommended next adventures."
       }
     },
     "features": {
@@ -80,19 +79,23 @@
       "title": "One ecosystem, <accent>four roles</accent>",
       "talentScout": {
         "title": "Talent Scout",
-        "body": "Upload a photo of your creation"
+        "body": "Upload a photo of your creation",
+        "imageAlt": "Children proudly showing handmade creations to a friendly AI companion"
       },
       "questBuddy": {
         "title": "Quest Buddy",
-        "body": "7-day mission chat mentor"
+        "body": "7-day mission chat mentor",
+        "imageAlt": "Child on an adventure quest with a glowing AI mentor companion"
       },
       "squadGallery": {
         "title": "Squad Gallery",
-        "body": "Safe cross-country showcase"
+        "body": "Safe cross-country showcase",
+        "imageAlt": "Diverse children admiring a gallery of artworks from around the world"
       },
       "parentBridge": {
         "title": "Parent Bridge",
-        "body": "Reports & realistic tips"
+        "body": "Reports & realistic tips",
+        "imageAlt": "Parent and child sharing a glowing storybook of progress at home"
       }
     },
     "community": {
@@ -103,16 +106,14 @@
       "tagStory": "#StoryMakers",
       "tagMini": "#MiniScientists",
       "tagDesign": "#SmallDesigners",
-      "boxArtAlt": "Creative palette and art tools",
-      "boxScienceAlt": "Science experiment and discovery icon",
-      "boxMobilityAlt": "Mobility and engineering project icon"
+      "boxArtAlt": "Graduation cap icon for learning achievements",
+      "boxScienceAlt": "Atom icon for science exploration",
+      "boxMobilityAlt": "Airplane icon for mobility projects"
     },
     "closing": {
       "freeBadge": "Free Forever",
       "title": "Ready to spark your child's talent?",
-      "sub": "No credit needed · Cancel anytime",
-      "primaryCta": "Download Katalis AI",
-      "secondaryCta": "Watch 30-sec Demo",
+      "primaryCta": "Try now",
       "footerLine1": "© 2026 Katalis AI",
       "footerNavLabel": "Footer navigation",
       "footerPrivacy": "Privacy",
@@ -133,10 +134,21 @@
     "choose": {
       "title": "Who's logging in?",
       "subtitle": "Choose your account type to get started",
+      "parentKicker": "Parent mode",
       "parentTitle": "I'm a Parent",
       "parentDesc": "Manage your child's learning journey",
+      "parentBoardTitle": "Weekly learning view",
+      "parentSignal1": "Reports",
+      "parentSignal2": "Privacy",
+      "parentSignal3": "Guidance",
+      "parentCta": "Parent sign in",
+      "childKicker": "Kid zone",
       "childTitle": "I'm a Kid",
-      "childDesc": "Continue your adventure!"
+      "childDesc": "Continue your adventure!",
+      "childSignal1": "Missions",
+      "childSignal2": "Badges",
+      "childSignal3": "Secret code",
+      "childCta": "Enter adventure"
     },
     "parent": {
       "title": "Parent Sign In",
@@ -149,6 +161,18 @@
       "errors": {
         "required": "Please enter your email and password",
         "invalid": "Invalid email or password"
+      },
+      "features": {
+        "heading": "Empower your child's future",
+        "vision": "Children will discover their passions and explore their interests and talents from an early age.",
+        "feature1Title": "Real-time progress",
+        "feature1Desc": "Monitor your child's learning journey every step of the way",
+        "feature2Title": "Talent discovery",
+        "feature2Desc": "Identify your child's strengths and interests early",
+        "feature3Title": "Weekly reports",
+        "feature3Desc": "Get detailed exploration reports every week",
+        "feature4Title": "Guided learning",
+        "feature4Desc": "Curated quests that match your child's potential"
       }
     },
     "child": {
@@ -226,6 +250,7 @@
     "results": "Results",
     "new": "New Quest",
     "complete": "Complete",
+    "login": "Login",
     "admin": "Admin",
     "users": "Users",
     "codes": "Access Codes",
@@ -245,6 +270,7 @@
       "back": "Back to choices"
     },
     "upload": {
+      "hint": "Drop your artwork here!",
       "dropzone": "Drag and drop your image here",
       "dropzoneActive": "Drop your image here!",
       "tapToUpload": "Tap to upload",
@@ -293,13 +319,17 @@
     },
     "history": {
       "title": "Your Discoveries",
-      "empty": "You haven't made any discoveries yet. Start your first one!",
+      "subtitle": "Look at all the amazing talents you've found!",
+      "empty": "No discoveries yet!",
+      "emptyDesc": "Start your first discovery to uncover your amazing talents. Upload a drawing, record your voice, or tell a story!",
       "startFirst": "Start Discovering",
-      "viewAll": "View All",
       "loadMore": "Load More",
+      "talentSummary": "{count} talents found",
       "artifact": "Image Discovery",
       "story": "Story Discovery",
-      "audio": "Voice Discovery"
+      "audio": "Voice Discovery",
+      "viewDetails": "View Details",
+      "totalDiscoveries": "{count} discoveries so far"
     },
     "sessionRecovery": {
       "title": "Resume Upload?",
@@ -316,6 +346,11 @@
       "talentCardLabel": "Talent: {name}",
       "confidenceLabel": "{name} confidence: {percent}%",
       "discoverAgain": "Discover More Talents",
+      "createQuestCta": "Create Your Quest!",
+      "createQuestHint": "See your personalised 7-day adventure — no account needed yet.",
+      "loginToSave": "Save your results and start a quest!",
+      "loginToSaveHint": "Create a free account to save your discovery and unlock personalised quests.",
+      "loginCta": "Login to Save",
       "errorGeneral": "Oops! We couldn't analyze your creation right now.",
       "errorTimeout": "The analysis is taking a bit too long. Let's try again!",
       "errorNetwork": "It seems you're not connected. Please check your internet and try again.",
@@ -347,24 +382,11 @@
       "audioType": "Voice Discovery",
       "dateLabel": "Discovered on {date}"
     },
-    "history": {
-      "title": "Your Discoveries",
-      "subtitle": "Look at all the amazing talents you've found!",
-      "empty": "No discoveries yet!",
-      "emptyDesc": "Start your first discovery to uncover your amazing talents. Upload a drawing, record your voice, or tell a story!",
-      "startFirst": "Start Discovering",
-      "loadMore": "Load More",
-      "talentSummary": "{count} talents found",
-      "artifact": "Image Discovery",
-      "story": "Story Discovery",
-      "audio": "Voice Discovery",
-      "viewDetails": "View Details",
-      "totalDiscoveries": "{count} discoveries so far"
-    },
     "story": {
       "imagePromptTitle": "Look at these pictures!",
       "imagePromptSubtitle": "Create a story inspired by what you see",
       "imageGroupLabel": "Story prompt images",
+      "imageExpandLabel": "click to enlarge",
       "writeStory": "Write a Story",
       "recordStory": "Record a Story",
       "textLabel": "Your Story",
@@ -497,6 +519,16 @@
       "proofPhotoAlt": "Proof photo for Day {day}: {title}",
       "viewCompletedProof": "View your submitted proof",
       "viewCompletion": "View Celebration"
+    },
+    "preview": {
+      "title": "Your 7-Day Quest Preview",
+      "subtitle": "Here's a taste of your adventure!",
+      "loginBanner": "Login to save this quest and track your real progress",
+      "loginCta": "Login to Start Your Quest",
+      "discoverAgain": "Try Another Discovery",
+      "dayLabel": "Day {day}",
+      "missionCount": "{count} missions planned",
+      "dreamLabel": "Your Dream"
     },
     "complete": {
       "title": "Quest Complete!",

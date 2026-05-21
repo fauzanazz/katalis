@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/navigation";
+import { InterestInsightsClient } from "./InterestInsightsClient";
 
 interface ChildCardProps {
   child: {
@@ -103,6 +104,10 @@ export function ChildCard({ child }: ChildCardProps) {
           </div>
         </div>
       )}
+
+      <div className="mt-4 border-t pt-3">
+        <InterestInsightsClient childId={child.id} />
+      </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
         <button

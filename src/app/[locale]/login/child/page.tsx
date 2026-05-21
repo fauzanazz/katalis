@@ -3,10 +3,10 @@
 import { useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter, Link } from "@/i18n/navigation";
-import { Button } from "@/components/ui/button";
+import { ArrowRight, Sparkles, Rocket } from "lucide-react";
 
 export default function ChildLoginPage() {
-  const t = useTranslations("auth.child");
+  const t = useTranslations("auth");
   const router = useRouter();
 
   const [code, setCode] = useState("");
@@ -19,7 +19,7 @@ export default function ChildLoginPage() {
 
     const trimmedCode = code.trim();
     if (!trimmedCode) {
-      setError(t("errors.empty"));
+      setError(t("child.errors.empty"));
       return;
     }
 
@@ -39,78 +39,131 @@ export default function ChildLoginPage() {
         router.refresh();
       } else {
         if (data.error === "expired") {
-          setError(t("errors.expired"));
+          setError(t("child.errors.expired"));
         } else if (data.error === "rate_limited") {
-          setError(data.message || t("errors.invalid"));
+          setError(data.message || t("child.errors.invalid"));
         } else {
-          setError(t("errors.invalid"));
+          setError(t("child.errors.invalid"));
         }
       }
     } catch {
-      setError(t("errors.invalid"));
+      setError(t("child.errors.invalid"));
     } finally {
       setIsSubmitting(false);
     }
   }
 
+  const features = [
+    t("choose.childSignal1"),
+    t("choose.childSignal2"),
+    t("choose.childSignal3"),
+  ];
+
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] flex-col bg-gradient-to-b from-amber-50 to-orange-100 px-6 py-8">
-      <Link
-        href="/login"
-        className="mb-4 inline-flex items-center gap-1 text-base text-amber-700 hover:text-amber-900"
-      >
-        <span aria-hidden="true">←</span> {t("back")}
-      </Link>
+    <div className="relative min-h-screen overflow-hidden bg-[#F5C542] flex items-center justify-center px-6 py-10">
+      {/* Corner decorations */}
+      <div className="pointer-events-none absolute right-4 top-4 h-14 w-14 rotate-12 rounded-sm bg-[#C8A4E0]" />
+      <div className="pointer-events-none absolute bottom-6 left-4 h-10 w-10 -rotate-6 rounded-sm bg-[#A8C8F0]" />
 
-      <div className="flex flex-1 flex-col items-center justify-center">
-        {/* Kit the Explorer Fox mascot */}
-        <div className="mb-8 flex justify-center">
-          <img
-            src="/images/kit-mascot.png"
-            alt="Kit the Explorer Fox"
-            className="h-48 w-48 object-contain sm:h-56 sm:w-56 md:h-64 md:w-64"
-          />
-        </div>
+      <div className="w-full max-w-2xl">
+        <Link
+          href="/login"
+          className="mb-8 inline-flex items-center gap-1 text-sm font-semibold text-black/50 hover:text-black"
+        >
+          ← {t("child.back")}
+        </Link>
 
-        <h1 className="mb-3 text-center text-4xl font-bold text-amber-900 sm:text-5xl">{t("title")}</h1>
-        <p className="mb-10 text-center text-lg text-amber-700 sm:text-xl">{t("subtitle")}</p>
-
-        <form onSubmit={handleSubmit} noValidate className="w-full max-w-md space-y-6">
+        <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2">
+          {/* Left: text + form */}
           <div>
-            <label htmlFor="access-code" className="sr-only">
-              {t("codePlaceholder")}
-            </label>
-            <input
-              id="access-code"
-              name="code"
-              type="text"
-              autoComplete="off"
-              value={code}
-              onChange={(e) => {
-                setCode(e.target.value);
-                if (error) setError(null);
-              }}
-              placeholder={t("codePlaceholder")}
-              aria-invalid={!!error}
-              className="flex h-16 w-full rounded-2xl border-3 border-amber-300 bg-white px-6 text-center text-xl font-bold tracking-[0.3em] text-ink placeholder:text-amber-300 placeholder:tracking-normal placeholder:font-normal focus:border-amber-500 focus:outline-none focus:ring-4 focus:ring-amber-400/30 disabled:cursor-not-allowed disabled:opacity-50 sm:h-20 sm:text-2xl"
-              disabled={isSubmitting}
-            />
+            {/* KID ZONE badge */}
+            <div className="mb-5 flex items-center gap-3">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-black px-3.5 py-1.5 text-xs font-black tracking-widest text-white uppercase">
+                <Sparkles className="size-3" aria-hidden />
+                {t("choose.childKicker")}
+              </span>
+              <Rocket className="size-5 text-black/60" aria-hidden />
+            </div>
+
+            {/* Heading */}
+            <h1 className="mb-2 text-5xl font-black leading-[1.05] tracking-tight text-black sm:text-6xl">
+              {t("choose.childTitle")}
+            </h1>
+            <p className="mb-6 text-base font-semibold text-black/65">
+              {t("choose.childDesc")}
+            </p>
+
+            {/* Feature chips */}
+            <div className="mb-7 flex flex-wrap gap-2">
+              {features.map((feat) => (
+                <span
+                  key={feat}
+                  className="rounded border-2 border-black bg-white px-4 py-2 text-sm font-bold text-black shadow-[2px_2px_0_#000]"
+                >
+                  {feat}
+                </span>
+              ))}
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} noValidate className="space-y-3">
+              <label htmlFor="access-code" className="sr-only">
+                {t("child.codePlaceholder")}
+              </label>
+              <input
+                id="access-code"
+                name="code"
+                type="text"
+                autoComplete="off"
+                value={code}
+                onChange={(e) => {
+                  setCode(e.target.value);
+                  if (error) setError(null);
+                }}
+                placeholder={t("child.codePlaceholder")}
+                aria-invalid={!!error}
+                className="flex h-14 w-full rounded-2xl border-2 border-black bg-white px-5 text-center text-lg font-bold tracking-[0.25em] text-black placeholder:text-black/30 placeholder:tracking-normal placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-black/20 disabled:opacity-50"
+                disabled={isSubmitting}
+              />
+
+              {error && (
+                <p role="alert" className="text-sm font-semibold text-red-700">
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-[#D4A0D0] px-6 text-base font-bold text-white shadow-[3px_3px_0_rgba(0,0,0,0.25)] transition-all hover:brightness-95 active:shadow-[1px_1px_0_rgba(0,0,0,0.25)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSubmitting ? (
+                  "..."
+                ) : (
+                  <>
+                    {t("choose.childCta")}
+                    <ArrowRight className="size-5" aria-hidden />
+                  </>
+                )}
+              </button>
+            </form>
           </div>
 
-          {error && (
-            <p id="auth-error" role="alert" className="text-center text-base text-red-600">
-              {error}
-            </p>
-          )}
+          {/* Right: mascot in polaroid */}
+          <div className="relative flex justify-center">
+            {/* Purple accent behind frame */}
+            <div className="absolute -right-2 -top-2 h-10 w-10 rounded-sm bg-[#C8A4E0] rotate-6" />
 
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="h-16 w-full rounded-2xl bg-amber-500 text-xl font-bold text-white shadow-lg shadow-amber-500/30 hover:bg-amber-600 hover:shadow-xl hover:shadow-amber-500/40 disabled:opacity-50 sm:h-20 sm:text-2xl"
-          >
-            {isSubmitting ? "..." : t("submit")}
-          </Button>
-        </form>
+            {/* Polaroid frame */}
+            <div className="relative z-10 rotate-2 border border-black/10 bg-white p-3 pb-8 shadow-2xl">
+              <img
+                src="/images/kit-mascot.png"
+                alt="Kit the Explorer Fox"
+                className="h-56 w-56 object-contain sm:h-64 sm:w-64"
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

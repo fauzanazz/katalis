@@ -11,6 +11,10 @@ async function hashPassword(password: string): Promise<string> {
 
 async function main() {
   // Clean existing data
+  await prisma.interestAuditEvent.deleteMany();
+  await prisma.missionInterestAssessment.deleteMany();
+  await prisma.childInterestProfile.deleteMany();
+  await prisma.interestSignal.deleteMany();
   await prisma.parentReport.deleteMany();
   await prisma.parentChild.deleteMany();
   await prisma.squadMember.deleteMany();
@@ -281,6 +285,101 @@ async function main() {
       data: { userId: testUser.id, childId: child1.id },
     });
   }
+
+  // ── Seed Longitudinal Interest Tracking ──────────────────────────────
+  const firstRobotMission = await prisma.mission.findFirst({
+    where: { questId: quest1.id, day: 1 },
+  });
+
+  await prisma.interestSignal.createMany({
+    data: [
+      {
+        childId: child1.id,
+        taxonomyVersion: "v1",
+        interestKey: "technology",
+        source: "discovery_analysis",
+        dimension: "curiosity",
+        strength: 0.9,
+        confidence: 0.95,
+        discoveryId: disc1.id,
+        metadataJson: JSON.stringify({ talentName: "Engineering", seed: true }),
+      },
+      {
+        childId: child1.id,
+        taxonomyVersion: "v1",
+        interestKey: "technology",
+        source: "quest_completed",
+        dimension: "persistence",
+        strength: 0.7,
+        confidence: 0.75,
+        questId: quest1.id,
+        metadataJson: JSON.stringify({ dream: quest1.dream, seed: true }),
+      },
+      {
+        childId: child1.id,
+        taxonomyVersion: "v1",
+        interestKey: "art",
+        source: "discovery_analysis",
+        dimension: "joy",
+        strength: 0.8,
+        confidence: 0.92,
+        discoveryId: disc3.id,
+        metadataJson: JSON.stringify({ talentName: "Art", seed: true }),
+      },
+    ],
+  });
+
+  await prisma.childInterestProfile.createMany({
+    data: [
+      {
+        childId: child1.id,
+        taxonomyVersion: "v1",
+        interestKey: "technology",
+        score: 1,
+        confidence: 0.85,
+        signalCount: 2,
+        lastSignalAt: new Date(),
+        trend: "rising",
+        summary: "Shows sustained interest in building helpful machines.",
+      },
+      {
+        childId: child1.id,
+        taxonomyVersion: "v1",
+        interestKey: "art",
+        score: 0.74,
+        confidence: 0.72,
+        signalCount: 1,
+        lastSignalAt: new Date(),
+        trend: "stable",
+        summary: "Visual art appears as an emerging adjacent interest.",
+      },
+    ],
+  });
+
+  if (firstRobotMission) {
+    await prisma.missionInterestAssessment.create({
+      data: {
+        childId: child1.id,
+        missionId: firstRobotMission.id,
+        taxonomyVersion: "v1",
+        interestKey: "technology",
+        explicitRating: 5,
+        parentRating: 5,
+        observedEngagement: 5,
+        notes: "Seed parent rating: child asked to repeat the robot activity.",
+      },
+    });
+  }
+
+  await prisma.interestAuditEvent.create({
+    data: {
+      childId: child1.id,
+      actorUserId: testUser?.id,
+      eventType: "seed_longitudinal_interest_data",
+      entityType: "interest_profile",
+      metadataJson: JSON.stringify({ profileCount: 2, signalCount: 3 }),
+    },
+  });
 
   // ── Seed Parent Report ──────────────────────────────────────────────
   if (testUser) {

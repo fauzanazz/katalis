@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getChildSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { mapDiscoveryAnalysisToInterestSignals } from "@/lib/interests/discovery-mapper";
+import { ingestInterestSignals } from "@/lib/interests/ingest-service";
 
 /** Schema for saving a discovery result */
 const SaveDiscoverySchema = z.object({
@@ -70,6 +72,21 @@ export async function POST(request: NextRequest) {
         detectedTalents: JSON.stringify(talents),
       },
     });
+
+    // Ingest interest signals from discovery (fire-and-forget; failure must not break discovery save)
+    try {
+      const signals = mapDiscoveryAnalysisToInterestSignals({ talents });
+      if (signals.length > 0) {
+        await ingestInterestSignals({
+          childId: session.childId,
+          source: "discovery_analysis",
+          discoveryId: discovery.id,
+          signals,
+        });
+      }
+    } catch (interestError) {
+      console.error("Interest ingestion failed for discovery, continuing:", interestError);
+    }
 
     return NextResponse.json(
       {

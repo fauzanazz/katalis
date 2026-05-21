@@ -14,12 +14,15 @@ type LocaleShellProps = {
   isAdmin: boolean;
 };
 
+const AUTH_PATHS = ["/login", "/register"];
+
 export function LocaleShell({ children, isAuthenticated, isAdmin }: LocaleShellProps) {
   const pathname = usePathname();
   const isLanding =
     pathname === "/" ||
     pathname === "" ||
     routing.locales.some((locale) => pathname === `/${locale}`);
+  const isAuth = AUTH_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
 
   return (
     <>
@@ -27,11 +30,11 @@ export function LocaleShell({ children, isAuthenticated, isAdmin }: LocaleShellP
       {!isLanding ? (
         <Header isAuthenticated={isAuthenticated} isAdmin={isAdmin} />
       ) : null}
-      {!isLanding ? <Breadcrumbs /> : null}
-      <main id="main-content" role="main" className="flex-1">
+      {!isLanding && !isAuth ? <Breadcrumbs /> : null}
+      <main id="main-content" role="main" className="flex flex-1 flex-col">
         {children}
       </main>
-      {!isLanding ? <Footer /> : null}
+      {!isLanding && !isAuth ? <Footer /> : null}
     </>
   );
 }

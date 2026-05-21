@@ -238,7 +238,10 @@ export default function DiscoverPage() {
   ];
 
   return (
-    <div className="relative isolate mx-auto w-full max-w-6xl overflow-hidden px-4 py-10 lg:flex lg:min-h-[calc(100svh-4rem)] lg:items-center lg:gap-16 lg:py-0">
+    <div className="mx-auto flex w-full max-w-6xl flex-col">
+      {/* Two-column content row */}
+      <div className="flex flex-col px-4 py-10 lg:min-h-[calc(100svh-20rem)] lg:flex-row lg:items-center lg:gap-16 lg:py-8">
+
       {/* Left column: title + persistent flow tabs */}
       <div className="mb-8 shrink-0 lg:mb-0 lg:w-5/12">
         <div className="text-center lg:text-left">
@@ -271,7 +274,7 @@ export default function DiscoverPage() {
       </div>
 
       {/* Right column: active flow content */}
-      <div className="min-w-0 flex-1 lg:pb-72">
+      <div className="min-w-0 flex-1">
         {analysisState === "done" && analysisResults && (
           <div className="flex flex-col gap-6">
             <AnalysisResults results={analysisResults} />
@@ -353,23 +356,16 @@ export default function DiscoverPage() {
         )}
       </div>
 
-      {/* Permanent bottom-corner garden decorations — always visible on desktop */}
-      <div className="-z-10 pointer-events-none absolute bottom-0 left-0 hidden overflow-hidden lg:block" aria-hidden="true">
+      </div>{/* end two-column content row */}
+
+      {/* Garden strip — in-flow below content, always visible on desktop */}
+      <div className="pointer-events-none hidden overflow-hidden lg:block" aria-hidden="true">
         <Image
           src="/images/discover/garden-strip.png"
           alt=""
           width={1792}
           height={1024}
-          className="h-72 w-72 object-cover object-left-bottom"
-        />
-      </div>
-      <div className="-z-10 pointer-events-none absolute bottom-0 right-0 hidden overflow-hidden lg:block" aria-hidden="true">
-        <Image
-          src="/images/discover/garden-strip.png"
-          alt=""
-          width={1792}
-          height={1024}
-          className="h-72 w-72 object-cover object-right-bottom"
+          className="h-64 w-full object-cover object-bottom"
         />
       </div>
     </div>

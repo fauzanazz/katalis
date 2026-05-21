@@ -61,7 +61,7 @@ export function ParentFeatureCarousel() {
   const slide = SLIDES[active];
 
   return (
-    <div className="relative h-full w-full overflow-hidden">
+    <div className="absolute inset-0 overflow-hidden">
       {/* Slides */}
       {SLIDES.map((s, i) => (
         <div

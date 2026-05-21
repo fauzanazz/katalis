@@ -1,17 +1,21 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, Suspense } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter, Link } from "@/i18n/navigation";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { ParentFeatureCarousel } from "@/components/auth/ParentFeatureCarousel";
 
-export default function ParentLoginPage() {
+function ParentLoginPageContent() {
   const t = useTranslations("auth.parent");
   const tFeatures = useTranslations("auth.parent.features");
   const tRegister = useTranslations("auth.register");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
+  const safeCallback = callbackUrl?.startsWith("/") ? callbackUrl : "/parent";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,7 +43,7 @@ export default function ParentLoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        router.push("/parent");
+        router.push(safeCallback);
         router.refresh();
       } else {
         if (data.error === "rate_limited") {
@@ -142,9 +146,17 @@ export default function ParentLoginPage() {
       </div>
 
       {/* Right: Visual panel */}
-      <div className="hidden h-full overflow-hidden lg:block lg:w-1/2">
+      <div className="relative hidden min-h-[600px] overflow-hidden lg:block lg:min-h-[calc(100dvh-4.5rem)] lg:w-1/2">
         <ParentFeatureCarousel />
       </div>
     </div>
+  );
+}
+
+export default function ParentLoginPage() {
+  return (
+    <Suspense>
+      <ParentLoginPageContent />
+    </Suspense>
   );
 }

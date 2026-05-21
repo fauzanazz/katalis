@@ -1,8 +1,9 @@
 "use client";
 
+import { Suspense } from "react";
 import Image from "next/image";
-import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { ArrowRight, ClipboardCheck, Rocket, ShieldCheck, Sparkles } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 
@@ -10,15 +11,18 @@ const PARENT_SIGNALS = ["parentSignal1", "parentSignal2", "parentSignal3"] as co
 const CHILD_SIGNALS = ["childSignal1", "childSignal2", "childSignal3"] as const;
 const PROGRESS_BARS = [76, 52, 88] as const;
 
-export default function LoginPage() {
+function LoginPageContent() {
   const t = useTranslations("auth.choose");
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") ?? "";
+  const cbQuery = callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : "";
 
   return (
     <div className="bg-general-surface px-4 py-6 sm:px-6 lg:px-8">
       <h1 className="sr-only">{t("title")}</h1>
       <div className="mx-auto grid min-h-[calc(100vh-18rem)] w-full max-w-7xl items-stretch gap-5 lg:grid-cols-2">
         <Link
-          href="/login/parent"
+          href={`/login/parent${cbQuery}`}
           className="group relative flex min-h-[520px] overflow-hidden rounded-lg border border-green-leaf-deep bg-auth-surface px-6 py-7 text-ink shadow-sm transition-transform hover:-translate-y-1 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-green-leaf-deep/35 sm:px-8 lg:px-10"
           aria-label={`${t("parentTitle")}. ${t("parentDesc")}`}
         >
@@ -88,7 +92,7 @@ export default function LoginPage() {
         </Link>
 
         <Link
-          href="/login/child"
+          href={`/login/child${cbQuery}`}
           className="group relative flex min-h-[520px] overflow-hidden rounded-lg border border-yellow-sun-deep bg-yellow-sun-light px-6 py-7 text-ink shadow-sm transition-transform hover:-translate-y-1 hover:shadow-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-sun-deep/35 sm:px-8 lg:px-10"
           aria-label={`${t("childTitle")}. ${t("childDesc")}`}
         >
@@ -151,5 +155,13 @@ export default function LoginPage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginPageContent />
+    </Suspense>
   );
 }

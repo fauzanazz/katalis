@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { gsap } from "gsap";
-import { Drama, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -355,74 +355,7 @@ export function HomeLanding() {
           </div>
         </section>
 
-        {/* Problem + supporting stats (layout seperti mockup) */}
-        <section
-          className="w-full bg-blue-ocean-light/15 pb-12 pt-10 sm:pb-16 sm:pt-12"
-          aria-labelledby="problem-heading"
-        >
-          <div className={`${shell} !max-w-2xl`}>
-            <h2
-              id="problem-heading"
-              className="type-h2 text-left [text-wrap:balance]"
-            >
-              <span className="type-kicker block text-left">
-                {t("problem.eyebrow")}
-              </span>
-              <span className="mt-3 block">
-                {t("problem.titleBefore")}
-                <strong className="font-normal">{t("problem.titleEmphasis")}</strong>
-                {t("problem.titleAfter")}
-              </span>
-            </h2>
-            <p className="type-lede mt-4 text-left">
-              {t("problem.body")}
-            </p>
-          </div>
-
-          <h3 id="stats-heading" className="sr-only">
-            {t("stats.sectionTitle")}
-          </h3>
-          <div
-            className={`${shell} mt-10 sm:mt-12`}
-            aria-labelledby="stats-heading"
-          >
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6 lg:gap-8">
-              {/* Kartu biru: chart → angka besar → caption */}
-              <div className="flex flex-col items-center rounded-2xl bg-blue-ocean-light/20 px-6 py-10 sm:py-12">
-                <div className="flex min-h-[145px] items-center justify-center">
-                  <StatDonut
-                    valueLabel={t("stats.centerValue")}
-                    ariaLabel={`${t("stats.centerValue")}. ${t("stats.donutAria")}`}
-                    showValueInCenter={false}
-                  />
-                </div>
-                <p className="mt-8 text-4xl font-bold tracking-normal text-primary sm:text-5xl">
-                  {t("stats.centerValue")}
-                </p>
-                <p className="type-p mt-4 max-w-sm text-center text-lg font-medium text-primary sm:text-xl">
-                  {t("stats.leftCaption")}
-                </p>
-              </div>
-
-              {/* Kartu hijau: ikon → judul → caption */}
-              <div className="flex flex-col items-center justify-center rounded-2xl bg-green-leaf-light/55 px-6 py-10 sm:py-12">
-                <div className="flex min-h-[145px] items-center justify-center">
-                  <Drama
-                    className="size-[4.5rem] shrink-0 text-foreground sm:size-24"
-                    strokeWidth={1.15}
-                    aria-hidden
-                  />
-                </div>
-                <p className="mt-8 text-4xl font-semibold text-ink sm:text-5xl">
-                  {t("stats.rightTitle")}
-                </p>
-                <p className="type-p mt-4 max-w-sm text-center text-lg text-foreground sm:text-xl">
-                  {t("stats.rightCaption")}
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
+        <div className="h-16 bg-blue-ocean-light/15 sm:h-20" aria-hidden />
 
         {/* Journey — full-vw sticky sections (image left, text right) */}
         <section
@@ -527,7 +460,7 @@ export function HomeLanding() {
         </section>
 
         {/* Key features — MagicBento (image-led, max 1 viewport on lg+) */}
-        <section className="relative z-20 w-full bg-background py-10 sm:py-12 lg:flex lg:h-screen lg:max-h-screen lg:flex-col lg:overflow-hidden lg:py-8">
+        <section className="relative z-20 mt-16 w-full bg-background py-10 sm:mt-20 sm:py-12 lg:flex lg:h-screen lg:max-h-screen lg:flex-col lg:overflow-hidden lg:py-8">
           <div className={cn(shell, "flex h-full min-h-0 flex-col")}>
             <div className="mx-auto max-w-xl text-center">
               <p className="type-kicker">{t("features.eyebrow")}</p>
@@ -573,7 +506,7 @@ export function HomeLanding() {
         </section>
 
         {/* Community */}
-        <section className="relative z-20 w-full bg-background py-12 sm:py-14">
+        <section className="relative z-20 mt-16 w-full bg-background py-12 sm:mt-20 sm:py-14">
           <div className={shell}>
           <p className="type-kicker text-center">
             {t("community.eyebrow")}
@@ -621,7 +554,7 @@ export function HomeLanding() {
         </section>
 
         {/* Closing CTA */}
-        <section className="relative z-20 w-full bg-yellow-sun-light/30 py-14 sm:py-16">
+        <section className="relative z-20 mt-16 w-full bg-yellow-sun-light/30 py-14 sm:mt-20 sm:py-16">
           <div className={`${shellNarrow} flex flex-col items-center text-center`}>
             <h2 className="type-h2 max-w-[min(100%,320px)] sm:max-w-none">
               {t("closing.title")}
@@ -729,40 +662,6 @@ function HeroFigmaDecor() {
             <div className="absolute right-[52px] top-[52px] h-[242px] w-[5px] rounded-full bg-blue-ocean/40 blur-lg opacity-90" />
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function StatDonut({
-  valueLabel,
-  ariaLabel,
-  showValueInCenter = true,
-}: {
-  valueLabel: string;
-  ariaLabel: string;
-  /** When false, render the stat label below the chart instead of inside the ring. */
-  showValueInCenter?: boolean;
-}) {
-  return (
-    <div
-      role="img"
-      aria-label={ariaLabel}
-      className="relative mx-auto size-[115px] shrink-0 rounded-full p-3 sm:size-[135px] sm:p-[14px] md:size-[145px] md:p-4"
-      style={{
-        background:
-          "conic-gradient(from -90deg, var(--primary) 0 75%, var(--border) 75% 100%)",
-      }}
-    >
-      <div className="flex size-full items-center justify-center rounded-full bg-plain-surface">
-        {showValueInCenter ? (
-          <p
-            className="text-xl font-medium text-primary sm:text-2xl md:text-[1.75rem]"
-            aria-hidden
-          >
-            {valueLabel}
-          </p>
-        ) : null}
       </div>
     </div>
   );

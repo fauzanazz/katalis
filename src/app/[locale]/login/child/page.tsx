@@ -1,13 +1,17 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, Suspense } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter, Link } from "@/i18n/navigation";
+import { useSearchParams } from "next/navigation";
 import { ArrowRight, Sparkles, Rocket } from "lucide-react";
 
-export default function ChildLoginPage() {
+function ChildLoginPageContent() {
   const t = useTranslations("auth");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
+  const safeCallback = callbackUrl?.startsWith("/") ? callbackUrl : "/discover";
 
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +39,7 @@ export default function ChildLoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        router.push("/discover");
+        router.push(safeCallback);
         router.refresh();
       } else {
         if (data.error === "expired") {
@@ -166,5 +170,13 @@ export default function ChildLoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ChildLoginPage() {
+  return (
+    <Suspense>
+      <ChildLoginPageContent />
+    </Suspense>
   );
 }

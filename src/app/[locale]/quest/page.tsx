@@ -11,7 +11,7 @@ import {
   Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 
 interface QuestMissionSummary {
   day: number;
@@ -31,6 +31,7 @@ interface QuestListItem {
 
 export default function QuestListPage() {
   const t = useTranslations("quest.list");
+  const router = useRouter();
 
   const [quests, setQuests] = useState<QuestListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +40,12 @@ export default function QuestListPage() {
     async function fetchQuests() {
       try {
         const res = await fetch("/api/quest/list");
-        if (!res.ok) return;
+        if (!res.ok) {
+          if (res.status === 401) {
+            router.push("/login?callbackUrl=/quest");
+          }
+          return;
+        }
         const data = await res.json();
         setQuests(data.quests ?? []);
       } catch {

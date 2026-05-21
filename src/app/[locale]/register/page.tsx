@@ -174,7 +174,7 @@ export default function RegisterPage() {
       </div>
 
       {/* Right: Visual panel */}
-      <div className="hidden h-full overflow-hidden lg:block lg:w-1/2">
+      <div className="relative hidden min-h-[600px] overflow-hidden lg:block lg:min-h-[calc(100dvh-4.5rem)] lg:w-1/2">
         <ParentFeatureCarousel />
       </div>
     </div>

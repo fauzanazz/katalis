@@ -40,11 +40,11 @@ const JOURNEY_STEP_STYLES = [
 ] as const;
 
 const JOURNEY_IMAGES = [
-  "/images/journey/step1.png",
-  "/images/journey/step2.png",
-  "/images/journey/step3.png",
-  "/images/journey/step4.png",
-  "/images/journey/step5.png",
+  "/images/journey/step1.webp",
+  "/images/journey/step2.webp",
+  "/images/journey/step3.webp",
+  "/images/journey/step4.webp",
+  "/images/journey/step5.webp",
 ] as const;
 
 const TAG_STYLES = [
@@ -59,28 +59,28 @@ const TAG_STYLES = [
 const FEATURE_BENTO_LAYOUT = [
   {
     id: "talentScout" as const,
-    image: "/images/features/talent-scout.png",
+    image: "/images/features/talent-scout.webp",
     accentClassName: "text-yellow-sun-deep",
     size: "hero" as const,
     imageSizes: "(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 50vw",
   },
   {
     id: "questBuddy" as const,
-    image: "/images/features/quest-buddy.png",
+    image: "/images/features/quest-buddy.webp",
     accentClassName: "text-blue-ocean-light",
     size: "wide" as const,
     imageSizes: "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 50vw",
   },
   {
     id: "squadGallery" as const,
-    image: "/images/features/squad-gallery.png",
+    image: "/images/features/squad-gallery.webp",
     accentClassName: "text-pink-bloom",
     size: "square" as const,
     imageSizes: "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw",
   },
   {
     id: "parentBridge" as const,
-    image: "/images/features/parent-bridge.png",
+    image: "/images/features/parent-bridge.webp",
     accentClassName: "text-lavender-mist",
     size: "square" as const,
     imageSizes: "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw",
@@ -223,7 +223,7 @@ export function HomeLanding() {
         <div className={cn(shell, "flex items-center justify-between gap-4")}>
           <Link href="/" className="flex min-w-0 items-center gap-2.5">
             <Image
-              src="/images/katalis-logo.png"
+              src="/images/katalis-logo.webp"
               alt=""
               width={44}
               height={44}
@@ -342,7 +342,7 @@ export function HomeLanding() {
               >
                 <div className="relative aspect-[4/3] w-full sm:aspect-[16/11] lg:h-full lg:min-h-[calc(100svh-73px)] lg:aspect-auto">
                   <Image
-                    src="/images/landing-hero-generated.png"
+                    src="/images/landing-hero-generated.webp"
                     alt={t("hero.imageAlt")}
                     fill
                     className="object-cover object-[center_58%]"

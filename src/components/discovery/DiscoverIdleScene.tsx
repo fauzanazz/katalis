@@ -37,7 +37,7 @@ export function DiscoverIdleScene() {
   return (
     <div className="relative overflow-hidden rounded-3xl shadow-sm">
       <Image
-        src="/images/discover/garden-scene.png"
+        src="/images/discover/garden-scene.webp"
         alt=""
         width={1792}
         height={1024}

@@ -161,7 +161,7 @@ function ChildLoginPageContent() {
             {/* Polaroid frame */}
             <div className="relative z-10 rotate-2 border border-black/10 bg-white p-3 pb-8 shadow-2xl">
               <img
-                src="/images/kit-mascot.png"
+                src="/images/kit-mascot.webp"
                 alt="Kit the Explorer Fox"
                 className="h-56 w-56 object-contain sm:h-64 sm:w-64"
               />

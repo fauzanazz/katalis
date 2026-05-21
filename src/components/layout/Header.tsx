@@ -62,7 +62,7 @@ export function Header({ isAuthenticated, isAdmin }: HeaderProps) {
           className="flex min-w-0 items-center gap-2.5"
         >
           <Image
-            src="/images/katalis-logo.png"
+            src="/images/katalis-logo.webp"
             alt=""
             width={44}
             height={44}

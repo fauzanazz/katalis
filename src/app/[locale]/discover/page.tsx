@@ -361,7 +361,7 @@ export default function DiscoverPage() {
       {/* Garden strip — in-flow below content, always visible on desktop */}
       <div className="pointer-events-none hidden overflow-hidden lg:block" aria-hidden="true">
         <Image
-          src="/images/discover/garden-strip.png"
+          src="/images/discover/garden-strip.webp"
           alt=""
           width={1792}
           height={1024}

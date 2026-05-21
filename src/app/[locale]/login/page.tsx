@@ -141,7 +141,7 @@ function LoginPageContent() {
             <div className="relative mx-auto w-full max-w-[300px] md:mx-0">
               <div className="aspect-square rotate-2 border-2 border-ink bg-white p-4 shadow-[10px_10px_0_var(--pink-bloom)] transition-transform duration-300 group-hover:rotate-3">
                 <Image
-                  src="/images/kit-mascot.png"
+                  src="/images/kit-mascot.webp"
                   alt=""
                   width={320}
                   height={320}

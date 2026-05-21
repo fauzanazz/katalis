@@ -7,22 +7,22 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const SLIDES = [
   {
-    image: "/images/features/parent-bridge.png",
+    image: "/images/features/parent-bridge.webp",
     titleKey: "feature1Title",
     descKey: "feature1Desc",
   },
   {
-    image: "/images/features/talent-scout.png",
+    image: "/images/features/talent-scout.webp",
     titleKey: "feature2Title",
     descKey: "feature2Desc",
   },
   {
-    image: "/images/features/squad-gallery.png",
+    image: "/images/features/squad-gallery.webp",
     titleKey: "feature3Title",
     descKey: "feature3Desc",
   },
   {
-    image: "/images/features/quest-buddy.png",
+    image: "/images/features/quest-buddy.webp",
     titleKey: "feature4Title",
     descKey: "feature4Desc",
   },

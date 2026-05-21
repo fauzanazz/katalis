@@ -37,6 +37,7 @@ model Child {
   accessCodeId       String?
   name               String?
   locale             String              @default("id")
+  dateOfBirth        DateTime?           // Parent-provided. Drives age-band policy via src/lib/age.
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   accessCode         AccessCode?         @relation(fields: [accessCodeId], references: [id])

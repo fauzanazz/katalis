@@ -10,11 +10,20 @@ interface AddChildDialogProps {
 }
 
 const MIN_AGE_YEARS = 3;
-const MAX_AGE_YEARS = 13;
+const MAX_AGE_YEARS = 12;
 
 function isoForAgeYearsAgo(years: number): string {
   const d = new Date();
   d.setFullYear(d.getFullYear() - years);
+  return d.toISOString().slice(0, 10);
+}
+
+function earliestAllowedDobIso(maxAgeYears: number): string {
+  // One day after `maxAgeYears` ago, so a child who turns `maxAgeYears+1` today
+  // is correctly rejected.
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - (maxAgeYears + 1));
+  d.setDate(d.getDate() + 1);
   return d.toISOString().slice(0, 10);
 }
 
@@ -27,7 +36,7 @@ export function AddChildDialog({ open, onClose, onSuccess }: AddChildDialogProps
 
   const dobBounds = useMemo(
     () => ({
-      min: isoForAgeYearsAgo(MAX_AGE_YEARS),
+      min: earliestAllowedDobIso(MAX_AGE_YEARS),
       max: isoForAgeYearsAgo(MIN_AGE_YEARS),
     }),
     [],

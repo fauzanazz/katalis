@@ -68,11 +68,11 @@ export async function PATCH(
 
     const dob = new Date(parsed.data.dateOfBirth);
     const years = (Date.now() - dob.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-    if (years < 3 || years > 13) {
+    if (years < 3 || years >= 13) {
       return NextResponse.json(
         {
           error: "invalid",
-          message: "dateOfBirth must indicate an age between 3 and 13 years.",
+          message: "dateOfBirth must indicate an age between 3 and 12 years.",
         },
         { status: 400 },
       );

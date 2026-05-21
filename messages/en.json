@@ -696,10 +696,22 @@
       "description": "Create a profile for your child. You can enter their name to identify them.",
       "nameLabel": "Child's Name",
       "namePlaceholder": "e.g. Sarah",
+      "dobLabel": "Date of Birth",
+      "dobHelp": "We use this to choose age-appropriate activities. Children must be 3-12.",
       "submit": "Create Child",
       "cancel": "Cancel",
       "creating": "Creating...",
       "errorDefault": "Could not create child profile. Please try again."
+    },
+    "backfillDob": {
+      "title": "Add date of birth",
+      "description": "We use date of birth to tailor missions, prompts, and mentor support to each child's stage. Please add it for the children below.",
+      "submit": "Save",
+      "saving": "Saving...",
+      "success": "Saved for {name}.",
+      "dateInputLabel": "Date of birth for {name}",
+      "unnamed": "this child",
+      "errorDefault": "Could not save date of birth. Please try again."
     },
     "claim": {
       "title": "Link Your Child",

@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getChildSession } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { sanitizeInput } from "@/lib/sanitize";
 import { StoryAnalysisInputSchema } from "@/lib/ai/story-schemas";
 import { analyzeStory } from "@/lib/ai/client";
 import { moderateContent, getUncertaintyFallback } from "@/lib/moderation";
+import { bandForDob, isModalityAllowed } from "@/lib/discover/age-modality";
 
 /**
  * POST /api/discovery/analyze-story
@@ -43,6 +45,28 @@ export async function POST(request: NextRequest) {
         { error: "invalid", message },
         { status: 400 },
       );
+    }
+
+    // Enforce age-band modality gate for authenticated children. The story
+    // submission is mapped to either the `text` modality (typed prompt) or
+    // the `voice` modality (audio narration). Guests skip the gate.
+    if (session?.childId) {
+      const child = await prisma.child.findUnique({
+        where: { id: session.childId },
+        select: { dateOfBirth: true },
+      });
+      const band = bandForDob(child?.dateOfBirth);
+      const modality =
+        parsed.data.submissionType === "audio" ? "voice" : "text";
+      if (!isModalityAllowed(band, modality)) {
+        return NextResponse.json(
+          {
+            error: "modality_not_allowed_for_age",
+            message: "This input type is not available for this child's age.",
+          },
+          { status: 400 },
+        );
+      }
     }
 
     // Moderate story text for child safety

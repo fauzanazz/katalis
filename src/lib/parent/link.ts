@@ -4,6 +4,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { getAgeGroup } from "@/lib/age";
 import type { LinkedChild } from "./schemas";
 
 /**
@@ -63,7 +64,7 @@ export async function getParentChildren(userId: string): Promise<LinkedChild[]> 
       child: {
         include: {
           discoveries: { select: { detectedTalents: true } },
-          quests: { select: { id: true, status: true } },
+          quests: { select: { id: true, dream: true, status: true }, orderBy: { createdAt: "desc" } },
           squadMemberships: { select: { id: true } },
         },
       },
@@ -85,13 +86,17 @@ export async function getParentChildren(userId: string): Promise<LinkedChild[]> 
       }
     }
 
+    const dob = child.dateOfBirth ?? null;
     return {
       id: child.id,
       name: child.name ?? undefined,
       locale: child.locale,
       claimedAt: link.claimedAt.toISOString(),
+      dateOfBirth: dob ? dob.toISOString() : null,
+      ageGroup: getAgeGroup(dob).band,
       latestTalents,
       questCount: child.quests.length,
+      quests: child.quests,
     };
   });
 }

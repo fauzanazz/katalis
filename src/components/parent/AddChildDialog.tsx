@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 
 interface AddChildDialogProps {
@@ -9,24 +9,43 @@ interface AddChildDialogProps {
   onSuccess: (childId: string) => void;
 }
 
+const MIN_AGE_YEARS = 3;
+const MAX_AGE_YEARS = 13;
+
+function isoForAgeYearsAgo(years: number): string {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - years);
+  return d.toISOString().slice(0, 10);
+}
+
 export function AddChildDialog({ open, onClose, onSuccess }: AddChildDialogProps) {
   const t = useTranslations("parent.createChild");
   const [name, setName] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const dobBounds = useMemo(
+    () => ({
+      min: isoForAgeYearsAgo(MAX_AGE_YEARS),
+      max: isoForAgeYearsAgo(MIN_AGE_YEARS),
+    }),
+    [],
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || !dateOfBirth) return;
 
     setLoading(true);
     setError(null);
 
     try {
+      const dobIso = new Date(`${dateOfBirth}T00:00:00.000Z`).toISOString();
       const response = await fetch("/api/parent/create-child", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim() }),
+        body: JSON.stringify({ name: name.trim(), dateOfBirth: dobIso }),
       });
 
       const data = await response.json();
@@ -37,6 +56,7 @@ export function AddChildDialog({ open, onClose, onSuccess }: AddChildDialogProps
       }
 
       setName("");
+      setDateOfBirth("");
       onSuccess(data.child.id);
       onClose();
     } catch {
@@ -74,6 +94,24 @@ export function AddChildDialog({ open, onClose, onSuccess }: AddChildDialogProps
             />
           </div>
 
+          <div>
+            <label htmlFor="child-dob" className="block text-sm font-medium">
+              {t("dobLabel")}
+            </label>
+            <input
+              id="child-dob"
+              type="date"
+              value={dateOfBirth}
+              onChange={(e) => setDateOfBirth(e.target.value)}
+              min={dobBounds.min}
+              max={dobBounds.max}
+              className="mt-1 block w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              disabled={loading}
+              required
+            />
+            <p className="mt-1 text-xs text-muted-foreground">{t("dobHelp")}</p>
+          </div>
+
           {error && (
             <p className="text-sm text-red-600" role="alert">{error}</p>
           )}
@@ -90,7 +128,7 @@ export function AddChildDialog({ open, onClose, onSuccess }: AddChildDialogProps
             <button
               type="submit"
               className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              disabled={loading || !name.trim()}
+              disabled={loading || !name.trim() || !dateOfBirth}
             >
               {loading ? t("creating") : t("submit")}
             </button>

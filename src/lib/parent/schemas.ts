@@ -61,9 +61,16 @@ export const LinkedChildSchema = z.object({
   name: z.string().optional(),
   locale: z.string(),
   claimedAt: z.string(),
+  /** ISO string. Null when not yet backfilled by parent. */
+  dateOfBirth: z.string().nullable().optional(),
+  /** Derived age band (3-6 / 7-9 / 10-12 / unknown). */
+  ageGroup: z.enum(["3-6", "7-9", "10-12", "unknown"]).optional(),
   latestTalents: z.array(z.string()).optional(),
   questCount: z.number().optional(),
   badgeCount: z.number().optional(),
+  quests: z
+    .array(z.object({ id: z.string(), dream: z.string(), status: z.string() }))
+    .optional(),
 });
 
 export type LinkedChild = z.infer<typeof LinkedChildSchema>;

@@ -1,17 +1,22 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { ClaimChildDialog } from "@/components/parent/ClaimChildDialog";
 import { AddChildDialog } from "@/components/parent/AddChildDialog";
+import { BackfillDoBPrompt } from "@/components/parent/BackfillDoBPrompt";
 import { ChildCard } from "@/components/parent/ChildCard";
 
 interface LinkedChildData {
   id: string;
+  name?: string;
   locale: string;
   claimedAt: string;
+  dateOfBirth?: string | null;
+  ageGroup?: "3-6" | "7-9" | "10-12" | "unknown";
   latestTalents?: string[];
   questCount?: number;
+  quests?: Array<{ id: string; dream: string; status: string }>;
   tips?: Array<{
     title: string;
     description: string;
@@ -53,6 +58,14 @@ export default function ParentDashboardPage() {
     fetchChildren();
   };
 
+  const childrenMissingDob = useMemo(
+    () =>
+      children
+        .filter((c) => !c.dateOfBirth)
+        .map((c) => ({ id: c.id, name: c.name })),
+    [children],
+  );
+
   if (isLoading) {
     return (
       <div className="container mx-auto flex min-h-[50vh] items-center justify-center px-4">
@@ -89,6 +102,11 @@ export default function ParentDashboardPage() {
           </button>
         </div>
       </div>
+
+      <BackfillDoBPrompt
+        children={childrenMissingDob}
+        onUpdated={() => fetchChildren()}
+      />
 
       {children.length === 0 ? (
         <div className="rounded-lg border bg-muted/30 p-8 text-center">

@@ -696,10 +696,22 @@
       "description": "Buat profil untuk anak Anda. Masukkan nama mereka untuk identifikasi.",
       "nameLabel": "Nama Anak",
       "namePlaceholder": "contoh: Sarah",
+      "dobLabel": "Tanggal Lahir",
+      "dobHelp": "Kami pakai ini untuk memilih aktivitas sesuai usia. Anak harus berusia 3-12 tahun.",
       "submit": "Buat Profil Anak",
       "cancel": "Batal",
       "creating": "Membuat...",
       "errorDefault": "Tidak dapat membuat profil anak. Silakan coba lagi."
+    },
+    "backfillDob": {
+      "title": "Tambah tanggal lahir",
+      "description": "Kami pakai tanggal lahir untuk menyesuaikan misi, pertanyaan, dan dukungan mentor dengan tahap perkembangan anak. Mohon lengkapi untuk anak-anak berikut.",
+      "submit": "Simpan",
+      "saving": "Menyimpan...",
+      "success": "Tersimpan untuk {name}.",
+      "dateInputLabel": "Tanggal lahir untuk {name}",
+      "unnamed": "anak ini",
+      "errorDefault": "Tidak dapat menyimpan tanggal lahir. Silakan coba lagi."
     },
     "claim": {
       "title": "Hubungkan Anak Anda",

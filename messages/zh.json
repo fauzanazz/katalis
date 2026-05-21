@@ -673,10 +673,22 @@
       "description": "为您的孩子创建个人资料。输入他们的名字以便识别。",
       "nameLabel": "孩子姓名",
       "namePlaceholder": "例如：小明",
+      "dobLabel": "出生日期",
+      "dobHelp": "我们使用它为孩子选择年龄合适的活动。孩子年龄需在 3-12 岁之间。",
       "submit": "创建孩子资料",
       "cancel": "取消",
       "creating": "创建中...",
       "errorDefault": "无法创建孩子资料，请重试。"
+    },
+    "backfillDob": {
+      "title": "添加出生日期",
+      "description": "我们根据出生日期为每个孩子量身定制任务、提示和导师支持。请为以下孩子补充信息。",
+      "submit": "保存",
+      "saving": "保存中...",
+      "success": "已为 {name} 保存。",
+      "dateInputLabel": "{name} 的出生日期",
+      "unnamed": "此孩子",
+      "errorDefault": "无法保存出生日期，请重试。"
     },
     "claim": {
       "title": "关联您的孩子",

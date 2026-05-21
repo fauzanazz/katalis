@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getChildSession } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { sanitizeInput } from "@/lib/sanitize";
 import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 import { AnalysisInputSchema } from "@/lib/ai/schemas";
 import { analyzeArtifact } from "@/lib/ai/client";
 import { moderateImageContent, getUncertaintyFallback } from "@/lib/moderation";
+import {
+  bandForDob,
+  isModalityAllowed,
+  modalityFromArtifactType,
+} from "@/lib/discover/age-modality";
 
 /**
  * POST /api/discovery/analyze
@@ -55,6 +61,23 @@ export async function POST(request: NextRequest) {
         parsed.error.issues[0]?.message ?? "Invalid request";
       return NextResponse.json(
         { error: "invalid", message },
+        { status: 400 },
+      );
+    }
+
+    // Enforce age-band modality gate (defense in depth alongside the UI)
+    const child = await prisma.child.findUnique({
+      where: { id: session.childId },
+      select: { dateOfBirth: true },
+    });
+    const band = bandForDob(child?.dateOfBirth);
+    const modality = modalityFromArtifactType(parsed.data.artifactType);
+    if (!isModalityAllowed(band, modality)) {
+      return NextResponse.json(
+        {
+          error: "modality_not_allowed_for_age",
+          message: "This input type is not available for this child's age.",
+        },
         { status: 400 },
       );
     }

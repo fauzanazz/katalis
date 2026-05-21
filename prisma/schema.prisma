@@ -51,6 +51,8 @@ model Child {
   interestSignals    InterestSignal[]
   interestProfiles   ChildInterestProfile[]
   interestAssessments MissionInterestAssessment[]
+  zpdState           ChildZpdState?
+  zpdSnapshots       ChildZpdSnapshot[]
 }
 
 model Discovery {
@@ -96,6 +98,9 @@ model Mission {
   tips             String // JSON stored as text for SQLite
   status           String            @default("locked") // "locked", "available", "in_progress", "completed"
   proofPhotoUrl    String?
+  phase            String?           // ZPD scaffold phase: "high" | "medium" | "low"
+  intensityHint    Float?            // ZPD anchor score used to calibrate this day's task
+  intent           String?           // short text intent (e.g., "stretch", "stabilize", "consolidate")
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   quest            Quest             @relation(fields: [questId], references: [id])
@@ -413,4 +418,30 @@ model ParentQuestFollow {
   @@unique([parentId, questId])
   @@index([parentId])
   @@index([questId])
+}
+
+model ChildZpdState {
+  id        String   @id @default(cuid())
+  childId   String   @unique
+  child     Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  score     Float    @default(0.30)
+  band      String   @default("developing")
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@index([childId])
+}
+
+model ChildZpdSnapshot {
+  id        String   @id @default(cuid())
+  childId   String
+  child     Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  score     Float
+  band      String
+  missionId String?
+  reason    String   // "baseline" | "mission_completed" | "reflection_submitted" | "frustration_sustained" | "mission_abandoned"
+  createdAt DateTime @default(now())
+
+  @@index([childId, createdAt])
+  @@index([missionId])
 }

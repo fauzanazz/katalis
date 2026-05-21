@@ -21,6 +21,19 @@ vi.mock("@/lib/moderation", () => ({
   getUncertaintyFallback: vi.fn(() => "Keep exploring your amazing talents!"),
 }));
 
+// Mock prisma so the age-band lookup doesn't hit the real dev DB. Use a DoB
+// in the 10-12 band so the analyze-story modality gate allows `text` and
+// existing test expectations (timeout, success, etc.) keep working.
+vi.mock("@/lib/db", () => ({
+  prisma: {
+    child: {
+      findUnique: vi.fn().mockResolvedValue({
+        dateOfBirth: new Date(Date.now() - 10 * 365.25 * 24 * 60 * 60 * 1000),
+      }),
+    },
+  },
+}));
+
 import { POST } from "../analyze-story/route";
 import { getChildSession } from "@/lib/auth";
 import { analyzeStory } from "@/lib/ai/client";

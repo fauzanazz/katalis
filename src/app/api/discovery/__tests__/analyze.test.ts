@@ -21,6 +21,15 @@ vi.mock("@/lib/moderation", () => ({
   getUncertaintyFallback: vi.fn(() => "Keep exploring your amazing talents!"),
 }));
 
+// Mock prisma so the age-band lookup doesn't hit the real dev DB.
+vi.mock("@/lib/db", () => ({
+  prisma: {
+    child: {
+      findUnique: vi.fn().mockResolvedValue({ dateOfBirth: null }),
+    },
+  },
+}));
+
 import { POST } from "../analyze/route";
 import { getChildSession } from "@/lib/auth";
 import { analyzeArtifact } from "@/lib/ai/client";

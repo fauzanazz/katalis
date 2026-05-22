@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, waitFor, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom/vitest";
 
@@ -40,14 +40,13 @@ vi.mock("next-intl", () => {
   };
 });
 
+// Stable router refs so useCallback deps don't churn between renders.
+const stableRouter = { push: vi.fn(), back: vi.fn(), replace: vi.fn() };
+
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
   useParams: () => ({ locale: "en" }),
-  useRouter: () => ({
-    push: vi.fn(),
-    back: vi.fn(),
-    replace: vi.fn(),
-  }),
+  useRouter: () => stableRouter,
   usePathname: () => "/en/discover/history",
 }));
 
@@ -58,11 +57,7 @@ vi.mock("@/i18n/navigation", () => ({
       {children}
     </a>
   ),
-  useRouter: () => ({
-    push: vi.fn(),
-    back: vi.fn(),
-    replace: vi.fn(),
-  }),
+  useRouter: () => stableRouter,
   usePathname: () => "/en/discover/history",
 }));
 
@@ -84,6 +79,10 @@ const mockTalents = [
 describe("DiscoveryHistoryPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("shows loading state initially", () => {

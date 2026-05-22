@@ -19,11 +19,14 @@ import type {
 } from "../mentor-schemas";
 import { MentorResponseSchema, SimplifiedMissionSchema, ReflectionSummarySchema } from "../mentor-schemas";
 import { getMockMentorChat, getMockSimplifiedMission, getMockReflectionSummary } from "./mock-chat";
-import { getProvider } from "../providers";
 import { getMentorSystemPrompt } from "./age-config";
+import { resolveModel, type ModelTier } from "../models";
 import type { ZpdBand } from "@/lib/zpd";
 
 const API_TIMEOUT_MS = 30_000;
+const ANTHROPIC_BASE_MODEL = "claude-sonnet-4-20250514";
+const OPENAI_BASE_MODEL = "gpt-4o";
+const VERTEX_BASE_MODEL = process.env.VERTEX_AI_MODEL ?? "gemini-2.0-flash";
 
 /** Context builder — assembles the conversation context for Claude */
 function buildUserMessage(
@@ -102,37 +105,14 @@ async function generateMentorResponse(
   isGreeting: boolean,
   ageGroup: AgeGroup | null | undefined,
 ): Promise<MentorResponse> {
-  const provider = getProvider();
   const userMessage = buildUserMessage(childMessage, frustrationLevel, missionContext, chatHistory, isGreeting);
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
   try {
-    // Use provider's text generation capability for mentor chat
-    // Since AIProvider doesn't have a generic generateText method,
-    // we'll leverage the text moderation or use a workaround
-    // For now, create a lightweight wrapper that calls the provider's API
-    
-    // Get the underlying provider implementation
-    const providerImpl = await (async () => {
-      const providers = {
-        anthropic: () => import("../providers/anthropic").then(m => m.anthropicProvider),
-        openai: () => import("../providers/openai").then(m => m.openaiProvider),
-        google: () => import("../providers/google").then(m => m.googleProvider),
-        "vertex-ai": () => import("../providers/vertex-ai").then(m => m.vertexAiProvider),
-        openrouter: () => import("../providers/openrouter").then(m => m.openrouterProvider),
-        nvidia: () => import("../providers/nvidia").then(m => m.nvidiaProvider),
-        grok: () => import("../providers/grok").then(m => m.grokProvider),
-      };
-      
-      const providerName = (process.env.AI_PROVIDER ?? "openai") as keyof typeof providers;
-      return providers[providerName]?.() ?? import("../providers/openai").then(m => m.openaiProvider);
-    })();
-
-    // This is a fallback - ideally we'd have a generic generateJSON method on AIProvider
-    // For now, we'll use the direct client approach as before but make it provider-aware
-    const response = await callProviderForMentor(userMessage, ageGroup);
+    // Provider selection happens inside callProviderForMentor via AI_PROVIDER env.
+    const response = await callProviderForMentor(userMessage, ageGroup, "smart");
 
     clearTimeout(timeoutId);
     return MentorResponseSchema.parse(response);
@@ -148,6 +128,7 @@ async function generateMentorResponse(
 async function callProviderForMentor(
   userMessage: string,
   ageGroup: AgeGroup | null | undefined,
+  tier: ModelTier = "default",
 ): Promise<unknown> {
   const providerName = process.env.AI_PROVIDER ?? "openai";
   const systemPrompt = getMentorSystemPrompt(ageGroup);
@@ -160,7 +141,7 @@ async function callProviderForMentor(
     });
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: resolveModel("anthropic", tier, ANTHROPIC_BASE_MODEL),
       max_tokens: 500,
       system: systemPrompt,
       messages: [{ role: "user", content: userMessage }],
@@ -176,7 +157,7 @@ async function callProviderForMentor(
   if (providerName === "google" || providerName === "vertex-ai") {
     const { VertexAI } = await import("@google-cloud/vertexai");
     const projectId = process.env.GOOGLE_CLOUD_PROJECT;
-    
+
     if (!projectId) {
       throw new Error("GOOGLE_CLOUD_PROJECT environment variable required for Vertex AI");
     }
@@ -187,7 +168,11 @@ async function callProviderForMentor(
     });
 
     const model = vertexAI.preview.getGenerativeModel({
-      model: process.env.VERTEX_AI_MODEL ?? "gemini-2.0-flash",
+      model: resolveModel(
+        providerName === "vertex-ai" ? "vertex-ai" : "google",
+        tier,
+        VERTEX_BASE_MODEL,
+      ),
     });
 
     const response = await model.generateContent({
@@ -221,7 +206,7 @@ async function callProviderForMentor(
   });
 
   const response = await client.chat.completions.create({
-    model: "gpt-4o",
+    model: resolveModel("openai", tier, OPENAI_BASE_MODEL),
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userMessage },
@@ -279,7 +264,7 @@ ${zpdFloorLine}
 
 Create a simplified version of these instructions (3-4 steps max) using the simplest materials.`;
 
-  const response = await callProviderForJSON(SIMPLIFY_SYSTEM_PROMPT, userMessage, 400);
+  const response = await callProviderForJSON(SIMPLIFY_SYSTEM_PROMPT, userMessage, 400, "default");
   return SimplifiedMissionSchema.parse(response);
 }
 
@@ -316,7 +301,7 @@ Child's reflection:
 
 Summarize this reflection with encouragement.`;
 
-  const response = await callProviderForJSON(REFLECTION_SYSTEM_PROMPT, userMessage, 300);
+  const response = await callProviderForJSON(REFLECTION_SYSTEM_PROMPT, userMessage, 300, "fast");
   return ReflectionSummarySchema.parse(response);
 }
 
@@ -324,6 +309,7 @@ async function callProviderForJSON(
   systemPrompt: string,
   userMessage: string,
   maxTokens: number,
+  tier: ModelTier = "default",
 ): Promise<unknown> {
   const providerName = process.env.AI_PROVIDER ?? "openai";
 
@@ -335,7 +321,7 @@ async function callProviderForJSON(
     });
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: resolveModel("anthropic", tier, ANTHROPIC_BASE_MODEL),
       max_tokens: maxTokens,
       system: systemPrompt,
       messages: [{ role: "user", content: userMessage }],
@@ -351,7 +337,7 @@ async function callProviderForJSON(
   if (providerName === "google" || providerName === "vertex-ai") {
     const { VertexAI } = await import("@google-cloud/vertexai");
     const projectId = process.env.GOOGLE_CLOUD_PROJECT;
-    
+
     if (!projectId) {
       throw new Error("GOOGLE_CLOUD_PROJECT environment variable required for Vertex AI");
     }
@@ -362,7 +348,11 @@ async function callProviderForJSON(
     });
 
     const model = vertexAI.preview.getGenerativeModel({
-      model: process.env.VERTEX_AI_MODEL ?? "gemini-2.0-flash",
+      model: resolveModel(
+        providerName === "vertex-ai" ? "vertex-ai" : "google",
+        tier,
+        VERTEX_BASE_MODEL,
+      ),
     });
 
     const response = await model.generateContent({
@@ -396,7 +386,7 @@ async function callProviderForJSON(
   });
 
   const response = await client.chat.completions.create({
-    model: "gpt-4o",
+    model: resolveModel("openai", tier, OPENAI_BASE_MODEL),
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userMessage },

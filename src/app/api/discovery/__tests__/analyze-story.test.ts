@@ -73,8 +73,9 @@ describe("POST /api/discovery/analyze-story", () => {
     vi.clearAllMocks();
   });
 
-  it("returns 401 when not authenticated", async () => {
+  it("allows guest analysis without authentication", async () => {
     mockedGetSession.mockResolvedValue(null);
+    mockedAnalyzeStory.mockResolvedValue(mockStoryResult);
 
     const res = await POST(
       createRequest({
@@ -83,9 +84,9 @@ describe("POST /api/discovery/analyze-story", () => {
         submissionType: "text",
       }),
     );
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.error).toBe("unauthorized");
+    expect(data.talents).toBeDefined();
   });
 
   it("returns 200 with talent analysis for valid text story", async () => {

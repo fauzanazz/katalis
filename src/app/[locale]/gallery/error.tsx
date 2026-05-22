@@ -9,7 +9,7 @@ interface ErrorPageProps {
   reset: () => void;
 }
 
-export default function GalleryError({ error, reset }: ErrorPageProps) {
+export default function GalleryError({ error: _error, reset }: ErrorPageProps) {
   const t = useTranslations("error");
 
   return (

@@ -143,17 +143,17 @@ describe("QuestListPage", () => {
     });
   });
 
-  it("shows loading state initially", () => {
+  it("shows skeleton loader initially", () => {
     mockFetch.mockImplementation(
       () => new Promise(() => {}), // Never resolves
     );
 
-    render(<QuestListPage />);
-
-    expect(screen.getByText("Your Quests...")).toBeInTheDocument();
+    const { container } = render(<QuestListPage />);
+    // Skeleton uses animate-pulse on its placeholder bars.
+    expect(container.querySelector(".animate-pulse")).toBeTruthy();
   });
 
-  it("has page heading and subtitle", async () => {
+  it("renders KidPageShell greeting + subtitle after load", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({ quests: [] }),
@@ -163,12 +163,13 @@ describe("QuestListPage", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: "Your Quests" }),
+        screen.getByText("Pick up where you left off, or start a new adventure."),
       ).toBeInTheDocument();
     });
 
-    expect(
-      screen.getByText("Track your 7-day adventure quests!"),
-    ).toBeInTheDocument();
+    // Greeting varies by time-of-day & auth state; assert the guest fallback
+    // OR the heading slot exists.
+    const heading = screen.queryByRole("heading", { level: 1 });
+    expect(heading).toBeTruthy();
   });
 });

@@ -4,7 +4,6 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Image from "next/image";
 import { BookOpen, Send, ImageIcon, X, ZoomIn } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { AudioRecorder } from "@/components/upload/AudioRecorder";
 import { STORY_MIN_LENGTH, STORY_MAX_LENGTH } from "@/lib/ai/story-schemas";
 import type { StoryPromptImage } from "@/lib/story-prompts";

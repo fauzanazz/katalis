@@ -10,8 +10,10 @@ import { ClusteringOutputSchema } from "../clustering-schemas";
 import type { ClusterEntry, ClusteringOutput } from "../clustering-schemas";
 import type { ModerationResult } from "@/lib/moderation/schemas";
 import { mapToModerationResult } from "@/lib/moderation/map-result";
+import { resolveModel, type ModelTier } from "../models";
 
 const API_TIMEOUT_MS = 30_000;
+const BASE_MODEL = "gpt-4o";
 
 const TEXT_MODERATION_PROMPT = `You are a child safety content moderator. Analyze the following text content for any harmful, inappropriate, or unsafe material for children (ages 6-12).
 
@@ -212,6 +214,7 @@ async function chatJSON<T>(
   userContent: string | ChatCompletionContentPart[],
   maxTokens: number,
   parse: (raw: unknown) => T,
+  tier: ModelTier = "default",
 ): Promise<T> {
   const client = await getClient();
   const controller = new AbortController();
@@ -220,7 +223,7 @@ async function chatJSON<T>(
   try {
     const response = await client.chat.completions.create(
       {
-        model: "gpt-4o",
+        model: resolveModel("openai", tier, BASE_MODEL),
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userContent },
@@ -309,8 +312,12 @@ ${talentSummary}${explorationBlock}
 Design missions that connect their dream with their talents, using materials available in their local environment. Make it practical, fun, and progressively challenging.
 ${buildZpdPromptBlock(input.zpdScore)}`;
 
-    return chatJSON(QUEST_SYSTEM_PROMPT, userMessage, 4000, (raw) =>
-      QuestGenerationOutputSchema.parse(raw),
+    return chatJSON(
+      QUEST_SYSTEM_PROMPT,
+      userMessage,
+      4000,
+      (raw) => QuestGenerationOutputSchema.parse(raw),
+      "smart",
     );
   },
 
@@ -324,8 +331,12 @@ ${buildZpdPromptBlock(input.zpdScore)}`;
 
     const userMessage = `Group these ${entries.length} gallery entries into meaningful clusters:\n\n${entrySummary}\n\nCreate clusters that highlight talent themes and geographic connections. Make labels child-friendly and encouraging.`;
 
-    return chatJSON(CLUSTERING_SYSTEM_PROMPT, userMessage, 2000, (raw) =>
-      ClusteringOutputSchema.parse(raw),
+    return chatJSON(
+      CLUSTERING_SYSTEM_PROMPT,
+      userMessage,
+      2000,
+      (raw) => ClusteringOutputSchema.parse(raw),
+      "fast",
     );
   },
 

@@ -17,6 +17,7 @@ import { ClusteringOutputSchema } from "../clustering-schemas";
 import type { ClusterEntry, ClusteringOutput } from "../clustering-schemas";
 import type { ModerationResult } from "@/lib/moderation/schemas";
 import { mapToModerationResult } from "@/lib/moderation/map-result";
+import { resolveModel, type ModelTier } from "../models";
 
 const API_TIMEOUT_MS = 30_000;
 const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT ?? "";
@@ -205,10 +206,13 @@ async function generateContent<T>(
   userMessage: string | Part[],
   max_output_tokens: number,
   parse: (raw: unknown) => T,
+  tier: ModelTier = "default",
 ): Promise<T> {
   try {
     const vertexAI = await initializeVertexAI();
-    const model = vertexAI.preview.getGenerativeModel({ model: MODEL_ID });
+    const model = vertexAI.preview.getGenerativeModel({
+      model: resolveModel("vertex-ai", tier, MODEL_ID),
+    });
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
@@ -355,6 +359,7 @@ ${buildZpdPromptBlock(input.zpdScore)}`;
       userMessage,
       4000,
       (raw) => QuestGenerationOutputSchema.parse(raw),
+      "smart",
     );
   },
 
@@ -373,6 +378,7 @@ ${buildZpdPromptBlock(input.zpdScore)}`;
       userMessage,
       2000,
       (raw) => ClusteringOutputSchema.parse(raw),
+      "fast",
     );
   },
 

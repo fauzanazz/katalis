@@ -753,7 +753,8 @@
           "proficient": "Mahir",
           "extending": "Melampaui"
         }
-      }
+      },
+      "quests": "Misi"
     },
     "createChild": {
       "title": "Tambah Anak Baru",
@@ -765,7 +766,14 @@
       "submit": "Buat Profil Anak",
       "cancel": "Batal",
       "creating": "Membuat...",
-      "errorDefault": "Tidak dapat membuat profil anak. Silakan coba lagi."
+      "errorDefault": "Tidak dapat membuat profil anak. Silakan coba lagi.",
+      "successTitle": "Profil Anak Dibuat!",
+      "successDescription": "Bagikan kode akses ini kepada {name} untuk masuk",
+      "accessCodeLabel": "Kode Akses",
+      "accessCodeHint": "Anak memasukkan kode ini di layar login.",
+      "copyTooltip": "Klik untuk menyalin",
+      "copied": "Tersalin!",
+      "done": "Selesai"
     },
     "backfillDob": {
       "title": "Tambah tanggal lahir",

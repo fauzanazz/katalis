@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { createElement, useEffect, useState, useCallback } from "react";
 import { motion } from "motion/react";
 import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
@@ -156,7 +156,7 @@ function ChampionCard({
   palette: PaletteEntry;
   t: ReturnType<typeof useTranslations>;
 }) {
-  const Icon = getTalentIcon(talent.name);
+  const iconComponent = getTalentIcon(talent.name);
   const level = getTalentLevel(talent.confidence, t);
   const pct = Math.round(talent.confidence * 100);
 
@@ -196,7 +196,7 @@ function ChampionCard({
         className="mb-5 flex size-14 items-center justify-center rounded-2xl sm:size-16"
         style={{ backgroundColor: palette.iconBg }}
       >
-        <Icon size={28} color={palette.accent} strokeWidth={1.75} />
+        {createElement(iconComponent, { size: 28, color: palette.accent, strokeWidth: 1.75 })}
       </div>
 
       {/* Name + level badge */}
@@ -261,7 +261,7 @@ function TalentCard({
   delay: number;
   t: ReturnType<typeof useTranslations>;
 }) {
-  const Icon = getTalentIcon(talent.name);
+  const iconComponent = getTalentIcon(talent.name);
   const pct = Math.round(talent.confidence * 100);
 
   return (
@@ -282,7 +282,7 @@ function TalentCard({
         >
           {rank}
         </span>
-        <Icon size={15} color={palette.accent} strokeWidth={2} />
+        {createElement(iconComponent, { size: 15, color: palette.accent, strokeWidth: 2 })}
         <h3
           className="line-clamp-1 flex-1 text-sm font-bold text-ink"
         >

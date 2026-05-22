@@ -123,7 +123,7 @@
   animation: gooey-pill 0.3s ease both;
 }
 
-/* ── gallery-dark: original gooey scheme (white+black+lighten) ─ */
+/* ── gallery scheme: original gooey scheme (white+black+lighten) ─ */
 html.gallery-dark .gooey-nav-container {
   /* white particles for original gooey look on dark bg */
   --color-1: white;

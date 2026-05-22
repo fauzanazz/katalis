@@ -64,7 +64,7 @@ export default function DiscoverPage() {
   const [authState, setAuthState] = useState<AuthState>("loading");
   const [childName, setChildName] = useState<string | null>(null);
   const [sessionChildId, setSessionChildId] = useState<string | null>(null);
-  const { childId } = useChildId(authState, sessionChildId);
+  useChildId(authState, sessionChildId);
   const [flow, setFlow] = useState<DiscoveryFlow | null>(null);
   const [analysisState, setAnalysisState] = useState<AnalysisState>("idle");
   const [analysisResults, setAnalysisResults] = useState<AnalysisOutput | null>(null);

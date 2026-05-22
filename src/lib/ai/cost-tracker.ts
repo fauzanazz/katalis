@@ -1,5 +1,3 @@
-import { prisma } from "@/lib/db";
-
 // USD per 1M tokens — update as pricing changes
 const PRICING: Record<string, { input: number; output: number }> = {
   "gemini-2.0-flash":         { input: 0.10,  output: 0.40 },
@@ -27,13 +25,10 @@ export async function trackUsage(params: {
 }): Promise<void> {
   const costUsd = calcCost(params.model, params.inputTokens, params.outputTokens);
 
+  // No DB persistence yet — AiUsageLog model not in schema. Log-only for now.
   console.log(
     `[AI Cost] ${params.provider}/${params.model} ${params.operation}` +
     ` in:${params.inputTokens} out:${params.outputTokens}` +
     ` $${costUsd.toFixed(6)}`,
   );
-
-  prisma.aiUsageLog
-    .create({ data: { ...params, costUsd } })
-    .catch((err: unknown) => console.error("[AI Cost] persist failed:", err));
 }

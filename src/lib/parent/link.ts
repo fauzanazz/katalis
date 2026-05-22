@@ -66,6 +66,7 @@ export async function getParentChildren(userId: string): Promise<LinkedChild[]> 
           discoveries: { select: { detectedTalents: true } },
           quests: { select: { id: true, dream: true, status: true }, orderBy: { createdAt: "desc" } },
           squadMemberships: { select: { id: true } },
+          accessCode: { select: { code: true } },
         },
       },
     },
@@ -97,6 +98,7 @@ export async function getParentChildren(userId: string): Promise<LinkedChild[]> 
       latestTalents,
       questCount: child.quests.length,
       quests: child.quests,
+      accessCode: child.accessCode?.code ?? undefined,
     };
   });
 }

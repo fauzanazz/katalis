@@ -33,6 +33,7 @@ interface LinkedChildData {
     category: string;
   }>;
   zpdSnapshots?: ZpdSnapshotData[];
+  accessCode?: string;
 }
 
 export default function ParentDashboardPage() {
@@ -128,7 +129,7 @@ export default function ParentDashboardPage() {
       </div>
 
       <BackfillDoBPrompt
-        children={childrenMissingDob}
+        childrenMissingDob={childrenMissingDob}
         onUpdated={() => fetchChildren()}
       />
 

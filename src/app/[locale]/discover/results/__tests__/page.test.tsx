@@ -97,10 +97,11 @@ describe("DiscoveryResultsPage", () => {
     vi.clearAllMocks();
   });
 
-  it("shows loading state initially", () => {
+  it("shows skeleton placeholder initially", () => {
     global.fetch = vi.fn().mockReturnValue(new Promise(() => {}));
-    render(<DiscoveryResultsPage />);
-    expect(screen.getAllByText("Loading your results...").length).toBeGreaterThanOrEqual(1);
+    const { container } = render(<DiscoveryResultsPage />);
+    // Skeleton uses animate-pulse on placeholder bars.
+    expect(container.querySelector(".animate-pulse")).toBeTruthy();
   });
 
   it("renders talent cards with name, confidence bar, and reasoning", async () => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent, Suspense } from "react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useRouter, Link } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
@@ -176,10 +177,13 @@ function ChildLoginPageContent() {
 
             {/* Polaroid frame */}
             <div className="relative z-10 rotate-2 border border-black/10 bg-white p-3 pb-8 shadow-2xl">
-              <img
+              <Image
                 src="/images/kit-mascot.webp"
                 alt="Kit the Explorer Fox"
+                width={256}
+                height={256}
                 className="h-56 w-56 object-contain sm:h-64 sm:w-64"
+                priority
               />
             </div>
           </div>

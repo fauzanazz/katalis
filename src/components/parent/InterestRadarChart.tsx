@@ -198,7 +198,7 @@ export function InterestRadarChart({
       </svg>
       <figcaption className="mt-2 text-xs text-muted-foreground">
         Each axis is one interest; distance from the center reflects how
-        strongly we're currently seeing it. Interests change over time.
+        strongly we&apos;re currently seeing it. Interests change over time.
       </figcaption>
     </figure>
   );

@@ -5,7 +5,7 @@
  * Badge conditions are evaluated by the engine in engine.ts.
  */
 
-import type { BadgeCategory, BadgeDefinition, BadgeTier } from "./schemas";
+import type { BadgeDefinition } from "./schemas";
 
 interface BadgeDef extends BadgeDefinition {
   /** i18n key for name: badges.<slug>.name */

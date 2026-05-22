@@ -38,8 +38,19 @@ vi.mock("@/lib/db", () => ({
     child: {
       findUnique: vi.fn().mockResolvedValue({ dateOfBirth: null }),
     },
+    childInterestProfile: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
     $transaction: (...args: unknown[]) => mockPrismaTransaction(...args),
   },
+}));
+
+vi.mock("@/lib/interests/quest-mapper", () => ({
+  mapQuestToInterestSignals: vi.fn().mockReturnValue([]),
+}));
+
+vi.mock("@/lib/interests/ingest-service", () => ({
+  ingestInterestSignals: vi.fn().mockResolvedValue(undefined),
 }));
 
 // --- Mock Auth ---

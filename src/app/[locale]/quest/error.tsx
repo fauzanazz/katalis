@@ -9,7 +9,7 @@ interface ErrorPageProps {
   reset: () => void;
 }
 
-export default function QuestError({ error, reset }: ErrorPageProps) {
+export default function QuestError({ error: _error, reset }: ErrorPageProps) {
   const t = useTranslations("error");
 
   return (

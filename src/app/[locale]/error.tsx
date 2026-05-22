@@ -9,7 +9,7 @@ interface ErrorPageProps {
   reset: () => void;
 }
 
-export default function LocaleError({ error, reset }: ErrorPageProps) {
+export default function LocaleError({ error: _error, reset }: ErrorPageProps) {
   const t = useTranslations("error");
 
   return (

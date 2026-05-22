@@ -10,11 +10,14 @@ import { ClusteringOutputSchema } from "../clustering-schemas";
 import type { ClusterEntry, ClusteringOutput } from "../clustering-schemas";
 import type { ModerationResult } from "@/lib/moderation/schemas";
 import { mapToModerationResult } from "@/lib/moderation/map-result";
+import { resolveModel, type ModelTier } from "../models";
 
 const API_TIMEOUT_MS = 30_000;
 const BASE_URL = "https://integrate.api.nvidia.com/v1";
 const TEXT_MODEL = "meta/llama-3.1-70b-instruct";
-const VISION_MODEL = "meta/llama-3.2-90b-vision-instruct";
+
+const textModel = (tier: ModelTier = "default") =>
+  resolveModel("nvidia-text", tier, TEXT_MODEL);
 
 const TEXT_MODERATION_PROMPT = `You are a child safety content moderator. Analyze the following text content for any harmful, inappropriate, or unsafe material for children (ages 6-12).
 
@@ -37,33 +40,6 @@ Respond ONLY with valid JSON:
 }
 
 Be CONSERVATIVE: when in doubt, flag for review rather than allowing. Children's safety is paramount.`;
-
-const IMAGE_MODERATION_PROMPT = `You are a child safety image moderator. Analyze the provided image for any harmful, inappropriate, or unsafe content for children (ages 6-12).
-
-IMPORTANT CONTEXT: This app is for children to upload their OWN creative work (drawings, paintings, crafts). Most uploads will be innocent children's artwork. Do NOT flag normal children's artwork showing:
-- Stick figures, cartoon characters, or simple drawings
-- Animals, nature scenes, houses, vehicles
-- Fantasy elements (dragons, unicorns, superheroes)
-- Abstract art, scribbles, or color experiments
-- Family portraits or self-portraits
-
-Only flag content that is CLEARLY harmful:
-- violence: Realistic graphic violence, real weapons being used harmfully
-- self_harm: Clear depictions of self-injury (not abstract dark themes)
-- sexual: Explicit sexual content (not innocent depictions of people)
-- hate: Clear hate symbols (swastikas, etc.) - not just faces or figures
-- harassment: Targeted bullying imagery with identifiable victims
-
-Respond ONLY with valid JSON:
-{
-  "isHarmful": boolean,
-  "category": "violence" | "self_harm" | "sexual" | "hate" | "harassment" | "other" | null,
-  "severity": "low" | "medium" | "high" | "critical" | null,
-  "confidence": number (0.0-1.0),
-  "reasoning": "Brief explanation"
-}
-
-Default to isHarmful: false for typical children's artwork. Only flag when genuinely concerned.`;
 
 const ARTIFACT_SYSTEM_PROMPT = `You are an expert child development specialist and talent scout. Your job is to analyze children's creative artifacts (drawings, paintings, photos, audio recordings) to detect their deep interests and talents.
 
@@ -324,7 +300,7 @@ ${buildZpdPromptBlock(input.zpdScore)}`;
 
     return chatJSON(QUEST_SYSTEM_PROMPT, userMessage, 4000, (raw) =>
       QuestGenerationOutputSchema.parse(raw),
-    TEXT_MODEL);
+    textModel("smart"));
   },
 
   async clusterGalleryEntries(entries: ClusterEntry[]): Promise<ClusteringOutput> {
@@ -339,7 +315,7 @@ ${buildZpdPromptBlock(input.zpdScore)}`;
 
     return chatJSON(CLUSTERING_SYSTEM_PROMPT, userMessage, 2000, (raw) =>
       ClusteringOutputSchema.parse(raw),
-    TEXT_MODEL);
+    textModel("fast"));
   },
 
   async moderateText(content: string): Promise<ModerationResult> {

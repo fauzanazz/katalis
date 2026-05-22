@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { TALENT_CATEGORY_COLORS, DEFAULT_PIN_COLOR, getTalentCategoryColor } from "@/types/gallery";
+import { getTalentCategoryColor } from "@/types/gallery";
 
 interface TalentCategoryFilterProps {
   categories: string[];

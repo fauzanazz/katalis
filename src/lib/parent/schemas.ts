@@ -71,6 +71,7 @@ export const LinkedChildSchema = z.object({
   quests: z
     .array(z.object({ id: z.string(), dream: z.string(), status: z.string() }))
     .optional(),
+  accessCode: z.string().optional(),
 });
 
 export type LinkedChild = z.infer<typeof LinkedChildSchema>;

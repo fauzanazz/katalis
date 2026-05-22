@@ -97,7 +97,9 @@ ${input.localContext ? `- Local context: ${input.localContext}` : ""}
 Generate a parent progress report for this period.`;
 
   const response = await callProviderForReport(userMessage);
-  const parsed = JSON.parse(response);
+  const jsonMatch = response.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("No JSON found in AI response");
+  const parsed = JSON.parse(jsonMatch[0]);
   return ReportOutputSchema.parse(parsed);
 }
 

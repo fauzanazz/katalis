@@ -28,7 +28,7 @@ export interface BackfillDoBChild {
 }
 
 interface BackfillDoBPromptProps {
-  children: BackfillDoBChild[];
+  childrenMissingDob: BackfillDoBChild[];
   /** Called after successful update so parent can refetch. */
   onUpdated?: (childId: string) => void;
 }
@@ -39,7 +39,7 @@ interface BackfillDoBPromptProps {
  * child, each with its own date picker. Non-blocking; reappears next visit
  * until all DoBs are filled.
  */
-export function BackfillDoBPrompt({ children, onUpdated }: BackfillDoBPromptProps) {
+export function BackfillDoBPrompt({ childrenMissingDob, onUpdated }: BackfillDoBPromptProps) {
   const t = useTranslations("parent.backfillDob");
   const dobBounds = useMemo(
     () => ({
@@ -49,7 +49,7 @@ export function BackfillDoBPrompt({ children, onUpdated }: BackfillDoBPromptProp
     [],
   );
 
-  if (children.length === 0) return null;
+  if (childrenMissingDob.length === 0) return null;
 
   return (
     <section
@@ -61,7 +61,7 @@ export function BackfillDoBPrompt({ children, onUpdated }: BackfillDoBPromptProp
       </h2>
       <p className="mt-1 text-amber-900/80">{t("description")}</p>
       <ul className="mt-3 space-y-2">
-        {children.map((child) => (
+        {childrenMissingDob.map((child) => (
           <BackfillRow
             key={child.id}
             child={child}

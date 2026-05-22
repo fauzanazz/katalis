@@ -753,7 +753,8 @@
           "proficient": "Proficient",
           "extending": "Extending"
         }
-      }
+      },
+      "quests": "Quests"
     },
     "createChild": {
       "title": "Add New Child",
@@ -765,7 +766,14 @@
       "submit": "Create Child",
       "cancel": "Cancel",
       "creating": "Creating...",
-      "errorDefault": "Could not create child profile. Please try again."
+      "errorDefault": "Could not create child profile. Please try again.",
+      "successTitle": "Child Created!",
+      "successDescription": "Share this access code with {name} to log in",
+      "accessCodeLabel": "Access Code",
+      "accessCodeHint": "The child enters this code on the login screen.",
+      "copyTooltip": "Click to copy",
+      "copied": "Copied!",
+      "done": "Done"
     },
     "backfillDob": {
       "title": "Add date of birth",

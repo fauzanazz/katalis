@@ -47,26 +47,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Enforce age-band modality gate for authenticated children. The story
-    // submission is mapped to either the `text` modality (typed prompt) or
-    // the `voice` modality (audio narration). Guests skip the gate.
+    // Enforce age-band modality gate. The story submission is mapped to
+    // either the `text` modality (typed prompt) or the `voice` modality
+    // (audio narration). Authed children resolve DoB from DB; guests pass
+    // guestDob in the body. Guests without DoB fall back to `unknown` band.
+    let dob: Date | null | undefined;
     if (session?.childId) {
       const child = await prisma.child.findUnique({
         where: { id: session.childId },
         select: { dateOfBirth: true },
       });
-      const band = bandForDob(child?.dateOfBirth);
-      const modality =
-        parsed.data.submissionType === "audio" ? "voice" : "text";
-      if (!isModalityAllowed(band, modality)) {
-        return NextResponse.json(
-          {
-            error: "modality_not_allowed_for_age",
-            message: "This input type is not available for this child's age.",
-          },
-          { status: 400 },
-        );
-      }
+      dob = child?.dateOfBirth;
+    } else if (parsed.data.guestDob) {
+      dob = new Date(parsed.data.guestDob);
+    }
+    const band = bandForDob(dob);
+    const modality =
+      parsed.data.submissionType === "audio" ? "voice" : "text";
+    if (!isModalityAllowed(band, modality)) {
+      return NextResponse.json(
+        {
+          error: "modality_not_allowed_for_age",
+          message: "This input type is not available for this child's age.",
+        },
+        { status: 400 },
+      );
     }
 
     // Moderate story text for child safety

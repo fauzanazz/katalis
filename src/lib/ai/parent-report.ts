@@ -126,43 +126,26 @@ async function callProviderForReport(userMessage: string): Promise<string> {
   }
 
   if (providerName === "google" || providerName === "vertex-ai") {
-    const { VertexAI } = await import("@google-cloud/vertexai");
-    const projectId = process.env.GOOGLE_CLOUD_PROJECT;
-    
-    if (!projectId) {
-      throw new Error("GOOGLE_CLOUD_PROJECT environment variable required for Vertex AI");
-    }
-
-    const vertexAI = new VertexAI({
-      project: projectId,
-      location: process.env.GOOGLE_CLOUD_LOCATION ?? "us-central1",
+    const { default: OpenAI } = await import("openai");
+    const client = new OpenAI({
+      apiKey: process.env.GOOGLE_AI_API_KEY,
+      baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+      timeout: API_TIMEOUT_MS,
     });
 
-    const model = vertexAI.preview.getGenerativeModel({
-      model: process.env.VERTEX_AI_MODEL ?? "gemini-2.0-flash",
-    });
-
-    const response = await model.generateContent({
-      contents: [
-        {
-          role: "user",
-          parts: [
-            { text: REPORT_SYSTEM_PROMPT },
-            { text: userMessage },
-          ],
-        },
+    const response = await client.chat.completions.create({
+      model: process.env.GOOGLE_AI_MODEL ?? "gemini-2.0-flash",
+      messages: [
+        { role: "system", content: REPORT_SYSTEM_PROMPT },
+        { role: "user", content: userMessage },
       ],
-      generation_config: {
-        max_output_tokens: 1500,
-        temperature: 0.7,
-      },
+      max_tokens: 1500,
+      temperature: 0.7,
     });
 
-    const result = response.response.candidates?.[0]?.content?.parts?.[0];
-    if (!result?.text) {
-      throw new Error("Empty response from Vertex AI");
-    }
-    return result.text;
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error("Empty response from Google AI");
+    return content;
   }
 
   // Default to OpenAI

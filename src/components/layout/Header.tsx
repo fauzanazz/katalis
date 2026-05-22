@@ -43,6 +43,8 @@ export function Header({ isAuthenticated, isAdmin, isParent }: HeaderProps) {
     "inline-flex min-h-[44px] min-w-[44px] max-w-full items-center justify-center rounded-lg px-3 text-xs font-medium text-foreground transition-colors hover:bg-zinc-100 md:px-3 md:text-sm";
 
   const NAV_LINKS = isParent ? PARENT_NAV_LINKS : CHILD_NAV_LINKS;
+  const isChild = isAuthenticated && !isParent && !isAdmin;
+  const logoHref = isParent ? "/parent" : isChild ? "/home" : "/";
 
   const gooeyItems = NAV_LINKS.map((link) => ({
     label: tNav(link.labelKey),
@@ -66,7 +68,7 @@ export function Header({ isAuthenticated, isAdmin, isParent }: HeaderProps) {
     >
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 md:px-8 lg:px-10 xl:max-w-6xl">
         <Link
-          href="/"
+          href={logoHref}
           className="flex min-w-0 items-center gap-2.5"
         >
           <Image

@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useChildId } from "@/hooks/use-child-id";
+import { KidPageShell } from "@/components/layout/KidPageShell";
 
 interface QuestMissionSummary {
   day: number;
@@ -71,20 +72,25 @@ function getConfig(status: string) {
 
 function QuestSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12">
-      <div className="mb-8 flex items-start justify-between">
-        <div className="flex flex-col gap-2">
-          <div className="h-9 w-64 animate-pulse rounded-xl bg-muted" />
-          <div className="h-5 w-48 animate-pulse rounded-lg bg-muted" />
+    <section className="relative flex-1 overflow-hidden bg-[#F5C542] px-6 py-10">
+      <div className="mx-auto w-full max-w-2xl">
+        <div className="mb-8 flex items-start justify-between">
+          <div className="flex flex-col gap-2">
+            <div className="h-9 w-64 animate-pulse rounded-xl bg-black/10" />
+            <div className="h-5 w-48 animate-pulse rounded-lg bg-black/10" />
+          </div>
+          <div className="h-9 w-32 animate-pulse rounded-xl bg-black/10" />
         </div>
-        <div className="h-9 w-32 animate-pulse rounded-xl bg-muted" />
+        <div className="flex flex-col gap-3">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="h-28 animate-pulse rounded-2xl border-2 border-black bg-white shadow-[4px_4px_0_#000]"
+            />
+          ))}
+        </div>
       </div>
-      <div className="flex flex-col gap-3">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="h-28 animate-pulse rounded-2xl bg-muted" />
-        ))}
-      </div>
-    </div>
+    </section>
   );
 }
 
@@ -160,15 +166,14 @@ function QuestCard({
     >
       <Link href={`/quest/${quest.id}`}>
         <div
-          className="group relative overflow-hidden rounded-2xl bg-card p-5 transition-shadow hover:shadow-sm"
-          style={{ border: `1.5px solid ${cfg.borderColorVar}` }}
+          className="group relative overflow-hidden rounded-2xl border-2 border-black bg-white p-5 shadow-[4px_4px_0_#000] transition-all hover:-translate-y-0.5 hover:shadow-[6px_6px_0_#000] active:translate-y-0 active:shadow-[2px_2px_0_#000]"
           role="article"
           aria-label={`${quest.dream} — ${statusLabel} — ${t("progress", { completed: quest.completedCount, total: quest.totalMissions })}`}
         >
           <div className="flex items-start gap-4">
             {/* Status icon */}
             <div
-              className={`mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl ${cfg.iconBgClass}`}
+              className={`mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl border-2 border-black ${cfg.iconBgClass} shadow-[2px_2px_0_#000]`}
             >
               <Icon
                 size={18}
@@ -311,72 +316,73 @@ export default function QuestListPage() {
   if (loading) return <QuestSkeleton />;
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-        className="mb-8 flex items-start justify-between gap-4"
-      >
-        <div>
-          <h1 className="type-h2">{greeting}</h1>
-          <p className="type-lede mt-1">{t("greetingSubtitle")}</p>
-        </div>
-
-        {quests.length > 0 && (
-          <Link href="/quest/new" className="shrink-0 pt-2">
-            <Button size="sm">
+    <KidPageShell
+      kicker={t("kicker")}
+      title={greeting}
+      subtitle={t("greetingSubtitle")}
+      actions={
+        quests.length > 0 ? (
+          <Link href="/quest/new">
+            <Button
+              size="sm"
+              className="rounded-full border-2 border-black bg-[#C8A4E0] font-black text-black shadow-[3px_3px_0_#000] hover:bg-[#C8A4E0] hover:brightness-95 active:shadow-[1px_1px_0_#000]"
+            >
               <Plus className="mr-1.5 size-4" />
               {t("createQuest")}
             </Button>
           </Link>
+        ) : null
+      }
+    >
+      <div className="mx-auto w-full max-w-2xl">
+        {quests.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-col items-center justify-center rounded-3xl border-2 border-black bg-white px-6 py-16 text-center shadow-[4px_4px_0_#000]"
+          >
+            <div className="mb-5 flex size-20 items-center justify-center rounded-2xl border-2 border-black bg-[#F5C542] shadow-[2px_2px_0_#000]">
+              <Compass size={36} className="text-black" strokeWidth={2} aria-hidden="true" />
+            </div>
+            <h2 className="text-2xl font-black tracking-tight text-black">
+              {t("empty")}
+            </h2>
+            <p className="mt-2 max-w-xs text-sm font-semibold text-black/65">
+              {t("emptyDesc")}
+            </p>
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+              <Link href="/discover">
+                <Button
+                  size="lg"
+                  className="rounded-full border-2 border-black bg-[#A8C8F0] font-black text-black shadow-[3px_3px_0_#000] hover:bg-[#A8C8F0] hover:brightness-95 active:shadow-[1px_1px_0_#000]"
+                >
+                  <Map className="mr-2 size-4" />
+                  {t("startFirst")}
+                </Button>
+              </Link>
+              <Link href="/quest/new">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="rounded-full border-2 border-black bg-white font-black text-black shadow-[3px_3px_0_#000] hover:bg-white hover:brightness-95 active:shadow-[1px_1px_0_#000]"
+                >
+                  <Plus className="mr-2 size-4" />
+                  {t("createQuest")}
+                </Button>
+              </Link>
+            </div>
+          </motion.div>
         )}
-      </motion.div>
 
-      {/* Empty state */}
-      {quests.length === 0 && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.97 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-muted px-6 py-16 text-center"
-        >
-          <div className="mb-5 flex size-20 items-center justify-center rounded-2xl bg-general-surface">
-            <Compass
-              size={36}
-              style={{ color: "var(--yellow-sun-deep)" }}
-              strokeWidth={1.5}
-              aria-hidden="true"
-            />
+        {quests.length > 0 && (
+          <div className="flex flex-col gap-3">
+            {quests.map((quest, idx) => (
+              <QuestCard key={quest.id} quest={quest} index={idx} t={t} />
+            ))}
           </div>
-          <h2 className="type-h3">{t("empty")}</h2>
-          <p className="type-lede mt-2 max-w-xs">{t("emptyDesc")}</p>
-          <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-            <Link href="/discover">
-              <Button size="lg">
-                <Map className="mr-2 size-4" />
-                {t("startFirst")}
-              </Button>
-            </Link>
-            <Link href="/quest/new">
-              <Button variant="outline" size="lg">
-                <Plus className="mr-2 size-4" />
-                {t("createQuest")}
-              </Button>
-            </Link>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Quest list */}
-      {quests.length > 0 && (
-        <div className="flex flex-col gap-3">
-          {quests.map((quest, idx) => (
-            <QuestCard key={quest.id} quest={quest} index={idx} t={t} />
-          ))}
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </KidPageShell>
   );
 }

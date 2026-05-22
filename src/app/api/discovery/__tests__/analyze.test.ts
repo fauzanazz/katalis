@@ -67,15 +67,35 @@ describe("POST /api/discovery/analyze", () => {
     vi.clearAllMocks();
   });
 
-  it("returns 401 when not authenticated", async () => {
+  it("allows guests to analyze an image with no DoB (unknown age band allows photo)", async () => {
     mockedGetSession.mockResolvedValue(null);
+    mockedAnalyze.mockResolvedValue(mockAnalysisResult);
 
     const res = await POST(
-      createRequest({ artifactUrl: "http://test.com/img.jpg", artifactType: "image" }),
+      createRequest({
+        artifactUrl: "http://localhost:3100/api/storage/images/test.jpg",
+        artifactType: "image",
+      }),
     );
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(200);
+  });
+
+  it("rejects guest voice analysis when guestDob falls in 3-6 band (photo-only)", async () => {
+    mockedGetSession.mockResolvedValue(null);
+    // DoB ~5 years ago → 3-6 band → voice modality not allowed.
+    const dob = new Date();
+    dob.setFullYear(dob.getFullYear() - 5);
+
+    const res = await POST(
+      createRequest({
+        artifactUrl: "http://localhost:3100/api/storage/audio/test.mp3",
+        artifactType: "audio",
+        guestDob: dob.toISOString(),
+      }),
+    );
+    expect(res.status).toBe(400);
     const data = await res.json();
-    expect(data.error).toBe("unauthorized");
+    expect(data.error).toBe("modality_not_allowed_for_age");
   });
 
   it("returns 200 with talent analysis for valid image", async () => {

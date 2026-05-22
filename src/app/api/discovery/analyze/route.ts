@@ -23,14 +23,8 @@ import {
  */
 export async function POST(request: NextRequest) {
   try {
-    // Require authentication
+    // Auth is optional — guests can analyze if they provide a guestDob.
     const session = await getChildSession();
-    if (!session) {
-      return NextResponse.json(
-        { error: "unauthorized", message: "Authentication required" },
-        { status: 401 },
-      );
-    }
 
     // Parse request body
     const body = await request.json().catch(() => null);
@@ -65,12 +59,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Enforce age-band modality gate (defense in depth alongside the UI)
-    const child = await prisma.child.findUnique({
-      where: { id: session.childId },
-      select: { dateOfBirth: true },
-    });
-    const band = bandForDob(child?.dateOfBirth);
+    // Enforce age-band modality gate (defense in depth alongside the UI).
+    // Authed children resolve DoB from DB; guests must pass guestDob in body.
+    let dob: Date | null | undefined;
+    if (session?.childId) {
+      const child = await prisma.child.findUnique({
+        where: { id: session.childId },
+        select: { dateOfBirth: true },
+      });
+      dob = child?.dateOfBirth;
+    } else if (parsed.data.guestDob) {
+      dob = new Date(parsed.data.guestDob);
+    }
+    const band = bandForDob(dob);
     const modality = modalityFromArtifactType(parsed.data.artifactType);
     if (!isModalityAllowed(band, modality)) {
       return NextResponse.json(
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
     const moderationResult = await moderateImageContent({
       imageUrl: parsed.data.artifactUrl,
       sourceType: "discovery",
-      childId: session.childId,
+      childId: session?.childId,
     });
 
     if (!moderationResult.allowed) {

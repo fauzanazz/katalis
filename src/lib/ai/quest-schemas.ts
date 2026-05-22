@@ -52,6 +52,8 @@ export const QuestGenerationInputSchema = z.object({
    * Spec ref: Katalis.docx §8.1b — Pygmalion safeguard via exploration.
    */
   explorationInterests: z.array(z.string()).max(3).optional(),
+  /** Optional. Guest-supplied ISO date string for age-band derivation. */
+  guestDob: z.string().datetime().optional(),
 });
 
 export type QuestGenerationInput = z.infer<typeof QuestGenerationInputSchema>;

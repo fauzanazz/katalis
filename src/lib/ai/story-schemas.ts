@@ -28,6 +28,8 @@ export const StoryAnalysisInputSchema = z.object({
   submissionType: z.enum(["text", "audio"], {
     message: "Submission type must be 'text' or 'audio'",
   }),
+  /** Optional. Guest-supplied ISO date string for age-band gating. */
+  guestDob: z.string().datetime().optional(),
 });
 
 export type StoryAnalysisInput = z.infer<typeof StoryAnalysisInputSchema>;

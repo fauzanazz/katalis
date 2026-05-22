@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { dream, localContext, talents, discoveryId } = parsed.data;
+    const { dream, localContext, talents, discoveryId, guestDob } = parsed.data;
 
     // Moderate dream and context text for child safety
     const combinedText = `${dream} ${localContext}`;
@@ -92,7 +92,8 @@ export async function POST(request: NextRequest) {
       ? await getZpdScore(session.childId)
       : undefined;
 
-    // Resolve child age band (drives mission duration caps)
+    // Resolve child age band (drives mission duration caps). Authed children
+    // resolve DoB from DB; guests pass guestDob in the body.
     let ageGroup: ReturnType<typeof getAgeGroup>["band"] = "unknown";
     if (session?.childId) {
       const child = await prisma.child.findUnique({
@@ -100,6 +101,8 @@ export async function POST(request: NextRequest) {
         select: { dateOfBirth: true },
       });
       ageGroup = getAgeGroup(child?.dateOfBirth).band;
+    } else if (guestDob) {
+      ageGroup = getAgeGroup(new Date(guestDob)).band;
     }
 
     // Pygmalion safeguard (§8.1b): periodically inject interest keys outside

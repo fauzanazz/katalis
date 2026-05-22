@@ -12,9 +12,15 @@ import { AnalysisLoading } from "@/components/discovery/AnalysisLoading";
 import { AnalysisError } from "@/components/discovery/AnalysisError";
 import { StoryPrompt } from "@/components/discovery/StoryPrompt";
 import { DiscoverIdleScene } from "@/components/discovery/DiscoverIdleScene";
+import {
+  GuestProfileModal,
+  readGuestProfile,
+  type GuestProfile,
+} from "@/components/discovery/GuestProfileModal";
 import { getRandomStoryPrompts } from "@/lib/story-prompts";
 import { useRouter, Link } from "@/i18n/navigation";
 import { useChildId } from "@/hooks/use-child-id";
+import { KidPageShell } from "@/components/layout/KidPageShell";
 import type { UploadResultData } from "@/types/upload";
 import type { AnalysisOutput } from "@/lib/ai/schemas";
 import type { Talent } from "@/lib/ai/schemas";
@@ -71,6 +77,11 @@ export default function DiscoverPage() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const HISTORY_LIMIT = 5;
 
+  const [guestProfile, setGuestProfile] = useState<GuestProfile | null>(null);
+  const [guestModalOpen, setGuestModalOpen] = useState(false);
+  const [pendingAnalyze, setPendingAnalyze] = useState<(() => void) | null>(null);
+  const guestStoryGateRef = React.useRef<((allowed: boolean) => void) | null>(null);
+
   const storyImages = useMemo(() => getRandomStoryPrompts(3), []);
 
   useEffect(() => {
@@ -80,6 +91,7 @@ export default function DiscoverPage() {
         const data = await res.json();
         if (!data.authenticated) {
           setAuthState("unauthenticated");
+          setGuestProfile(readGuestProfile());
         } else if (data.type === "user") {
           setAuthState("parent");
         } else {
@@ -89,6 +101,7 @@ export default function DiscoverPage() {
         }
       } catch {
         setAuthState("unauthenticated");
+        setGuestProfile(readGuestProfile());
       }
     }
     checkAuth();
@@ -116,6 +129,10 @@ export default function DiscoverPage() {
     setAnalysisState("analyzing");
     setAnalysisResults(null);
 
+    const guestDob = authState === "unauthenticated"
+      ? readGuestProfile()?.dob ?? null
+      : null;
+
     try {
       const response = await fetch("/api/discovery/analyze", {
         method: "POST",
@@ -123,6 +140,7 @@ export default function DiscoverPage() {
         body: JSON.stringify({
           artifactUrl: upload.url,
           artifactType: upload.category,
+          ...(guestDob ? { guestDob } : {}),
         }),
       });
 
@@ -153,22 +171,77 @@ export default function DiscoverPage() {
       setErrorType("network");
       setAnalysisState("error");
     }
-  }, [router]);
+  }, [router, authState]);
 
   const handleUploadComplete = useCallback((result: UploadResultData) => {
     setCurrentUpload(result);
   }, []);
 
+  const ensureGuestProfile = useCallback(
+    (run: () => void) => {
+      if (authState !== "unauthenticated") {
+        run();
+        return;
+      }
+      const existing = readGuestProfile();
+      if (existing) {
+        setGuestProfile(existing);
+        run();
+        return;
+      }
+      setPendingAnalyze(() => run);
+      setGuestModalOpen(true);
+    },
+    [authState],
+  );
+
   const handleAnalyze = useCallback(() => {
-    if (currentUpload) {
+    if (!currentUpload) return;
+    const upload = currentUpload;
+    ensureGuestProfile(() => {
       try {
         sessionStorage.removeItem("katalis-upload-discover");
       } catch {
         // Ignore
       }
-      runAnalysis(currentUpload);
+      runAnalysis(upload);
+    });
+  }, [currentUpload, ensureGuestProfile, runAnalysis]);
+
+  const handleStoryBeforeSubmit = useCallback((): Promise<boolean> => {
+    if (authState !== "unauthenticated") return Promise.resolve(true);
+    if (readGuestProfile()) return Promise.resolve(true);
+    return new Promise<boolean>((resolve) => {
+      guestStoryGateRef.current = resolve;
+      setGuestModalOpen(true);
+    });
+  }, [authState]);
+
+  const handleGuestModalSubmit = useCallback(
+    (profile: GuestProfile) => {
+      setGuestProfile(profile);
+      setGuestModalOpen(false);
+      if (guestStoryGateRef.current) {
+        guestStoryGateRef.current(true);
+        guestStoryGateRef.current = null;
+      }
+      if (pendingAnalyze) {
+        const run = pendingAnalyze;
+        setPendingAnalyze(null);
+        run();
+      }
+    },
+    [pendingAnalyze],
+  );
+
+  const handleGuestModalCancel = useCallback(() => {
+    setGuestModalOpen(false);
+    if (guestStoryGateRef.current) {
+      guestStoryGateRef.current(false);
+      guestStoryGateRef.current = null;
     }
-  }, [currentUpload, runAnalysis]);
+    setPendingAnalyze(null);
+  }, []);
 
   const handleRetry = useCallback(() => {
     if (currentUpload) runAnalysis(currentUpload);
@@ -292,33 +365,36 @@ export default function DiscoverPage() {
     },
   ];
 
+  const displayName =
+    (authState === "child" && childName) ||
+    (authState === "unauthenticated" && guestProfile?.name) ||
+    null;
+  const personalTitle = displayName ? `${t("title")}, ${displayName}!` : t("title");
+
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col">
-      {/* Two-column content row */}
-      <div className="flex flex-col px-4 py-10 lg:min-h-[calc(100svh-20rem)] lg:flex-row lg:items-center lg:gap-16 lg:py-8">
-
-      {/* Left column: title + persistent flow tabs */}
-      <div className="mb-8 shrink-0 lg:mb-0 lg:w-5/12">
-        <div className="text-center lg:text-left">
-          <h1 className="type-h1 mb-3">{t("title")}</h1>
-          {authState === "child" && childName && (
-            <p className="mb-1 text-sm font-medium text-primary">Hi, {childName}! 👋</p>
-          )}
-          <p className="type-lede mx-auto max-w-md lg:mx-0">{t("subtitle")}</p>
-          {authState === "child" && (
-            <div className="mt-4 flex justify-center lg:justify-start">
-              <Link href="/discover/history">
-                <Button variant="outline" size="sm">
-                  <History className="mr-1.5 size-4" />
-                  {t("results.viewHistory")}
-                </Button>
-              </Link>
-            </div>
-          )}
-        </div>
-
-        {/* Flow tab nav — horizontal on mobile, vertical on desktop */}
-        <nav className="mt-8 flex gap-2 lg:flex-col" aria-label={t("flowSelection.title")}>
+    <KidPageShell
+      kicker={t("kicker")}
+      title={personalTitle}
+      subtitle={t("subtitle")}
+      actions={
+        authState === "child" ? (
+          <Link href="/discover/history">
+            <Button
+              size="sm"
+              variant="outline"
+              className="rounded-full border-2 border-black bg-white font-black text-black shadow-[3px_3px_0_#000] hover:bg-white hover:brightness-95 active:shadow-[1px_1px_0_#000]"
+            >
+              <History className="mr-1.5 size-4" />
+              {t("results.viewHistory")}
+            </Button>
+          </Link>
+        ) : null
+      }
+    >
+      <div className="flex flex-col lg:flex-row lg:items-start lg:gap-10">
+      {/* Left column: persistent flow tabs */}
+      <div className="mb-6 shrink-0 lg:mb-0 lg:w-4/12">
+        <nav className="flex gap-2 lg:flex-col" aria-label={t("flowSelection.title")}>
           {flowTabs.map((tab) => {
             const isActive = flow === tab.id;
             return (
@@ -327,10 +403,10 @@ export default function DiscoverPage() {
                 type="button"
                 onClick={() => handleSwitchFlow(tab.id)}
                 className={cn(
-                  "flex flex-1 items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition-all duration-150",
+                  "flex flex-1 items-center gap-3 rounded-xl border-2 border-black px-4 py-3 text-left text-sm font-black tracking-tight transition-all",
                   isActive
-                    ? `${tab.activeBg} ${tab.activeColor}`
-                    : "text-muted-foreground hover:bg-muted hover:text-ink",
+                    ? "bg-white text-black shadow-[3px_3px_0_#000]"
+                    : "bg-white/60 text-black/60 hover:bg-white hover:text-black hover:shadow-[3px_3px_0_#000]",
                 )}
               >
                 {tab.icon}
@@ -423,11 +499,20 @@ export default function DiscoverPage() {
             onAnalysisComplete={handleStoryAnalysisComplete}
             onAnalysisStart={handleStoryAnalysisStart}
             onError={handleStoryError}
+            beforeSubmit={authState === "unauthenticated" ? handleStoryBeforeSubmit : undefined}
+            guestDob={guestProfile?.dob ?? null}
           />
         )}
       </div>
 
       </div>{/* end two-column content row */}
+
+      <GuestProfileModal
+        open={guestModalOpen}
+        onCancel={handleGuestModalCancel}
+        onSubmit={handleGuestModalSubmit}
+      />
+
 
       {/* Discovery history — child only */}
       {authState === "child" && (
@@ -525,6 +610,6 @@ export default function DiscoverPage() {
           </div>
         </div>
       )}
-    </div>
+    </KidPageShell>
   );
 }

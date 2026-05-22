@@ -8,6 +8,7 @@ import { useRouter, usePathname } from "@/i18n/navigation";
 import { TalentCategoryFilter } from "@/components/gallery/TalentCategoryFilter";
 import { ClusterBrowseView } from "@/components/gallery/ClusterBrowseView";
 import { SquadBrowseView } from "@/components/gallery/SquadBrowseView";
+import { KidPageShell } from "@/components/layout/KidPageShell";
 import { cn } from "@/lib/utils";
 import type { GalleryEntryFeatureCollection } from "@/types/gallery";
 
@@ -197,14 +198,11 @@ export default function GalleryPage() {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 md:px-8 lg:px-10 sm:py-10">
-      {/* Page header */}
-      <div className="mb-8">
-        <h1 className="type-h1">{t("title")}</h1>
-        <p className="type-lede mt-2 max-w-2xl">{t("subtitle")}</p>
-      </div>
-
-      {/* View mode toggle */}
+    <KidPageShell
+      kicker={t("kicker")}
+      title={t("title")}
+      subtitle={t("subtitle")}
+    >
       <nav className="mb-6 flex gap-2" role="tablist" aria-label="Gallery view mode">
         {viewTabs.map((tab) => {
           const isActive = viewMode === tab.id;
@@ -215,10 +213,10 @@ export default function GalleryPage() {
               aria-selected={isActive}
               onClick={() => handleViewModeChange(tab.id)}
               className={cn(
-                "flex flex-1 items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-150",
+                "flex flex-1 items-center gap-2 rounded-xl border-2 border-black px-4 py-3 text-sm font-black tracking-tight transition-all",
                 isActive
-                  ? `${tab.activeBg} ${tab.activeColor}`
-                  : "text-muted-foreground hover:bg-muted hover:text-ink",
+                  ? "bg-white text-black shadow-[3px_3px_0_#000]"
+                  : "bg-white/60 text-black/60 hover:bg-white hover:text-black hover:shadow-[3px_3px_0_#000]",
               )}
             >
               {tab.icon}
@@ -293,6 +291,6 @@ export default function GalleryPage() {
           onSquadSelect={handleSquadSelect}
         />
       )}
-    </div>
+    </KidPageShell>
   );
 }

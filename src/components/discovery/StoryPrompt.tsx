@@ -18,6 +18,10 @@ interface StoryPromptProps {
   onAnalysisComplete: (results: AnalysisOutput) => void;
   onAnalysisStart: () => void;
   onError: (errorType: "ai_failure" | "timeout" | "network") => void;
+  /** Optional gate run before submit; abort submission if it returns false. */
+  beforeSubmit?: () => Promise<boolean> | boolean;
+  /** Optional guest DoB (ISO) sent to backend for age-band gating. */
+  guestDob?: string | null;
 }
 
 /**
@@ -32,6 +36,8 @@ export function StoryPrompt({
   onAnalysisComplete,
   onAnalysisStart,
   onError,
+  beforeSubmit,
+  guestDob,
 }: StoryPromptProps) {
   const t = useTranslations("discover.story");
   const locale = useLocale();
@@ -82,6 +88,11 @@ export function StoryPrompt({
 
   const submitStoryAnalysis = useCallback(
     async (text: string, submissionType: "text" | "audio") => {
+      if (beforeSubmit) {
+        const allowed = await beforeSubmit();
+        if (!allowed) return;
+      }
+
       setIsSubmitting(true);
       setValidationError(null);
       onAnalysisStart();
@@ -94,6 +105,7 @@ export function StoryPrompt({
             storyText: text,
             imageIds: images.map((img) => img.id),
             submissionType,
+            ...(guestDob ? { guestDob } : {}),
           }),
         });
 
@@ -116,7 +128,7 @@ export function StoryPrompt({
         setIsSubmitting(false);
       }
     },
-    [images, onAnalysisComplete, onAnalysisStart, onError],
+    [images, onAnalysisComplete, onAnalysisStart, onError, beforeSubmit, guestDob],
   );
 
   const handleTextSubmit = useCallback(() => {

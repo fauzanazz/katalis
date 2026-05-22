@@ -14,6 +14,7 @@
   },
   "nav": {
     "home": "Home",
+    "dashboard": "Dashboard",
     "discover": "Discover",
     "quest": "Quest",
     "gallery": "Gallery",
@@ -21,6 +22,27 @@
     "logout": "Logout",
     "register": "Sign Up",
     "admin": "Admin"
+  },
+  "childHome": {
+    "kicker": "Kid zone",
+    "cta": "Let's go",
+    "greetingNamed": "{dayPart, select, morning {Good morning, {name}!} afternoon {Hello, {name}!} evening {Good evening, {name}!} other {Hi, {name}!}}",
+    "greetingAnon": "{dayPart, select, morning {Good morning, explorer!} afternoon {Hello, explorer!} evening {Good evening, explorer!} other {Hi, explorer!}}",
+    "subtitle": "Where do you want to adventure today?",
+    "cards": {
+      "discover": {
+        "title": "Discover",
+        "description": "Upload a drawing, voice, or story to find new talents."
+      },
+      "quest": {
+        "title": "Quest",
+        "description": "Continue your learning adventure."
+      },
+      "gallery": {
+        "title": "Gallery",
+        "description": "See everything you've created."
+      }
+    }
   },
   "landing": {
     "brandName": "Katalis AI",
@@ -185,6 +207,18 @@
         "empty": "Please enter your access code",
         "invalid": "Access code is not valid",
         "expired": "This access code has expired"
+      },
+      "noCode": "Don't have a code?",
+      "noCodeDialog": {
+        "title": "How to get a code",
+        "step1Title": "Ask a parent to log in",
+        "step1Desc": "A parent or guardian needs to sign in to their Katalis account first.",
+        "step2Title": "Parent creates your account",
+        "step2Desc": "In the parent dashboard, they tap \"Add Child\" and set up your profile.",
+        "step3Title": "Get your secret code",
+        "step3Desc": "Your parent will give you the secret code to enter here.",
+        "parentLoginCta": "Go to parent login",
+        "close": "Got it!"
       }
     },
     "emailLogin": {
@@ -232,7 +266,9 @@
   "notFound": {
     "title": "Page Not Found",
     "description": "Oops! The page you are looking for doesn't exist or has been moved.",
-    "backHome": "Go Back Home"
+    "backHome": "Go Back Home",
+    "backToDiscovery": "Back to Discovery",
+    "backToDashboard": "Back to Dashboard"
   },
   "error": {
     "title": "Something Went Wrong",
@@ -257,6 +293,7 @@
     "moderation": "Moderation"
   },
   "discover": {
+    "kicker": "Talent scout",
     "title": "Discover Your Talents",
     "subtitle": "Upload a drawing, photo, or record your voice to discover your unique talents!",
     "flowSelection": {
@@ -383,7 +420,13 @@
       "dateLabel": "Discovered on {date}",
       "readyForQuest": "Ready for your quest?",
       "questDesc": "Turn your {talent} talent into a 7-day creative adventure.",
-      "startQuest": "Start a Quest"
+      "startQuest": "Start a Quest",
+      "topTalent": "Top Talent",
+      "moreTalents": "More Talents",
+      "naturalGift": "Natural Gift",
+      "strongTalent": "Strong Talent",
+      "genuineInterest": "Genuine Interest",
+      "emergingSkill": "Emerging Skill"
     },
     "story": {
       "imagePromptTitle": "Look at these pictures!",
@@ -447,8 +490,13 @@
       "goToDiscovery": "Start Discovering"
     },
     "list": {
+      "kicker": "Your quests",
       "title": "Your Quests",
       "subtitle": "Track your 7-day adventure quests!",
+      "greetingGuest": "Hello, Adventurer!",
+      "greetingMorning": "Good morning, {name}!",
+      "greetingAfternoon": "Good afternoon, {name}!",
+      "greetingEvening": "Good evening, {name}!",
       "greetingSubtitle": "Pick up where you left off, or start a new adventure.",
       "empty": "No quests yet!",
       "emptyDesc": "Complete a talent discovery first, then create your first 7-day quest adventure!",
@@ -465,6 +513,7 @@
       "createQuest": "Create a Quest"
     },
     "overview": {
+      "kicker": "7-day adventure",
       "title": "Your Quest",
       "subtitle": "Your 7-day mission plan",
       "dreamLabel": "Your Dream",
@@ -595,6 +644,7 @@
     }
   },
   "gallery": {
+    "kicker": "Squad gallery",
     "title": "Global Gallery",
     "subtitle": "Explore works by talented children around the world!",
     "retry": "Try Again",

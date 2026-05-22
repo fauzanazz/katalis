@@ -15,6 +15,8 @@ export const AnalysisInputSchema = z.object({
   artifactType: z.enum(["image", "audio"], {
     message: "Artifact type must be 'image' or 'audio'",
   }),
+  /** Optional. Guest-supplied ISO date string for age-band gating. */
+  guestDob: z.string().datetime().optional(),
 });
 
 export type AnalysisInput = z.infer<typeof AnalysisInputSchema>;

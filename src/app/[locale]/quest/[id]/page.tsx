@@ -32,6 +32,7 @@ import {
 } from "@/components/quest/MissionDetail";
 import { BadgeGrid } from "@/components/quest/BadgeGrid";
 import { BadgeToast } from "@/components/quest/BadgeToast";
+import { KidPageShell } from "@/components/layout/KidPageShell";
 import type { EarnedBadge } from "@/lib/badges";
 
 interface QuestData {
@@ -90,6 +91,7 @@ export default function QuestOverviewPage() {
   const [abandonLoading, setAbandonLoading] = useState(false);
   const [abandonError, setAbandonError] = useState<string | null>(null);
   const [earnedBadges, setEarnedBadges] = useState<EarnedBadge[]>([]);
+  const [badgeRefreshKey, setBadgeRefreshKey] = useState(0);
 
   const fetchQuest = useCallback(async () => {
     try {
@@ -128,6 +130,7 @@ export default function QuestOverviewPage() {
   const handleBadgesEarned = useCallback((badges: EarnedBadge[]) => {
     if (badges.length > 0) {
       setEarnedBadges(badges);
+      setBadgeRefreshKey((k) => k + 1);
     }
   }, []);
 
@@ -173,41 +176,34 @@ export default function QuestOverviewPage() {
 
   if (loading) {
     return (
-      <div className="quest-paper flex min-h-[100dvh] flex-col items-center justify-center px-4 py-16">
+      <section className="relative flex flex-1 items-center justify-center overflow-hidden bg-[#F5C542] px-6 py-16">
         <BouncyDots label={t("loading")} />
-      </div>
+      </section>
     );
   }
 
   if (error || !quest) {
     return (
-      <div className="quest-paper flex min-h-[100dvh] flex-col items-center justify-center px-4 py-16 text-center">
-        <Compass
-          className="mb-4 size-14 text-[color:var(--ink)] animate-bobble"
-          aria-hidden="true"
-        />
-        <h2
-          className="text-3xl text-[color:var(--ink)]"
-          style={{ fontFamily: "var(--font-luckiest-guy)" }}
-        >
+      <section className="relative flex flex-1 flex-col items-center justify-center overflow-hidden bg-[#F5C542] px-6 py-16 text-center">
+        <div className="mb-6 inline-flex size-20 items-center justify-center rounded-2xl border-2 border-black bg-white shadow-[3px_3px_0_#000]">
+          <Compass className="size-10 text-black" strokeWidth={2} aria-hidden="true" />
+        </div>
+        <h2 className="text-3xl font-black tracking-tight text-black sm:text-4xl">
           {t("notFound")}
         </h2>
-        <p
-          className="mt-2 text-lg text-[color:var(--muted-foreground)]"
-          style={{ fontFamily: "var(--font-schoolbell)" }}
-        >
+        <p className="mt-2 text-base font-semibold text-black/65 sm:text-lg">
           {t("notFoundDesc")}
         </p>
         <Link href="/quest" className="mt-6 inline-block">
           <Button
             variant="outline"
-            className="sticker-press border-2 border-[color:var(--ink)] bg-[color:var(--yellow-sun)] text-[color:var(--ink)] shadow-[3px_3px_0_0_var(--ink)] hover:bg-[color:var(--yellow-sun-light)]"
+            className="rounded-full border-2 border-black bg-white font-black text-black shadow-[3px_3px_0_#000] hover:bg-white hover:brightness-95 active:shadow-[1px_1px_0_#000]"
           >
             <ArrowLeft className="mr-2 size-4" />
             {t("backToQuests")}
           </Button>
         </Link>
-      </div>
+      </section>
     );
   }
 
@@ -222,150 +218,80 @@ export default function QuestOverviewPage() {
   const isAllDaysComplete = quest.completedCount === quest.totalMissions;
 
   return (
-    <div className="quest-paper min-h-[100dvh]">
-      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:py-8">
-        {/* Back button — chunky pill */}
-        <div className="mb-5">
-          <Link href="/quest">
+    <KidPageShell
+      kicker={t("kicker")}
+      title={t("title")}
+      subtitle={t("subtitle")}
+      actions={
+        <Link href="/quest">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="rounded-full border-2 border-black bg-white font-black text-black shadow-[3px_3px_0_#000] hover:bg-white hover:brightness-95 active:shadow-[1px_1px_0_#000]"
+          >
+            <ArrowLeft className="mr-1 size-4" />
+            {t("backToQuests")}
+          </Button>
+        </Link>
+      }
+    >
+      <div className="mb-6 inline-flex max-w-full items-start gap-3 rounded-2xl border-2 border-black bg-white px-5 py-4 shadow-[4px_4px_0_#000] sm:max-w-2xl">
+        <Sparkles className="mt-0.5 size-5 shrink-0 text-black" aria-hidden="true" />
+        <div className="min-w-0">
+          <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-black/60">
+            {t("dreamLabel")}
+          </span>
+          <span className="block text-lg font-bold leading-snug text-black">
+            {quest.dream}
+          </span>
+        </div>
+      </div>
+
+      {(isCompleted || isAllDaysComplete) && (
+        <div
+          className="relative mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border-2 border-black bg-[#B9E3C7] px-5 py-4 shadow-[4px_4px_0_#000]"
+          role="status"
+        >
+          <div className="flex items-center gap-3">
+            <Trophy className="size-10 text-black" aria-hidden="true" />
+            <div>
+              <h2 className="text-2xl font-black tracking-tight text-black">
+                {t("questCompleted")}
+              </h2>
+              <p className="text-sm font-semibold text-black/70">
+                {isCompleted ? t("readOnlyBanner") : t("questCompletedDesc")}
+              </p>
+            </div>
+          </div>
+          <Link href={`/quest/${questId}/complete`}>
             <Button
-              variant="ghost"
               size="sm"
-              className="sticker-press rounded-full border-2 border-[color:var(--ink)] bg-[#fffdf6] px-3 text-[color:var(--ink)] shadow-[2px_2px_0_0_var(--ink)] hover:bg-[color:var(--yellow-sun-light)]"
+              className="shrink-0 rounded-full border-2 border-black bg-[#F5C542] font-black text-black shadow-[3px_3px_0_#000] hover:bg-[#F5C542] hover:brightness-95 active:shadow-[1px_1px_0_#000]"
             >
-              <ArrowLeft className="mr-1 size-4" />
-              {t("backToQuests")}
+              <Trophy className="mr-1 size-4" aria-hidden="true" />
+              {t("viewCompletion")}
             </Button>
           </Link>
         </div>
+      )}
 
-        {/* Header — chunky title + mascot greeting */}
-        <header className="relative mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="min-w-0">
-            <span
-              className="inline-flex items-center gap-1 rounded-full bg-[color:var(--pink-bloom-soft)] px-3 py-0.5 text-[11px] font-black uppercase tracking-[0.18em] text-[color:var(--ink)]"
-              style={{ fontFamily: "var(--font-montserrat)" }}
-            >
-              <Sparkles className="size-3" aria-hidden="true" />
-              7-day adventure
-            </span>
-            <h1
-              className="mt-2 text-[clamp(2.5rem,6vw,4rem)] leading-[0.95] text-[color:var(--ink)]"
-              style={{ fontFamily: "var(--font-luckiest-guy)" }}
-            >
-              {t("title")}
-            </h1>
-            <p
-              className="mt-1 text-xl text-[color:var(--muted-foreground)]"
-              style={{ fontFamily: "var(--font-schoolbell)" }}
-            >
-              {t("subtitle")}
-            </p>
+      <div className="mb-6">
+        <BadgeGrid refreshKey={badgeRefreshKey} />
+      </div>
 
-            {/* Dream — thought-bubble sticker */}
-            <div
-              className="sticker-card relative mt-4 inline-flex max-w-full items-start gap-2 px-4 py-3 sm:max-w-2xl"
-            >
-              <span
-                aria-hidden="true"
-                className="tape-strip left-6 top-[-9px] rotate-[-4deg] rounded-[2px]"
-              />
-              <Sparkles
-                className="mt-0.5 size-5 shrink-0 text-[color:var(--yellow-sun-deep)]"
-                aria-hidden="true"
-              />
-              <div className="min-w-0">
-                <span
-                  className="block text-[10px] font-black uppercase tracking-[0.18em] text-[color:var(--blue-ocean-deep)]"
-                  style={{ fontFamily: "var(--font-montserrat)" }}
-                >
-                  {t("dreamLabel")}
-                </span>
-                <span
-                  className="block text-lg leading-snug text-[color:var(--ink)]"
-                  style={{ fontFamily: "var(--font-schoolbell)" }}
-                >
-                  {quest.dream}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Mascot compass — desktop only, decorative */}
-          <div className="hidden shrink-0 sm:block" aria-hidden="true">
-            <div className="relative inline-block animate-bobble">
-              <Compass className="size-20 text-[color:var(--blue-ocean-deep)]" />
-              <Sparkles className="absolute -right-2 -top-1 size-5 text-[color:var(--yellow-sun-deep)] animate-sway" />
-            </div>
-          </div>
-        </header>
-
-        {/* Completed quest banner */}
-        {(isCompleted || isAllDaysComplete) && (
-          <div
-            className="sticker-card relative mb-6 flex flex-wrap items-center justify-between gap-4 px-5 py-4"
-            role="status"
-            style={{
-              background:
-                "color-mix(in srgb, var(--green-leaf-light) 80%, white)",
-            }}
+      {quest.status === "active" && (
+        <div className="mb-4 flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowAbandonDialog(true)}
+            className="rounded-full border-2 border-black bg-white font-black text-red-700 shadow-[2px_2px_0_#000] hover:bg-red-700 hover:text-white active:shadow-[1px_1px_0_#000]"
           >
-            <span
-              aria-hidden="true"
-              className="tape-strip left-8 top-[-9px] rotate-[-5deg] rounded-[2px]"
-            />
-            <div className="flex items-center gap-3">
-              <Trophy
-                className="size-10 text-[color:var(--yellow-sun-deep)] animate-sway"
-                aria-hidden="true"
-              />
-              <div>
-                <h2
-                  className="text-2xl text-[color:var(--ink)]"
-                  style={{ fontFamily: "var(--font-luckiest-guy)" }}
-                >
-                  {t("questCompleted")}
-                </h2>
-                <p
-                  className="text-base text-[color:var(--ink)]"
-                  style={{ fontFamily: "var(--font-schoolbell)" }}
-                >
-                  {isCompleted
-                    ? t("readOnlyBanner")
-                    : t("questCompletedDesc")}
-                </p>
-              </div>
-            </div>
-            <Link href={`/quest/${questId}/complete`}>
-              <Button
-                size="sm"
-                className="sticker-press shrink-0 rounded-full border-2 border-[color:var(--ink)] bg-[color:var(--yellow-sun)] text-[color:var(--ink)] shadow-[3px_3px_0_0_var(--ink)] hover:bg-[color:var(--yellow-sun-light)]"
-              >
-                <Trophy className="mr-1 size-4" aria-hidden="true" />
-                {t("viewCompletion")}
-              </Button>
-            </Link>
-          </div>
-        )}
-
-        {/* Badge collection */}
-        <div className="mb-6">
-          <BadgeGrid />
+            <XCircle className="mr-1 size-4" aria-hidden="true" />
+            {t("abandonQuest")}
+          </Button>
         </div>
-
-        {/* Abandon quest button (only for active quests) */}
-        {quest.status === "active" && (
-          <div className="mb-4 flex justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowAbandonDialog(true)}
-              className="sticker-press rounded-full border-2 border-[color:var(--ink)] bg-[#fffdf6] text-[color:var(--destructive)] shadow-[2px_2px_0_0_var(--ink)] hover:bg-[color:var(--destructive)] hover:text-white"
-            >
-              <XCircle className="mr-1 size-4" aria-hidden="true" />
-              {t("abandonQuest")}
-            </Button>
-          </div>
-        )}
+      )}
 
         {/* Abandon confirmation dialog */}
         <Dialog open={showAbandonDialog} onOpenChange={setShowAbandonDialog}>
@@ -411,66 +337,52 @@ export default function QuestOverviewPage() {
           </DialogContent>
         </Dialog>
 
-        {/* Locked toast */}
-        {lockedToast && (
-          <div
-            className="sticker-card-soft mb-4 bg-[color:var(--yellow-sun-light)] p-3 text-center text-sm font-bold text-[color:var(--ink)] animate-pop-in"
-            role="alert"
-            aria-live="polite"
-          >
-            {t("lockedMessage")}
-          </div>
-        )}
+      {lockedToast && (
+        <div
+          className="mb-4 rounded-2xl border-2 border-black bg-white p-3 text-center text-sm font-bold text-black shadow-[3px_3px_0_#000]"
+          role="alert"
+          aria-live="polite"
+        >
+          {t("lockedMessage")}
+        </div>
+      )}
 
-        {/* Main content */}
-        <div className="flex flex-col gap-6 lg:flex-row">
-          {/* Quest map panel */}
-          <div className="w-full shrink-0 lg:w-[22rem]">
-            <h2 className="sr-only">{t("timeline")}</h2>
-            <QuestTimeline
-              missions={missionSummaries}
-              selectedDay={selectedDay}
-              onSelectDay={handleSelectDay}
-              completedCount={quest.completedCount}
-              totalMissions={quest.totalMissions}
-            />
-          </div>
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <div className="w-full shrink-0 lg:w-[22rem]">
+          <h2 className="sr-only">{t("timeline")}</h2>
+          <QuestTimeline
+            missions={missionSummaries}
+            selectedDay={selectedDay}
+            onSelectDay={handleSelectDay}
+            completedCount={quest.completedCount}
+            totalMissions={quest.totalMissions}
+          />
+        </div>
 
-          {/* Mission detail panel */}
-          <div className="min-w-0 flex-1">
-            <h2 className="sr-only">{t("missionDetail")}</h2>
-            {selectedMission ? (
-              <div className="sticker-card overflow-y-auto p-5 sm:p-7">
-                <MissionDetail
-                  mission={selectedMission}
-                  questId={questId}
-                  onStatusChange={handleStatusChange}
-                  readOnly={isCompleted}
-                  onBadgesEarned={handleBadgesEarned}
-                />
-              </div>
-            ) : (
-              <div className="sticker-card flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
-                <Compass
-                  className="size-12 text-[color:var(--blue-ocean-deep)] animate-bobble"
-                  aria-hidden="true"
-                />
-                <p
-                  className="text-xl text-[color:var(--ink)]"
-                  style={{ fontFamily: "var(--font-schoolbell)" }}
-                >
-                  {t("selectMission")}
-                </p>
-              </div>
-            )}
-          </div>
+        <div className="min-w-0 flex-1">
+          <h2 className="sr-only">{t("missionDetail")}</h2>
+          {selectedMission ? (
+            <div className="overflow-y-auto rounded-2xl border-2 border-black bg-white p-5 shadow-[4px_4px_0_#000] sm:p-7">
+              <MissionDetail
+                mission={selectedMission}
+                questId={questId}
+                onStatusChange={handleStatusChange}
+                readOnly={isCompleted}
+                onBadgesEarned={handleBadgesEarned}
+              />
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-black bg-white px-6 py-16 text-center shadow-[4px_4px_0_#000]">
+              <Compass className="size-12 text-black" strokeWidth={2} aria-hidden="true" />
+              <p className="text-lg font-bold text-black">{t("selectMission")}</p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Badge celebration toast */}
       {earnedBadges.length > 0 && (
         <BadgeToast badges={earnedBadges} onClose={() => setEarnedBadges([])} />
       )}
-    </div>
+    </KidPageShell>
   );
 }

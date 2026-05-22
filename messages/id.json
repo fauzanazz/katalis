@@ -14,6 +14,7 @@
   },
   "nav": {
     "home": "Beranda",
+    "dashboard": "Dasbor",
     "discover": "Temukan",
     "quest": "Misi",
     "gallery": "Galeri",
@@ -21,6 +22,27 @@
     "logout": "Keluar",
     "register": "Daftar",
     "admin": "Admin"
+  },
+  "childHome": {
+    "kicker": "Zona anak",
+    "cta": "Yuk mulai",
+    "greetingNamed": "{dayPart, select, morning {Selamat pagi, {name}!} afternoon {Halo, {name}!} evening {Selamat sore, {name}!} other {Hai, {name}!}}",
+    "greetingAnon": "{dayPart, select, morning {Selamat pagi, penjelajah!} afternoon {Halo, penjelajah!} evening {Selamat sore, penjelajah!} other {Hai, penjelajah!}}",
+    "subtitle": "Mau berpetualang ke mana hari ini?",
+    "cards": {
+      "discover": {
+        "title": "Temukan",
+        "description": "Unggah gambar, suara, atau cerita untuk menemukan bakat baru."
+      },
+      "quest": {
+        "title": "Misi",
+        "description": "Lanjutkan petualangan belajarmu."
+      },
+      "gallery": {
+        "title": "Galeri",
+        "description": "Lihat semua yang sudah kamu buat."
+      }
+    }
   },
   "landing": {
     "brandName": "Katalis AI",
@@ -185,6 +207,18 @@
         "empty": "Mohon masukkan kode aksesmu",
         "invalid": "Kode akses tidak valid",
         "expired": "Kode akses ini sudah kedaluwarsa"
+      },
+      "noCode": "Belum punya kode?",
+      "noCodeDialog": {
+        "title": "Cara mendapatkan kode",
+        "step1Title": "Minta orang tua masuk",
+        "step1Desc": "Orang tua atau wali harus masuk ke akun Katalis mereka terlebih dahulu.",
+        "step2Title": "Orang tua membuat akunmu",
+        "step2Desc": "Di dasbor orang tua, mereka ketuk \"Tambah Anak\" dan buat profilmu.",
+        "step3Title": "Dapatkan kode rahasiamu",
+        "step3Desc": "Orang tuamu akan memberimu kode rahasia untuk dimasukkan di sini.",
+        "parentLoginCta": "Ke login orang tua",
+        "close": "Mengerti!"
       }
     },
     "emailLogin": {
@@ -232,7 +266,9 @@
   "notFound": {
     "title": "Halaman Tidak Ditemukan",
     "description": "Ups! Halaman yang kamu cari tidak ada atau sudah dipindahkan.",
-    "backHome": "Kembali ke Beranda"
+    "backHome": "Kembali ke Beranda",
+    "backToDiscovery": "Kembali ke Penemuan",
+    "backToDashboard": "Kembali ke Dasbor"
   },
   "error": {
     "title": "Terjadi Kesalahan",
@@ -257,6 +293,7 @@
     "moderation": "Moderasi"
   },
   "discover": {
+    "kicker": "Pencari bakat",
     "title": "Temukan Bakatmu",
     "subtitle": "Unggah gambar, foto, atau rekam suaramu untuk menemukan bakat unikmu!",
     "flowSelection": {
@@ -383,7 +420,13 @@
       "dateLabel": "Ditemukan pada {date}",
       "readyForQuest": "Siap memulai petualanganmu?",
       "questDesc": "Ubah bakat {talent}-mu menjadi petualangan kreatif 7 hari.",
-      "startQuest": "Mulai Quest"
+      "startQuest": "Mulai Quest",
+      "topTalent": "Bakat Utama",
+      "moreTalents": "Bakat Lainnya",
+      "naturalGift": "Bakat Alami",
+      "strongTalent": "Bakat Kuat",
+      "genuineInterest": "Minat Sejati",
+      "emergingSkill": "Kemampuan Berkembang"
     },
     "story": {
       "imagePromptTitle": "Lihat gambar-gambar ini!",
@@ -447,8 +490,13 @@
       "goToDiscovery": "Mulai Menemukan"
     },
     "list": {
+      "kicker": "Misi kamu",
       "title": "Misi-Misimu",
       "subtitle": "Pantau petualangan misi 7 harimu!",
+      "greetingGuest": "Halo, Petualang!",
+      "greetingMorning": "Selamat pagi, {name}!",
+      "greetingAfternoon": "Selamat siang, {name}!",
+      "greetingEvening": "Selamat malam, {name}!",
       "greetingSubtitle": "Lanjutkan dari tempat terakhirmu, atau mulai petualangan baru.",
       "empty": "Belum ada misi!",
       "emptyDesc": "Selesaikan penemuan bakat terlebih dahulu, lalu buat petualangan misi 7 hari pertamamu!",
@@ -465,6 +513,7 @@
       "createQuest": "Buat Misi"
     },
     "overview": {
+      "kicker": "Petualangan 7 hari",
       "title": "Misimu",
       "subtitle": "Rencana misi 7 harimu",
       "dreamLabel": "Impianmu",
@@ -595,6 +644,7 @@
     }
   },
   "gallery": {
+    "kicker": "Galeri squad",
     "title": "Galeri Dunia",
     "subtitle": "Jelajahi karya anak-anak berbakat dari seluruh dunia!",
     "retry": "Coba Lagi",

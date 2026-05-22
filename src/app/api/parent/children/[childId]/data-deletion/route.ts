@@ -58,6 +58,10 @@ export async function DELETE(
         reflections: await tx.reflectionEntry.count({ where: { childId } }),
         galleryEntries: await tx.galleryEntry.count({ where: { childId } }),
         childBadges: await tx.childBadge.count({ where: { childId } }),
+        parentQuestFollows: await tx.parentQuestFollow.count({ where: { childId } }),
+        discoveryRatings: await tx.discoveryRating.count({
+          where: { discovery: { childId } },
+        }),
         quests: await tx.quest.count({ where: { childId } }),
         discoveries: await tx.discovery.count({ where: { childId } }),
       };

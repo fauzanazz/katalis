@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { ReportView } from "@/components/parent/ReportView";
 
+
 interface ReportData {
   id: string;
   childId: string;

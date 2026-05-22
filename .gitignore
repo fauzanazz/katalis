@@ -50,3 +50,15 @@ public/uploads/
 # research with credentials
 .factory/research/cloudflare-r2.md
 .env*.local
+
+# personal AI tooling / scratch
+.agents/
+.claude/
+.codex/
+.factory/
+.pi/
+.planning/
+
+# stray lockfiles (project uses bun)
+package-lock.json
+pnpm-lock.yaml

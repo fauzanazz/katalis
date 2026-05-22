@@ -172,12 +172,41 @@ describe("UploadZone", () => {
     obj["filename"] = "a.jpg";
     obj["contentType"] = "image/jpeg";
     obj["size"] = 1024;
-    sessionStorageMock.setItem("katalis-upload-session", JSON.stringify(obj));
+    sessionStorageMock.setItem("katalis-upload-default", JSON.stringify(obj));
 
     render(<UploadZone onUploadComplete={onUploadComplete} />);
 
     // Session recovery should load the completed state
     const img = await screen.findByAltText("Preview of uploaded image");
     expect(img).toBeTruthy();
+    expect(onUploadComplete).toHaveBeenCalledWith(
+      expect.objectContaining({ key: sk }),
+    );
+  });
+
+  it("scopes session storage to provided storageKey", async () => {
+    const sk = "img/scoped.jpg";
+    const obj = {
+      key: sk,
+      url: `http://localhost:3100/uploads/${sk}`,
+      category: "image",
+      filename: "scoped.jpg",
+      contentType: "image/jpeg",
+      size: 2048,
+    };
+    sessionStorageMock.setItem("custom-scope", JSON.stringify(obj));
+
+    render(
+      <UploadZone
+        onUploadComplete={onUploadComplete}
+        storageKey="custom-scope"
+      />,
+    );
+
+    const img = await screen.findByAltText("Preview of uploaded image");
+    expect(img).toBeTruthy();
+    expect(onUploadComplete).toHaveBeenCalledWith(
+      expect.objectContaining({ key: sk }),
+    );
   });
 });

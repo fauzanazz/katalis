@@ -160,7 +160,14 @@ export default function DiscoverPage() {
   }, []);
 
   const handleAnalyze = useCallback(() => {
-    if (currentUpload) runAnalysis(currentUpload);
+    if (currentUpload) {
+      try {
+        sessionStorage.removeItem("katalis-upload-discover");
+      } catch {
+        // Ignore
+      }
+      runAnalysis(currentUpload);
+    }
   }, [currentUpload, runAnalysis]);
 
   const handleRetry = useCallback(() => {
@@ -173,6 +180,11 @@ export default function DiscoverPage() {
     setAnalysisState("idle");
     setAnalysisResults(null);
     setCurrentUpload(null);
+    try {
+      sessionStorage.removeItem("katalis-upload-discover");
+    } catch {
+      // Ignore
+    }
   }, []);
 
   const handleNewDiscovery = useCallback(() => {
@@ -180,6 +192,11 @@ export default function DiscoverPage() {
     setAnalysisState("idle");
     setAnalysisResults(null);
     setCurrentUpload(null);
+    try {
+      sessionStorage.removeItem("katalis-upload-discover");
+    } catch {
+      // Ignore
+    }
   }, []);
 
   const handleStoryAnalysisComplete = useCallback(
@@ -367,7 +384,10 @@ export default function DiscoverPage() {
 
         {analysisState === "idle" && flow === "image" && (
           <div className="flex flex-col gap-6">
-            <UploadZone onUploadComplete={handleUploadComplete} />
+            <UploadZone
+              onUploadComplete={handleUploadComplete}
+              storageKey="katalis-upload-discover"
+            />
             {currentUpload && (
               <Button
                 onClick={handleAnalyze}

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { getUserSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { verifyParentChildLink } from "@/lib/parent/link";
+import { getAgeGroup } from "@/lib/age";
 
 const UpdateChildSchema = z.object({
   dateOfBirth: z
@@ -67,8 +68,8 @@ export async function PATCH(
     }
 
     const dob = new Date(parsed.data.dateOfBirth);
-    const years = (Date.now() - dob.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-    if (years < 3 || years >= 13) {
+    const { years } = getAgeGroup(dob);
+    if (years === null || years < 3 || years > 12) {
       return NextResponse.json(
         {
           error: "invalid",

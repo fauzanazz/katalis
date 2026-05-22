@@ -11,11 +11,15 @@ export async function GET() {
 
   let childName: string | null = null;
   if (session.type === "child" && session.childId) {
-    const child = await prisma.child.findUnique({
-      where: { id: session.childId },
-      select: { name: true },
-    });
-    childName = child?.name ?? null;
+    try {
+      const child = await prisma.child.findUnique({
+        where: { id: session.childId },
+        select: { name: true },
+      });
+      childName = child?.name ?? null;
+    } catch (error) {
+      console.error("Session child lookup failed:", error);
+    }
   }
 
   return NextResponse.json({

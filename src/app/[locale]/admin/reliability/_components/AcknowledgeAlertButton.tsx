@@ -11,17 +11,22 @@ export function AcknowledgeAlertButton({ alertId }: { alertId: string }) {
 
   function handleAck() {
     startTransition(async () => {
-      const response = await fetch(
-        `/api/admin/reliability/alerts/${alertId}/ack`,
-        { method: "POST" },
-      );
-      if (!response.ok) {
+      try {
+        const response = await fetch(
+          `/api/admin/reliability/alerts/${alertId}/ack`,
+          { method: "POST" },
+        );
+        if (!response.ok) {
+          toast.error("Failed to acknowledge alert");
+          return;
+        }
+        setAcked(true);
+        toast.success("Alert acknowledged");
+        router.refresh();
+      } catch (error) {
+        console.error("Acknowledge alert request failed:", error);
         toast.error("Failed to acknowledge alert");
-        return;
       }
-      setAcked(true);
-      toast.success("Alert acknowledged");
-      router.refresh();
     });
   }
 

@@ -18,7 +18,13 @@ export async function GET() {
 
     const enriched = await Promise.all(
       children.map(async (child) => {
-        const snapshots = await listSnapshots(child.id, 30).catch(() => []);
+        const snapshots = await listSnapshots(child.id, 30).catch((error) => {
+          console.error(
+            `ZPD snapshot fetch failed for child ${child.id}:`,
+            error,
+          );
+          return [];
+        });
         return {
           ...child,
           tips: getTipsForChild({ talents: child.latestTalents ?? [] }),

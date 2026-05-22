@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { authorizeReliabilityRequest } from "@/lib/reliability/auth";
 import { submitRating } from "@/lib/reliability/service";
+import { INTEREST_TAXONOMY_V1 } from "@/lib/interests/taxonomy";
+import { TAG_CATEGORIES } from "@/lib/ai/tag-schemas";
 
 const BodySchema = z.object({
   discoveryId: z.string().min(1),
-  humanInterestKeys: z.array(z.string()).max(64),
-  humanTagCategories: z.array(z.string()).max(16),
+  humanInterestKeys: z.array(z.enum(INTEREST_TAXONOMY_V1)).max(64),
+  humanTagCategories: z.array(z.enum(TAG_CATEGORIES)).max(16),
   notes: z.string().max(2000).optional(),
 });
 

@@ -68,6 +68,10 @@ export async function DELETE(
       await tx.reflectionEntry.deleteMany({ where: { childId } });
       await tx.galleryEntry.deleteMany({ where: { childId } });
       await tx.childBadge.deleteMany({ where: { childId } });
+      await tx.parentQuestFollow.deleteMany({ where: { childId } });
+      await tx.discoveryRating.deleteMany({
+        where: { discovery: { childId } },
+      });
       // Cascade-deleted: missions, mentor sessions/messages, adjustments via Quest FK.
       await tx.quest.deleteMany({ where: { childId } });
       await tx.discovery.deleteMany({ where: { childId } });
@@ -80,14 +84,23 @@ export async function DELETE(
       return counts;
     });
 
-    await createInterestAuditEvent({
-      childId,
-      actorUserId: session.userId,
-      eventType: "parent_full_data_deletion_requested",
-      entityType: "child",
-      entityId: childId,
-      metadataJson: { reason, deletedCounts: summary },
-    });
+    try {
+      await createInterestAuditEvent({
+        childId,
+        actorUserId: session.userId,
+        eventType: "parent_full_data_deletion_requested",
+        entityType: "child",
+        entityId: childId,
+        metadataJson: { reason, deletedCounts: summary },
+      });
+    } catch (auditError) {
+      // Deletion already committed; surface the audit failure in logs but
+      // don't 500 the request — the destructive work succeeded.
+      console.error(
+        `Audit event write failed after child ${childId} deletion:`,
+        auditError,
+      );
+    }
 
     return NextResponse.json({
       ok: true,

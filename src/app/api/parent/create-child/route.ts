@@ -1,24 +1,24 @@
+import { randomInt } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getUserSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { routing } from "@/i18n/routing";
+import { getAgeGroup } from "@/lib/age";
 
 function generateAccessCode(): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let suffix = "";
-  for (let i = 0; i < 6; i++) suffix += chars.charAt(Math.floor(Math.random() * chars.length));
+  for (let i = 0; i < 6; i++) suffix += chars.charAt(randomInt(chars.length));
   return `KATAL-${suffix}`;
 }
 
 const CreateChildSchema = z.object({
   name: z.string().min(1).max(50),
   locale: z.enum([...routing.locales]).optional(),
-  /** ISO date string. Required for new Child rows; legacy rows backfill later. */
   dateOfBirth: z
     .string()
-    .datetime({ message: "dateOfBirth must be an ISO datetime string" })
-    .optional(),
+    .datetime({ message: "dateOfBirth must be an ISO datetime string" }),
 });
 
 export async function POST(request: NextRequest | Request) {
@@ -51,19 +51,17 @@ export async function POST(request: NextRequest | Request) {
     }
 
     const { name, locale = routing.defaultLocale, dateOfBirth } = parsed.data;
-    const dob = dateOfBirth ? new Date(dateOfBirth) : null;
+    const dob = new Date(dateOfBirth);
 
-    if (dob) {
-      const years = (Date.now() - dob.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-      if (years < 3 || years >= 13) {
-        return NextResponse.json(
-          {
-            error: "invalid",
-            message: "dateOfBirth must indicate an age between 3 and 12 years.",
-          },
-          { status: 400 },
-        );
-      }
+    const { years } = getAgeGroup(dob);
+    if (years === null || years < 3 || years > 12) {
+      return NextResponse.json(
+        {
+          error: "invalid",
+          message: "dateOfBirth must indicate an age between 3 and 12 years.",
+        },
+        { status: 400 },
+      );
     }
 
     const { child, accessCode } = await prisma.$transaction(async (tx) => {

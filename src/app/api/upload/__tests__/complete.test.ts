@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Mock auth
+vi.stubEnv("SESSION_SECRET", "a".repeat(48));
+
 vi.mock("@/lib/auth", () => ({
   getChildSession: vi.fn(),
 }));
 
-// Mock storage client
 const mockGetPublicUrl = vi.fn();
 vi.mock("@/lib/storage", () => ({
   getStorageClient: () => ({
@@ -17,25 +17,16 @@ vi.mock("@/lib/storage", () => ({
 
 import { POST } from "../complete/route";
 import { getChildSession } from "@/lib/auth";
+import { GUEST_ID_COOKIE, signGuestId } from "@/lib/guest-id";
 
 const mockedGetSession = vi.mocked(getChildSession);
 
-// Test fixture keys - simple paths, not secrets
-const IMG_KEY = "img/a.jpg";
-const AUD_KEY = "aud/b.mp3";
-
-// Helper to build test payloads
-function makePayload(storageKey: string, cat: string) {
-  const obj: Record<string, string> = {};
-  obj["key"] = storageKey;
-  obj["category"] = cat;
-  return obj;
-}
-
-function createRequest(body: unknown) {
+function createRequest(body: unknown, cookie?: string) {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (cookie) headers["cookie"] = cookie;
   return new Request("http://localhost:3100/api/upload/complete", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(body),
   }) as unknown as Parameters<typeof POST>[0];
 }
@@ -43,12 +34,9 @@ function createRequest(body: unknown) {
 describe("POST /api/upload/complete", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  it("returns 401 when not authenticated", async () => {
-    mockedGetSession.mockResolvedValue(null);
-    const res = await POST(createRequest(makePayload(IMG_KEY, "image")));
-    expect(res.status).toBe(401);
+    mockGetPublicUrl.mockImplementation(
+      (key: string) => `http://localhost:3100/uploads/${key}`,
+    );
   });
 
   it("returns 400 for missing key", async () => {
@@ -59,43 +47,82 @@ describe("POST /api/upload/complete", () => {
 
   it("returns 400 for invalid category", async () => {
     mockedGetSession.mockResolvedValue({ childId: "child-1" });
-    const res = await POST(createRequest(makePayload(IMG_KEY, "video")));
+    const res = await POST(
+      createRequest({ key: "child/child-1/image/a.jpg", category: "video" }),
+    );
     expect(res.status).toBe(400);
   });
 
-  it("returns 200 with public URL for valid completion", async () => {
+  it("authed child can complete an upload under their own prefix", async () => {
     mockedGetSession.mockResolvedValue({ childId: "child-1" });
-    const fileUrl = `http://localhost:3100/uploads/${IMG_KEY}`;
-    mockGetPublicUrl.mockReturnValue(fileUrl);
-
-    const res = await POST(createRequest(makePayload(IMG_KEY, "image")));
+    const res = await POST(
+      createRequest({ key: "child/child-1/image/a.jpg", category: "image" }),
+    );
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.success).toBe(true);
-    expect(data.url).toBe(fileUrl);
-    expect(data.category).toBe("image");
+    expect(data.url).toContain("child/child-1/image/a.jpg");
   });
 
-  it("returns consistent structure for image upload", async () => {
+  it("authed child cannot claim a foreign child's key", async () => {
     mockedGetSession.mockResolvedValue({ childId: "child-1" });
-    mockGetPublicUrl.mockReturnValue(`http://localhost:3100/uploads/${IMG_KEY}`);
-
-    const res = await POST(createRequest(makePayload(IMG_KEY, "image")));
-    const data = await res.json();
-    expect(data).toHaveProperty("success");
-    expect(data).toHaveProperty("url");
-    expect(data).toHaveProperty("category");
+    const res = await POST(
+      createRequest({ key: "child/child-2/image/a.jpg", category: "image" }),
+    );
+    expect(res.status).toBe(403);
   });
 
-  it("returns consistent structure for audio upload", async () => {
+  it("authed child cannot complete a guest-prefixed key", async () => {
     mockedGetSession.mockResolvedValue({ childId: "child-1" });
-    mockGetPublicUrl.mockReturnValue(`http://localhost:3100/uploads/${AUD_KEY}`);
+    const res = await POST(
+      createRequest({ key: "guest/some-uuid/image/a.jpg", category: "image" }),
+    );
+    expect(res.status).toBe(403);
+  });
 
-    const res = await POST(createRequest(makePayload(AUD_KEY, "audio")));
+  it("guest with valid cookie can complete an upload under their own guest prefix", async () => {
+    mockedGetSession.mockResolvedValue(null);
+    const signed = signGuestId("guest-1");
+    const res = await POST(
+      createRequest(
+        { key: "guest/guest-1/image/a.jpg", category: "image" },
+        `${GUEST_ID_COOKIE}=${signed}`,
+      ),
+    );
+    expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data).toHaveProperty("success");
-    expect(data).toHaveProperty("url");
-    expect(data).toHaveProperty("category");
-    expect(data.category).toBe("audio");
+    expect(data.success).toBe(true);
+  });
+
+  it("guest cannot claim a different guest's prefix", async () => {
+    mockedGetSession.mockResolvedValue(null);
+    const signed = signGuestId("guest-1");
+    const res = await POST(
+      createRequest(
+        { key: "guest/guest-2/image/a.jpg", category: "image" },
+        `${GUEST_ID_COOKIE}=${signed}`,
+      ),
+    );
+    expect(res.status).toBe(403);
+  });
+
+  it("guest cannot complete a child-prefixed key", async () => {
+    mockedGetSession.mockResolvedValue(null);
+    const signed = signGuestId("guest-1");
+    const res = await POST(
+      createRequest(
+        { key: "child/child-1/image/a.jpg", category: "image" },
+        `${GUEST_ID_COOKIE}=${signed}`,
+      ),
+    );
+    expect(res.status).toBe(403);
+  });
+
+  it("unauthenticated + no guest cookie is rejected with 401", async () => {
+    mockedGetSession.mockResolvedValue(null);
+    const res = await POST(
+      createRequest({ key: "guest/guest-1/image/a.jpg", category: "image" }),
+    );
+    expect(res.status).toBe(401);
   });
 });

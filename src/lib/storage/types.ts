@@ -32,6 +32,12 @@ export interface PresignedUploadOptions {
   contentType: string;
   /** File category, used to choose the storage prefix */
   category: FileCategory;
+  /**
+   * Optional path prefix prepended to the key — e.g. `child/{childId}` or
+   * `guest/{guestId}`. Used to scope objects to the requesting subject so
+   * the corresponding `complete` endpoint can verify ownership.
+   */
+  pathPrefix?: string;
 }
 
 /** Options for direct server-side upload. */

@@ -41,9 +41,28 @@ function getEndpoint(): string {
   return `https://${getEnvOrThrow("R2_ACCOUNT_ID")}.r2.cloudflarestorage.com`;
 }
 
-function generateKey(filename: string, category: string): string {
+function generateKey(
+  filename: string,
+  category: string,
+  prefix?: string,
+): string {
   const ext = path.extname(filename).toLowerCase() || ".bin";
-  return `${category}/${randomUUID()}${ext}`;
+  const base = `${category}/${randomUUID()}${ext}`;
+  if (!prefix) return base;
+  assertSafePrefix(prefix);
+  return `${prefix}/${base}`;
+}
+
+function assertSafePrefix(prefix: string): void {
+  if (
+    prefix.startsWith("/") ||
+    prefix.endsWith("/") ||
+    prefix.includes("..") ||
+    prefix.includes("//") ||
+    !/^[a-zA-Z0-9/_-]+$/.test(prefix)
+  ) {
+    throw new Error(`Invalid path prefix: ${prefix}`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -105,7 +124,11 @@ export function createR2StorageClient(): StorageClient {
     async getPresignedUploadUrl(
       options: PresignedUploadOptions,
     ): Promise<PresignedUploadUrl> {
-      const key = generateKey(options.filename, options.category);
+      const key = generateKey(
+        options.filename,
+        options.category,
+        options.pathPrefix,
+      );
 
       const command = new PutObjectCommand({
         Bucket: bucketName,

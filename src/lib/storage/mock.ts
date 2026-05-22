@@ -34,12 +34,31 @@ function getBaseUrl(): string {
 }
 
 /**
- * Generate a storage key from a filename and category.
- * Format: `{category}/{uuid}.{ext}`
+ * Generate a storage key from a filename and category, optionally scoped
+ * under a subject prefix (e.g. `child/{id}` or `guest/{id}`).
  */
-function generateKey(filename: string, category: string): string {
+function generateKey(
+  filename: string,
+  category: string,
+  prefix?: string,
+): string {
   const ext = path.extname(filename).toLowerCase() || ".bin";
-  return `${category}/${randomUUID()}${ext}`;
+  const base = `${category}/${randomUUID()}${ext}`;
+  if (!prefix) return base;
+  assertSafePrefix(prefix);
+  return `${prefix}/${base}`;
+}
+
+function assertSafePrefix(prefix: string): void {
+  if (
+    prefix.startsWith("/") ||
+    prefix.endsWith("/") ||
+    prefix.includes("..") ||
+    prefix.includes("//") ||
+    !/^[a-zA-Z0-9/_-]+$/.test(prefix)
+  ) {
+    throw new Error(`Invalid path prefix: ${prefix}`);
+  }
 }
 
 /**
@@ -67,7 +86,12 @@ export function createMockStorageClient(): StorageClient {
         throw new Error(validation.error);
       }
 
-      const key = generateKey(options.filename, options.category);
+      const key = generateKey(
+        options.filename,
+        options.category,
+        // `uploadFile` does not currently expose a prefix in its options, so
+        // keep the unscoped key path here.
+      );
       await ensureDir(key);
 
       // Strip EXIF metadata from images
@@ -88,7 +112,11 @@ export function createMockStorageClient(): StorageClient {
     async getPresignedUploadUrl(
       options: PresignedUploadOptions,
     ): Promise<PresignedUploadUrl> {
-      const key = generateKey(options.filename, options.category);
+      const key = generateKey(
+        options.filename,
+        options.category,
+        options.pathPrefix,
+      );
 
       // In mock mode, the "presigned URL" points to a local API route
       // that accepts PUT requests and saves the file.

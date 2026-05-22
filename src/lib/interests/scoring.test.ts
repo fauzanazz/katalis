@@ -3,8 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   computeInterestScore,
   computeRecencyWeight,
+  computeStability,
   computeTrend,
+  countDistinctDays,
   DIMENSION_WEIGHTS,
+  RECENCY_HALF_LIFE_DAYS,
 } from "./scoring";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -13,29 +16,37 @@ function daysAgo(days: number, now = new Date()): Date {
   return new Date(now.getTime() - days * DAY);
 }
 
-describe("computeRecencyWeight", () => {
-  it("returns 1 for signals within 7 days", () => {
+describe("computeRecencyWeight (EMA — exponential decay)", () => {
+  it("returns 1 when observedAt equals now", () => {
     const now = new Date();
-    expect(computeRecencyWeight(daysAgo(0, now), now)).toBe(1);
-    expect(computeRecencyWeight(daysAgo(7, now), now)).toBe(1);
+    expect(computeRecencyWeight(now, now)).toBe(1);
   });
 
-  it("returns 0.75 for signals 8-30 days ago", () => {
+  it("returns 0.5 at one half-life", () => {
     const now = new Date();
-    expect(computeRecencyWeight(daysAgo(8, now), now)).toBe(0.75);
-    expect(computeRecencyWeight(daysAgo(30, now), now)).toBe(0.75);
+    expect(computeRecencyWeight(daysAgo(RECENCY_HALF_LIFE_DAYS, now), now)).toBeCloseTo(0.5, 5);
   });
 
-  it("returns 0.5 for signals 31-90 days ago", () => {
+  it("returns 0.25 at two half-lives", () => {
     const now = new Date();
-    expect(computeRecencyWeight(daysAgo(31, now), now)).toBe(0.5);
-    expect(computeRecencyWeight(daysAgo(90, now), now)).toBe(0.5);
+    expect(
+      computeRecencyWeight(daysAgo(RECENCY_HALF_LIFE_DAYS * 2, now), now),
+    ).toBeCloseTo(0.25, 5);
   });
 
-  it("returns 0.25 for signals older than 90 days", () => {
+  it("decays monotonically with age", () => {
     const now = new Date();
-    expect(computeRecencyWeight(daysAgo(91, now), now)).toBe(0.25);
-    expect(computeRecencyWeight(daysAgo(365, now), now)).toBe(0.25);
+    const w7 = computeRecencyWeight(daysAgo(7, now), now);
+    const w21 = computeRecencyWeight(daysAgo(21, now), now);
+    const w60 = computeRecencyWeight(daysAgo(60, now), now);
+    expect(w7).toBeGreaterThan(w21);
+    expect(w21).toBeGreaterThan(w60);
+  });
+
+  it("clamps future observations to weight 1 (no >1 amplification)", () => {
+    const now = new Date();
+    const future = new Date(now.getTime() + 5 * DAY);
+    expect(computeRecencyWeight(future, now)).toBe(1);
   });
 });
 
@@ -90,18 +101,31 @@ describe("computeInterestScore", () => {
     expect(computeInterestScore(signals, now)).toBe(0);
   });
 
-  it("applies recency weight to older signals", () => {
+  it("applies EMA recency weight to older signals (half-life = 21d)", () => {
     const now = new Date();
     const signals = [
       {
         strength: 1,
         confidence: 1,
         dimension: "engagement" as const,
-        observedAt: daysAgo(60, now),
+        observedAt: daysAgo(RECENCY_HALF_LIFE_DAYS, now),
       },
     ];
-    // contribution = 1 * 1 * 1.0 * 0.5 = 0.5
-    expect(computeInterestScore(signals, now)).toBeCloseTo(0.5);
+    // contribution = 1 * 1 * 1.0 * 0.5 ≈ 0.5 at one half-life
+    expect(computeInterestScore(signals, now)).toBeCloseTo(0.5, 2);
+  });
+
+  it("older signals contribute less than recent (monotonic decay)", () => {
+    const now = new Date();
+    const recent = computeInterestScore(
+      [{ strength: 1, confidence: 1, dimension: "engagement", observedAt: daysAgo(0, now) }],
+      now,
+    );
+    const old = computeInterestScore(
+      [{ strength: 1, confidence: 1, dimension: "engagement", observedAt: daysAgo(60, now) }],
+      now,
+    );
+    expect(recent).toBeGreaterThan(old);
   });
 
   it("uses confidence in formula", () => {
@@ -190,5 +214,56 @@ describe("computeTrend", () => {
     ];
     const trend = computeTrend(signals, now);
     expect(trend).toBe("stable");
+  });
+});
+
+describe("computeStability", () => {
+  it("returns fleeting with no observations", () => {
+    expect(computeStability([], new Date())).toBe("fleeting");
+  });
+
+  it("returns fleeting when all observations on the same day", () => {
+    const now = new Date();
+    const obs = [daysAgo(0, now), daysAgo(0, now)];
+    expect(computeStability(obs, now)).toBe("fleeting");
+  });
+
+  it("returns emerging when 2 distinct days within 14d span", () => {
+    const now = new Date();
+    const obs = [daysAgo(0, now), daysAgo(5, now)];
+    expect(computeStability(obs, now)).toBe("emerging");
+  });
+
+  it("returns sustained when ≥3 distinct days AND span ≥14d", () => {
+    const now = new Date();
+    const obs = [daysAgo(0, now), daysAgo(7, now), daysAgo(20, now)];
+    expect(computeStability(obs, now)).toBe("sustained");
+  });
+
+  it("returns emerging when 3 distinct days but span <14d", () => {
+    const now = new Date();
+    const obs = [daysAgo(0, now), daysAgo(3, now), daysAgo(10, now)];
+    expect(computeStability(obs, now)).toBe("emerging");
+  });
+});
+
+describe("countDistinctDays", () => {
+  it("returns 0 for empty observations", () => {
+    expect(countDistinctDays([])).toBe(0);
+  });
+
+  it("collapses same-day observations to one", () => {
+    const t = new Date("2026-05-20T10:00:00Z");
+    const t2 = new Date("2026-05-20T22:30:00Z");
+    expect(countDistinctDays([t, t2])).toBe(1);
+  });
+
+  it("counts distinct calendar days", () => {
+    const obs = [
+      new Date("2026-05-20T10:00:00Z"),
+      new Date("2026-05-21T10:00:00Z"),
+      new Date("2026-05-25T10:00:00Z"),
+    ];
+    expect(countDistinctDays(obs)).toBe(3);
   });
 });

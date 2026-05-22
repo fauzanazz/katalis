@@ -3,7 +3,13 @@ import {
   listInterestSignalsForChild,
   upsertChildInterestProfile,
 } from "./repository";
-import { type ScoringSignal, computeInterestScore, computeTrend } from "./scoring";
+import {
+  computeInterestScore,
+  computeStability,
+  computeTrend,
+  countDistinctDays,
+  type ScoringSignal,
+} from "./scoring";
 import {
   isInterestKey,
   isInterestSignalDimension,
@@ -63,10 +69,17 @@ async function rebuildProfiles(
     const trend = computeTrend(scoringSignals, now);
     const confidence =
       scoringSignals.reduce((acc, s) => acc + s.confidence, 0) / scoringSignals.length;
-    const lastSignalAt = keySignals.reduce<Date | null>((latest, s) => {
-      if (!latest || s.observedAt > latest) return s.observedAt;
+    const observations = keySignals.map((s) => s.observedAt);
+    const lastSignalAt = observations.reduce<Date | null>((latest, t) => {
+      if (!latest || t > latest) return t;
       return latest;
     }, null);
+    const firstSignalAt = observations.reduce<Date | null>((earliest, t) => {
+      if (!earliest || t < earliest) return t;
+      return earliest;
+    }, null);
+    const distinctDays = countDistinctDays(observations);
+    const stability = computeStability(observations, now);
 
     await deps.upsertProfile({
       childId,
@@ -74,8 +87,11 @@ async function rebuildProfiles(
       score,
       confidence,
       signalCount: keySignals.length,
+      distinctDays,
+      firstSignalAt,
       lastSignalAt,
       trend,
+      stability,
     });
   }
 

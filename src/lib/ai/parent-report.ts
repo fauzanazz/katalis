@@ -26,7 +26,19 @@ Rules:
 - Growth areas: 1-2 constructive suggestions framed positively (not weaknesses)
 - Tips: 2-3 practical at-home activities using common household materials
 - Summary: warm, specific, and encouraging
-- Keep language parent-friendly, not academic`;
+- Keep language parent-friendly, not academic
+
+PYGMALION SAFEGUARD (Katalis.docx §8.1): NEVER label the child with fixed-trait
+language such as "your child IS an engineer", "she is a born artist", "he is the
+kinesthetic type". Always frame interests as currently expressed behavior:
+"is currently enjoying", "shows interest in this week", "is exploring".
+Avoid academic jargon — no "kinesthetic intelligence", "linguistic intelligence",
+etc. Use plain language: "loves hands-on activities", "enjoys telling stories".
+Interests CHANGE — encourage parents to expect evolution.
+
+GROWTH MINDSET (Dweck): praise effort and process, not innate ability. Say
+"worked hard on", "kept trying when X was tricky"; avoid "is so smart",
+"is a natural".`;
 
 const API_TIMEOUT_MS = 20000;
 

@@ -2,14 +2,30 @@ import { prisma } from "@/lib/db";
 import { isInterestKey } from "./taxonomy";
 import type { InterestKey } from "./taxonomy";
 
+type ExplanationSource = {
+  source: string;
+  observedAt: string;
+  dimension: string;
+  strength: number;
+};
+
 type TopInterest = {
   interestKey: InterestKey;
   score: number;
   confidence: number;
   trend: "rising" | "falling" | "stable";
+  /** Pygmalion-safe persistence classification. See scoring.computeStability. */
+  stability: "fleeting" | "emerging" | "sustained";
   signalCount: number;
+  distinctDays: number;
+  firstSignalAt: string | null;
   lastSignalAt: string | null;
   summary: string | null;
+  /**
+   * Explainability trace for §8.3a — what observations led to this score.
+   * Top 3 recent signals carrying this interestKey, ordered newest first.
+   */
+  recentEvidence: ExplanationSource[];
 };
 
 type RecentSignal = {
@@ -54,6 +70,11 @@ function toTrend(raw: string): "rising" | "falling" | "stable" {
   return "stable";
 }
 
+function toStability(raw: string): "fleeting" | "emerging" | "sustained" {
+  if (raw === "emerging" || raw === "sustained") return raw;
+  return "fleeting";
+}
+
 function buildSuggestedQuestions(topInterests: TopInterest[]): string[] {
   const questions: string[] = [];
   for (const interest of topInterests.slice(0, 3)) {
@@ -80,6 +101,21 @@ export async function getParentInterestInsights(childId: string): Promise<Parent
     }),
   ]);
 
+  // Index recent signals by interestKey for the explainability trace.
+  const evidenceByKey = new Map<string, ExplanationSource[]>();
+  for (const s of recentRawSignals) {
+    if (!isInterestKey(s.interestKey)) continue;
+    const list = evidenceByKey.get(s.interestKey) ?? [];
+    if (list.length >= 3) continue;
+    list.push({
+      source: s.source,
+      dimension: s.dimension,
+      strength: s.strength,
+      observedAt: s.observedAt.toISOString(),
+    });
+    evidenceByKey.set(s.interestKey, list);
+  }
+
   const topInterests: TopInterest[] = profiles.flatMap((p) => {
     if (!isInterestKey(p.interestKey)) return [];
     return [{
@@ -87,9 +123,13 @@ export async function getParentInterestInsights(childId: string): Promise<Parent
       score: p.score,
       confidence: p.confidence,
       trend: toTrend(p.trend),
+      stability: toStability(p.stability),
       signalCount: p.signalCount,
+      distinctDays: p.distinctDays,
+      firstSignalAt: p.firstSignalAt ? p.firstSignalAt.toISOString() : null,
       lastSignalAt: p.lastSignalAt ? p.lastSignalAt.toISOString() : null,
       summary: p.summary,
+      recentEvidence: evidenceByKey.get(p.interestKey) ?? [],
     }];
   });
 

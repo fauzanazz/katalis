@@ -3,8 +3,9 @@
  *
  * - 3-6: photo only (drawing upload). Pre-readers; voice-recording UX not
  *   reliable at this stage.
- * - 7-9: photo + voice. Voice transcription bridges literacy gap.
- * - 10-12: photo + voice + text/story prompt.
+ * - 7-9: photo + voice + simple text. Concrete-operational stage; children
+ *   can write short descriptions of why they made something.
+ * - 10-12: photo + voice + text/story prompt; full multimodal.
  * - unknown: aliases 7-9 baseline.
  *
  * Enforcement is defense-in-depth: UI hides/disables disallowed inputs AND
@@ -19,9 +20,9 @@ export type Modality = (typeof MODALITY_LIST)[number];
 
 export const ALLOWED_MODALITIES: Record<AgeGroup, Modality[]> = {
   "3-6": ["photo"],
-  "7-9": ["photo", "voice"],
+  "7-9": ["photo", "voice", "text"],
   "10-12": ["photo", "voice", "text"],
-  unknown: ["photo", "voice"],
+  unknown: ["photo", "voice", "text"],
 };
 
 export function isModalityAllowed(

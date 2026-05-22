@@ -46,6 +46,12 @@ export const QuestGenerationInputSchema = z.object({
   zpdScore: z.number().min(0).max(1).optional(),
   /** Optional. Drives per-band mission duration cap. */
   ageGroup: AgeGroupSchema.optional(),
+  /**
+   * Optional. Interest keys outside the child's current top interests that
+   * the generator should weave into at least one mission for breadth.
+   * Spec ref: Katalis.docx §8.1b — Pygmalion safeguard via exploration.
+   */
+  explorationInterests: z.array(z.string()).max(3).optional(),
 });
 
 export type QuestGenerationInput = z.infer<typeof QuestGenerationInputSchema>;

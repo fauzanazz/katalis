@@ -20,21 +20,29 @@ import { GooeyNav } from "./GooeyNav";
 interface HeaderProps {
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isParent: boolean;
 }
 
-const NAV_LINKS = [
+const CHILD_NAV_LINKS = [
   { href: "/discover", labelKey: "discover" },
   { href: "/quest", labelKey: "quest" },
   { href: "/gallery", labelKey: "gallery" },
 ] as const;
 
-export function Header({ isAuthenticated, isAdmin }: HeaderProps) {
+const PARENT_NAV_LINKS = [
+  { href: "/parent", labelKey: "dashboard" },
+  { href: "/gallery", labelKey: "gallery" },
+] as const;
+
+export function Header({ isAuthenticated, isAdmin, isParent }: HeaderProps) {
   const tNav = useTranslations("nav");
   const tLanding = useTranslations("landing");
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const navLinkClass =
     "inline-flex min-h-[44px] min-w-[44px] max-w-full items-center justify-center rounded-lg px-3 text-xs font-medium text-foreground transition-colors hover:bg-zinc-100 md:px-3 md:text-sm";
+
+  const NAV_LINKS = isParent ? PARENT_NAV_LINKS : CHILD_NAV_LINKS;
 
   const gooeyItems = NAV_LINKS.map((link) => ({
     label: tNav(link.labelKey),

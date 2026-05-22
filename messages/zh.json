@@ -357,7 +357,10 @@
       "artifactType": "图片发现",
       "storyType": "故事发现",
       "audioType": "语音发现",
-      "dateLabel": "发现于 {date}"
+      "dateLabel": "发现于 {date}",
+      "readyForQuest": "准备好开始你的任务了吗？",
+      "questDesc": "把你的{talent}天赋变成 7 天创意冒险。",
+      "startQuest": "开始任务"
     },
     "story": {
       "imagePromptTitle": "看这些图片！",
@@ -423,6 +426,7 @@
     "list": {
       "title": "你的任务",
       "subtitle": "追踪你的7天冒险任务！",
+      "greetingSubtitle": "从上次中断处继续，或开启新的冒险。",
       "empty": "还没有任务！",
       "emptyDesc": "先完成天赋发现，然后创建你的第一个7天冒险任务！",
       "startFirst": "发现你的天赋",

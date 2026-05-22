@@ -36,6 +36,11 @@ function getEnvOrThrow(name: string): string {
   return value;
 }
 
+function getEndpoint(): string {
+  if (process.env.R2_ENDPOINT) return process.env.R2_ENDPOINT;
+  return `https://${getEnvOrThrow("R2_ACCOUNT_ID")}.r2.cloudflarestorage.com`;
+}
+
 function generateKey(filename: string, category: string): string {
   const ext = path.extname(filename).toLowerCase() || ".bin";
   return `${category}/${randomUUID()}${ext}`;
@@ -46,19 +51,21 @@ function generateKey(filename: string, category: string): string {
 // ---------------------------------------------------------------------------
 
 export function createR2StorageClient(): StorageClient {
-  const accountId = getEnvOrThrow("R2_ACCOUNT_ID");
   const accessKeyId = getEnvOrThrow("R2_ACCESS_KEY_ID");
   const secretAccessKey = getEnvOrThrow("R2_SECRET_ACCESS_KEY");
   const bucketName = getEnvOrThrow("R2_BUCKET_NAME");
   const publicUrl = getEnvOrThrow("R2_PUBLIC_URL");
+  const endpoint = getEndpoint();
 
   const s3 = new S3Client({
     region: "auto",
-    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+    endpoint,
     credentials: {
       accessKeyId,
       secretAccessKey,
     },
+    // MinIO requires path-style access; Cloudflare R2 works with either
+    forcePathStyle: !!process.env.R2_ENDPOINT,
   });
 
   return {

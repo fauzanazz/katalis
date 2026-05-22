@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { ImageIcon, Mic, Sparkles, BookOpen, Users } from "lucide-react";
+import { ImageIcon, Mic, Sparkles, BookOpen, Users, History, Clock, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { UploadZone } from "@/components/upload/UploadZone";
@@ -12,11 +12,20 @@ import { AnalysisLoading } from "@/components/discovery/AnalysisLoading";
 import { AnalysisError } from "@/components/discovery/AnalysisError";
 import { StoryPrompt } from "@/components/discovery/StoryPrompt";
 import { DiscoverIdleScene } from "@/components/discovery/DiscoverIdleScene";
-import Image from "next/image";
 import { getRandomStoryPrompts } from "@/lib/story-prompts";
 import { useRouter, Link } from "@/i18n/navigation";
+import { useChildId } from "@/hooks/use-child-id";
 import type { UploadResultData } from "@/types/upload";
 import type { AnalysisOutput } from "@/lib/ai/schemas";
+import type { Talent } from "@/lib/ai/schemas";
+
+interface DiscoveryItem {
+  id: string;
+  type: string;
+  fileUrl: string | null;
+  talents: Talent[];
+  createdAt: string;
+}
 
 type DiscoveryFlow = "image" | "audio" | "story";
 type AnalysisState = "idle" | "analyzing" | "done" | "error";
@@ -47,11 +56,20 @@ export default function DiscoverPage() {
   const router = useRouter();
 
   const [authState, setAuthState] = useState<AuthState>("loading");
+  const [childName, setChildName] = useState<string | null>(null);
+  const [sessionChildId, setSessionChildId] = useState<string | null>(null);
+  const { childId } = useChildId(authState, sessionChildId);
   const [flow, setFlow] = useState<DiscoveryFlow | null>(null);
   const [analysisState, setAnalysisState] = useState<AnalysisState>("idle");
   const [analysisResults, setAnalysisResults] = useState<AnalysisOutput | null>(null);
   const [errorType, setErrorType] = useState<ErrorType>("ai_failure");
   const [currentUpload, setCurrentUpload] = useState<UploadResultData | null>(null);
+
+  const [historyItems, setHistoryItems] = useState<DiscoveryItem[]>([]);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const HISTORY_LIMIT = 5;
 
   const storyImages = useMemo(() => getRandomStoryPrompts(3), []);
 
@@ -66,6 +84,8 @@ export default function DiscoverPage() {
           setAuthState("parent");
         } else {
           setAuthState("child");
+          setChildName(data.childName ?? null);
+          setSessionChildId(data.childId ?? null);
         }
       } catch {
         setAuthState("unauthenticated");
@@ -73,6 +93,24 @@ export default function DiscoverPage() {
     }
     checkAuth();
   }, []);
+
+  const fetchHistory = useCallback(async (page: number) => {
+    setHistoryLoading(true);
+    try {
+      const res = await fetch(`/api/discovery/history?page=${page}&limit=${HISTORY_LIMIT}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setHistoryItems(data.discoveries ?? []);
+      setHistoryTotal(data.total ?? 0);
+      setHistoryPage(page);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (authState === "child") fetchHistory(1);
+  }, [authState, fetchHistory]);
 
   const runAnalysis = useCallback(async (upload: UploadResultData) => {
     setAnalysisState("analyzing");
@@ -246,7 +284,20 @@ export default function DiscoverPage() {
       <div className="mb-8 shrink-0 lg:mb-0 lg:w-5/12">
         <div className="text-center lg:text-left">
           <h1 className="type-h1 mb-3">{t("title")}</h1>
+          {authState === "child" && childName && (
+            <p className="mb-1 text-sm font-medium text-primary">Hi, {childName}! 👋</p>
+          )}
           <p className="type-lede mx-auto max-w-md lg:mx-0">{t("subtitle")}</p>
+          {authState === "child" && (
+            <div className="mt-4 flex justify-center lg:justify-start">
+              <Link href="/discover/history">
+                <Button variant="outline" size="sm">
+                  <History className="mr-1.5 size-4" />
+                  {t("results.viewHistory")}
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Flow tab nav — horizontal on mobile, vertical on desktop */}
@@ -358,16 +409,102 @@ export default function DiscoverPage() {
 
       </div>{/* end two-column content row */}
 
-      {/* Garden strip — in-flow below content, always visible on desktop */}
-      <div className="pointer-events-none hidden overflow-hidden lg:block" aria-hidden="true">
-        <Image
-          src="/images/discover/garden-strip.webp"
-          alt=""
-          width={1792}
-          height={1024}
-          className="h-64 w-full object-cover object-bottom"
-        />
-      </div>
+      {/* Discovery history — child only */}
+      {authState === "child" && (
+        <div className="border-t border-border px-4 py-8">
+          <div className="mx-auto max-w-6xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-ink">{t("history.title")}</h2>
+              {historyTotal > 0 && (
+                <span className="text-sm text-muted-foreground">
+                  {t("history.totalDiscoveries", { count: historyTotal })}
+                </span>
+              )}
+            </div>
+
+            {historyLoading && (
+              <div className="flex justify-center py-8">
+                <div className="size-8 animate-spin rounded-full border-2 border-border border-t-amber-500" />
+              </div>
+            )}
+
+            {!historyLoading && historyItems.length === 0 && (
+              <p className="py-6 text-center text-sm text-muted-foreground">{t("history.empty")}</p>
+            )}
+
+            {!historyLoading && historyItems.length > 0 && (
+              <>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {historyItems.map((item) => {
+                    const typeLabel =
+                      item.type === "artifact" ? t("history.artifact") :
+                      item.type === "story" ? t("history.story") :
+                      t("history.audio");
+                    const TypeIcon =
+                      item.type === "artifact" ? ImageIcon :
+                      item.type === "story" ? BookOpen :
+                      Mic;
+                    return (
+                      <Link key={item.id} href={`/discover/results/${item.id}`}>
+                        <div className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 transition-shadow hover:border-amber-300 hover:shadow-sm">
+                          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-50">
+                            <TypeIcon className="size-4 text-amber-600" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-ink">{typeLabel}</p>
+                            <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                              <Clock className="size-3" />
+                              <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <div className="mt-1.5 flex flex-wrap gap-1">
+                              {item.talents.slice(0, 2).map((talent, i) => (
+                                <span key={i} className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                                  {talent.name}
+                                </span>
+                              ))}
+                              {item.talents.length > 2 && (
+                                <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                                  +{item.talents.length - 2}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <ArrowRight className="mt-1 size-4 shrink-0 text-border transition-transform group-hover:translate-x-1" />
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+
+                {/* Pagination */}
+                {historyTotal > HISTORY_LIMIT && (
+                  <div className="mt-5 flex items-center justify-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={historyPage === 1}
+                      onClick={() => fetchHistory(historyPage - 1)}
+                    >
+                      <ChevronLeft className="size-4" />
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      {historyPage} / {Math.ceil(historyTotal / HISTORY_LIMIT)}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={historyPage >= Math.ceil(historyTotal / HISTORY_LIMIT)}
+                      onClick={() => fetchHistory(historyPage + 1)}
+                    >
+                      <ChevronRight className="size-4" />
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -21,16 +21,16 @@ describe("ALLOWED_MODALITIES", () => {
     expect(ALLOWED_MODALITIES["3-6"]).toEqual(["photo"]);
   });
 
-  it("7-9: photo + voice", () => {
-    expect(ALLOWED_MODALITIES["7-9"]).toEqual(["photo", "voice"]);
+  it("7-9: photo + voice + text (concrete-operational; can describe creations)", () => {
+    expect(ALLOWED_MODALITIES["7-9"]).toEqual(["photo", "voice", "text"]);
   });
 
   it("10-12: photo + voice + text", () => {
     expect(ALLOWED_MODALITIES["10-12"]).toEqual(["photo", "voice", "text"]);
   });
 
-  it("unknown: aliases 7-9 baseline (photo + voice)", () => {
-    expect(ALLOWED_MODALITIES.unknown).toEqual(["photo", "voice"]);
+  it("unknown: aliases 7-9 baseline (photo + voice + text)", () => {
+    expect(ALLOWED_MODALITIES.unknown).toEqual(["photo", "voice", "text"]);
   });
 
   it("every band entry is a subset of MODALITY_LIST", () => {
@@ -51,13 +51,13 @@ describe("isModalityAllowed", () => {
       { band: "3-6", modality: "text", allowed: false },
       { band: "7-9", modality: "photo", allowed: true },
       { band: "7-9", modality: "voice", allowed: true },
-      { band: "7-9", modality: "text", allowed: false },
+      { band: "7-9", modality: "text", allowed: true },
       { band: "10-12", modality: "photo", allowed: true },
       { band: "10-12", modality: "voice", allowed: true },
       { band: "10-12", modality: "text", allowed: true },
       { band: "unknown", modality: "photo", allowed: true },
       { band: "unknown", modality: "voice", allowed: true },
-      { band: "unknown", modality: "text", allowed: false },
+      { band: "unknown", modality: "text", allowed: true },
     ];
 
     for (const { band, modality, allowed } of truthTable) {
@@ -67,7 +67,7 @@ describe("isModalityAllowed", () => {
 
   it("handles null/undefined band → unknown fallback", () => {
     expect(isModalityAllowed(null, "photo")).toBe(true);
-    expect(isModalityAllowed(null, "text")).toBe(false);
+    expect(isModalityAllowed(null, "text")).toBe(true);
     expect(isModalityAllowed(undefined, "voice")).toBe(true);
   });
 });

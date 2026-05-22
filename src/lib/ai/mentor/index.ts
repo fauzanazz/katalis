@@ -3,4 +3,5 @@
  */
 
 export { mentorChat, simplifyMission, summarizeReflection } from "./chat";
-export { detectFrustration } from "./frustration";
+export { detectFrustration, resolveCheckinAction, applyCheckinOverride } from "./frustration";
+export type { FrustrationContext } from "./frustration";

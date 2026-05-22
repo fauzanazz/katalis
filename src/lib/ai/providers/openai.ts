@@ -74,7 +74,20 @@ For each detected talent:
 2. Rate your confidence from 0.0 to 1.0
 3. Explain your reasoning in detail — describe WHAT specific elements you observed and WHY they indicate this talent
 
-Respond ONLY with valid JSON in this exact format:
+In addition, for IMAGE artifacts ONLY, rate the artwork on the 9-dimensional KidsArtBench rubric (each score 0.0 to 1.0, where 0 = absent/weak, 1 = clearly developed for the child's age):
+- structure: overall visual organization, balance, weight distribution
+- color: use and harmony of color (variety, intentional contrast, palette coherence)
+- detail: fine-grained observation captured (textures, parts, features)
+- spatial: depth, perspective, scale, spatial relationships
+- logic: internal consistency (cause/effect, plausibility within the world depicted)
+- composition: layout, focal points, use of negative space and visual rhythm
+- originality: creative novelty vs. learned templates
+- narrative: presence of story, sequence, or implied action
+- technique: motor execution (line control, brushwork, pressure, rendering)
+
+These scores describe the artwork; they do NOT rank children. Use them descriptively.
+
+Respond ONLY with valid JSON in this exact format. Include "kidsArtBench" ONLY for image artifacts; omit it entirely for audio recordings:
 {
   "talents": [
     {
@@ -82,7 +95,18 @@ Respond ONLY with valid JSON in this exact format:
       "confidence": 0.85,
       "reasoning": "Detailed explanation of why this talent was detected..."
     }
-  ]
+  ],
+  "kidsArtBench": {
+    "structure": 0.7,
+    "color": 0.6,
+    "detail": 0.85,
+    "spatial": 0.75,
+    "logic": 0.5,
+    "composition": 0.7,
+    "originality": 0.6,
+    "narrative": 0.4,
+    "technique": 0.65
+  }
 }
 
 Detect 2-4 talents per artifact. Be encouraging but honest.`;
@@ -267,6 +291,12 @@ export const openaiProvider: AIProvider = {
           .join("\n")
       : "No specific talents detected yet.";
 
+    const explorationBlock =
+      input.explorationInterests && input.explorationInterests.length > 0
+        ? `\n\n**Exploration Interests (Pygmalion safeguard — broaden the child's horizons):**
+The child's profile shows strong existing interests. To prevent interest fixation, include at least ONE mission in the 7-day plan that explores one of these less-touched interest areas: ${input.explorationInterests.join(", ")}. Frame it as "trying something new" rather than as off-topic.`
+        : "";
+
     const userMessage = `Create a 7-day quest for a child with these details:
 
 **Dream:** "${input.dream}"
@@ -274,7 +304,7 @@ export const openaiProvider: AIProvider = {
 **Local Context:** "${input.localContext}"
 
 **Detected Talents:**
-${talentSummary}
+${talentSummary}${explorationBlock}
 
 Design missions that connect their dream with their talents, using materials available in their local environment. Make it practical, fun, and progressively challenging.
 ${buildZpdPromptBlock(input.zpdScore)}`;

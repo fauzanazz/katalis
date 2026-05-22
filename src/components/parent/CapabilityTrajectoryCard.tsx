@@ -26,11 +26,11 @@ const POINT_RADIUS = 3;
 export function CapabilityTrajectoryCard({ snapshots, labels }: Props) {
   if (snapshots.length === 0) {
     return (
-      <section className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+      <section className="rounded-lg border border-slate-200 bg-white p-4">
+        <h3 className="text-sm font-semibold text-slate-900">
           {labels.title}
         </h3>
-        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+        <p className="mt-2 text-xs text-slate-500">
           {labels.placeholder}
         </p>
       </section>
@@ -60,12 +60,12 @@ export function CapabilityTrajectoryCard({ snapshots, labels }: Props) {
     .join(" ");
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+    <section className="rounded-lg border border-slate-200 bg-white p-4">
       <header className="flex items-baseline justify-between">
-        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+        <h3 className="text-sm font-semibold text-slate-900">
           {labels.title}
         </h3>
-        <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+        <span className="text-xs font-medium text-emerald-600">
           {latestBand}
         </span>
       </header>
@@ -80,7 +80,7 @@ export function CapabilityTrajectoryCard({ snapshots, labels }: Props) {
           fill="none"
           stroke="currentColor"
           strokeWidth={1.5}
-          className="text-emerald-500 dark:text-emerald-400"
+          className="text-emerald-500"
         />
         {snapshots.map((snapshot, i) => (
           <circle
@@ -89,7 +89,7 @@ export function CapabilityTrajectoryCard({ snapshots, labels }: Props) {
             cx={xs[i]}
             cy={ys[i]}
             r={POINT_RADIUS}
-            className="fill-emerald-600 dark:fill-emerald-400"
+            className="fill-emerald-600"
           />
         ))}
       </svg>

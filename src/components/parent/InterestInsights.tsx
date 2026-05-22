@@ -1,13 +1,26 @@
 import type { InterestKey } from "@/lib/interests/taxonomy";
 
+import { InterestRadarChart } from "./InterestRadarChart";
+
+export type EvidenceSource = {
+  source: string;
+  observedAt: string;
+  dimension: string;
+  strength: number;
+};
+
 export type TopInterest = {
   interestKey: InterestKey;
   score: number;
   confidence: number;
   trend: "rising" | "falling" | "stable";
+  stability?: "fleeting" | "emerging" | "sustained";
   signalCount: number;
+  distinctDays?: number;
+  firstSignalAt?: string | null;
   lastSignalAt: string | null;
   summary: string | null;
+  recentEvidence?: EvidenceSource[];
 };
 
 export type RecentSignal = {
@@ -60,6 +73,14 @@ export function InterestInsights({ insights }: Props) {
         </p>
       ) : (
         <div className="mt-4 space-y-6">
+          {topInterests.length >= 3 && (
+            <div className="rounded-lg border bg-card p-4">
+              <p className="mb-2 text-sm font-medium">
+                Currently exploring (top {Math.min(topInterests.length, 5)})
+              </p>
+              <InterestRadarChart interests={topInterests.slice(0, 5)} />
+            </div>
+          )}
           {topInterests.length > 0 && (
             <div className="grid gap-3 sm:grid-cols-2">
               {topInterests.map((interest) => (
@@ -70,12 +91,26 @@ export function InterestInsights({ insights }: Props) {
                   <p className="font-medium">{formatKey(interest.interestKey)}</p>
                   <p className="text-muted-foreground">
                     Trend: {interest.trend}
+                    {interest.stability && (
+                      <>
+                        {" "}
+                        · {interest.stability === "sustained"
+                          ? "sustained interest"
+                          : interest.stability === "emerging"
+                            ? "emerging interest"
+                            : "currently enjoying"}
+                      </>
+                    )}
                   </p>
                   <p className="text-muted-foreground">
                     Confidence: {Math.round(interest.confidence * 100)}%
                   </p>
                   <p className="text-muted-foreground">
                     Signals: {interest.signalCount}
+                    {typeof interest.distinctDays === "number" &&
+                      ` across ${interest.distinctDays} day${
+                        interest.distinctDays === 1 ? "" : "s"
+                      }`}
                   </p>
                   <p className="text-muted-foreground">
                     Last observed: {formatDate(interest.lastSignalAt)}
@@ -85,6 +120,22 @@ export function InterestInsights({ insights }: Props) {
                       {interest.summary}
                     </p>
                   )}
+                  {interest.recentEvidence &&
+                    interest.recentEvidence.length > 0 && (
+                      <details className="mt-2 text-xs text-muted-foreground">
+                        <summary className="cursor-pointer">
+                          Why we say this
+                        </summary>
+                        <ul className="mt-1 space-y-1">
+                          {interest.recentEvidence.map((e, i) => (
+                            <li key={i}>
+                              {formatDate(e.observedAt)} — {formatKey(e.source)}{" "}
+                              ({formatKey(e.dimension)})
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
                 </div>
               ))}
             </div>

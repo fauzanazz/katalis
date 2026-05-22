@@ -218,3 +218,100 @@ p { text-wrap: pretty; }
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------- Quest map / sticker UI ---------- */
+
+.quest-paper {
+  background-color: #fdf8ec;
+  background-image:
+    radial-gradient(circle at 12% 18%, color-mix(in srgb, var(--pink-bloom-soft) 70%, transparent) 0 110px, transparent 111px),
+    radial-gradient(circle at 92% 12%, color-mix(in srgb, var(--green-leaf-light) 60%, transparent) 0 140px, transparent 141px),
+    radial-gradient(circle at 8% 92%, color-mix(in srgb, var(--blue-ocean-light) 40%, transparent) 0 160px, transparent 161px),
+    radial-gradient(circle at 95% 88%, color-mix(in srgb, var(--yellow-sun-light) 60%, transparent) 0 130px, transparent 131px),
+    radial-gradient(circle at 1px 1px, rgba(3, 9, 20, 0.06) 1px, transparent 0);
+  background-size: auto, auto, auto, auto, 22px 22px;
+}
+
+.sticker-card {
+  border: 2px solid var(--ink);
+  border-radius: 1.25rem;
+  background: #fffdf6;
+  box-shadow: 4px 5px 0 0 var(--ink);
+}
+
+.sticker-card-soft {
+  border: 2px solid var(--ink);
+  border-radius: 1.25rem;
+  box-shadow: 3px 4px 0 0 var(--ink);
+}
+
+.sticker-chip {
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: 2px 2px 0 0 var(--ink);
+  background: #fffdf6;
+}
+
+.sticker-press {
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.sticker-press:hover { transform: translate(-1px, -1px); box-shadow: 5px 6px 0 0 var(--ink); }
+.sticker-press:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 0 var(--ink); }
+
+.tape-strip {
+  position: absolute;
+  width: 64px; height: 18px;
+  background: color-mix(in srgb, var(--yellow-sun-light) 80%, white);
+  box-shadow: 0 1px 2px rgb(3 9 20 / 0.1);
+  opacity: 0.92;
+}
+
+.dash-trail {
+  background-image: linear-gradient(90deg, var(--ink) 50%, transparent 50%);
+  background-size: 14px 4px;
+  background-repeat: repeat-x;
+  background-position: center;
+}
+
+.dash-trail-y {
+  background-image: linear-gradient(180deg, var(--ink) 50%, transparent 50%);
+  background-size: 4px 14px;
+  background-repeat: repeat-y;
+  background-position: center;
+}
+
+@keyframes quest-bobble {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-6px) rotate(2deg); }
+}
+
+@keyframes quest-sway {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+}
+
+@keyframes quest-pop-in {
+  0% { opacity: 0; transform: translateY(8px) scale(0.92); }
+  60% { opacity: 1; transform: translateY(0) scale(1.04); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes quest-pulse-ring {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--yellow-sun) 70%, transparent); }
+  70% { box-shadow: 0 0 0 14px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+@keyframes quest-bounce-dots {
+  0%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-10px); }
+}
+
+.animate-bobble { animation: quest-bobble 3.6s ease-in-out infinite; }
+.animate-sway { animation: quest-sway 4.2s ease-in-out infinite; transform-origin: top center; }
+.animate-pop-in {
+  animation: quest-pop-in 0.45s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+.animate-pulse-ring {
+  animation: quest-pulse-ring 1.6s ease-out infinite;
+}

@@ -183,6 +183,32 @@ async function getClient() {
   });
 }
 
+function isLocalUrl(url: string): boolean {
+  try {
+    const { hostname } = new URL(url);
+    return (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "0.0.0.0" ||
+      hostname.endsWith(".local")
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function toDataUrl(url: string): Promise<string> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to fetch image ${url}: ${res.status}`);
+  const contentType = res.headers.get("content-type") ?? "image/jpeg";
+  const buf = Buffer.from(await res.arrayBuffer());
+  return `data:${contentType};base64,${buf.toString("base64")}`;
+}
+
+async function resolveImageUrl(url: string): Promise<string> {
+  return isLocalUrl(url) ? toDataUrl(url) : url;
+}
+
 async function chatJSON<T>(
   systemPrompt: string,
   userContent: string | ChatCompletionContentPart[],
@@ -234,7 +260,10 @@ export const googleProvider: AIProvider = {
               type: "text" as const,
               text: "Please analyze this child's artwork and detect their interests and talents. Look beyond surface-level categorization.",
             },
-            { type: "image_url" as const, image_url: { url: input.artifactUrl } },
+            {
+              type: "image_url" as const,
+              image_url: { url: await resolveImageUrl(input.artifactUrl) },
+            },
           ]
         : [
             {
@@ -325,9 +354,10 @@ ${buildZpdPromptBlock(input.zpdScore)}`;
 
   async moderateImage(imageUrl: string): Promise<ModerationResult> {
     try {
+      const resolvedUrl = await resolveImageUrl(imageUrl);
       const userContent: ChatCompletionContentPart[] = [
         { type: "text", text: "Analyze this image for child safety concerns:" },
-        { type: "image_url", image_url: { url: imageUrl } },
+        { type: "image_url", image_url: { url: resolvedUrl } },
       ];
       const parsed = await chatJSON(
         IMAGE_MODERATION_PROMPT,

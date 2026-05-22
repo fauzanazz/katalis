@@ -22,11 +22,12 @@ export default async function LocaleLayout({
   const session = await getSession();
   const isAuthenticated = !!(session?.childId || session?.userId);
   const isAdmin = session?.type === "user" && session?.role === "admin";
+  const isParent = session?.type === "user" && session?.role === "user";
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <div className="flex min-h-dvh flex-col">
-        <LocaleShell isAuthenticated={isAuthenticated} isAdmin={isAdmin}>{children}</LocaleShell>
+        <LocaleShell isAuthenticated={isAuthenticated} isAdmin={isAdmin} isParent={isParent}>{children}</LocaleShell>
       </div>
     </NextIntlClientProvider>
   );

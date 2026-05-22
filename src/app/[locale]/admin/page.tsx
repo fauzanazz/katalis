@@ -63,7 +63,7 @@ export default async function AdminDashboardPage() {
         ))}
       </div>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-3">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Link
           href="/admin/users"
           className="rounded-xl border border-border/60 bg-background p-6 transition-colors hover:bg-zinc-50"
@@ -89,6 +89,15 @@ export default async function AdminDashboardPage() {
           <h2 className="font-semibold text-foreground">{t("tabs.moderation")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {stats.pendingModeration} {t("stats.pendingModeration").toLowerCase()}
+          </p>
+        </Link>
+        <Link
+          href="/admin/reliability"
+          className="rounded-xl border border-border/60 bg-background p-6 transition-colors hover:bg-zinc-50"
+        >
+          <h2 className="font-semibold text-foreground">Reliability</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            AI vs human Kappa
           </p>
         </Link>
       </div>

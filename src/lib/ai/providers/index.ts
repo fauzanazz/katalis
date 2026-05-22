@@ -1,39 +1,26 @@
 import type { AIProvider } from "../types";
+import { anthropicProvider } from "./anthropic";
+import { googleProvider } from "./google";
+import { grokProvider } from "./grok";
+import { nvidiaProvider } from "./nvidia";
+import { openaiProvider } from "./openai";
+import { openrouterProvider } from "./openrouter";
+import { vertexAiProvider } from "./vertex-ai";
+
+const PROVIDERS: Record<string, AIProvider> = {
+  anthropic: anthropicProvider,
+  google: googleProvider,
+  grok: grokProvider,
+  nvidia: nvidiaProvider,
+  openai: openaiProvider,
+  openrouter: openrouterProvider,
+  "vertex-ai": vertexAiProvider,
+};
 
 export function getProvider(): AIProvider {
-  const provider = process.env.AI_PROVIDER ?? "openai";
-  console.log("[AI] Provider:", provider);
-
-  if (provider === "anthropic") {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require("./anthropic").anthropicProvider as AIProvider;
-  }
-
-  if (provider === "nvidia") {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require("./nvidia").nvidiaProvider as AIProvider;
-  }
-
-  if (provider === "openrouter") {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require("./openrouter").openrouterProvider as AIProvider;
-  }
-
-  if (provider === "google") {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require("./google").googleProvider as AIProvider;
-  }
-
-  if (provider === "vertex-ai") {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require("./vertex-ai").vertexAiProvider as AIProvider;
-  }
-
-  if (provider === "grok") {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require("./grok").grokProvider as AIProvider;
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  return require("./openai").openaiProvider as AIProvider;
+  const name = process.env.AI_PROVIDER ?? "openai";
+  console.log("[AI] Provider:", name);
+  const provider = PROVIDERS[name];
+  if (!provider) throw new Error(`Unknown AI provider: "${name}". Valid: ${Object.keys(PROVIDERS).join(", ")}`);
+  return provider;
 }

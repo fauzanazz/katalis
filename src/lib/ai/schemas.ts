@@ -7,6 +7,8 @@
 
 import { z } from "zod";
 
+import { KidsArtBenchScoreSchema } from "./kidsartbench-schemas";
+
 /** Schema for the analysis request input */
 export const AnalysisInputSchema = z.object({
   artifactUrl: z.string().min(1, "Artifact URL is required"),
@@ -26,9 +28,17 @@ export const TalentSchema = z.object({
 
 export type Talent = z.infer<typeof TalentSchema>;
 
-/** Schema for the full analysis response */
+/**
+ * Schema for the full analysis response.
+ *
+ * `kidsArtBench` is the optional 9-dim rubric (structure / color / detail /
+ * spatial / logic / composition / originality / narrative / technique) from
+ * Katalis.docx §1.2. Marked optional so audio analysis and providers that
+ * don't yet support it remain backward compatible.
+ */
 export const AnalysisOutputSchema = z.object({
   talents: z.array(TalentSchema).min(1, "At least one talent must be detected"),
+  kidsArtBench: KidsArtBenchScoreSchema.optional(),
 });
 
 export type AnalysisOutput = z.infer<typeof AnalysisOutputSchema>;

@@ -380,7 +380,10 @@
       "artifactType": "Penemuan Gambar",
       "storyType": "Penemuan Cerita",
       "audioType": "Penemuan Suara",
-      "dateLabel": "Ditemukan pada {date}"
+      "dateLabel": "Ditemukan pada {date}",
+      "readyForQuest": "Siap memulai petualanganmu?",
+      "questDesc": "Ubah bakat {talent}-mu menjadi petualangan kreatif 7 hari.",
+      "startQuest": "Mulai Quest"
     },
     "story": {
       "imagePromptTitle": "Lihat gambar-gambar ini!",
@@ -446,6 +449,7 @@
     "list": {
       "title": "Misi-Misimu",
       "subtitle": "Pantau petualangan misi 7 harimu!",
+      "greetingSubtitle": "Lanjutkan dari tempat terakhirmu, atau mulai petualangan baru.",
       "empty": "Belum ada misi!",
       "emptyDesc": "Selesaikan penemuan bakat terlebih dahulu, lalu buat petualangan misi 7 hari pertamamu!",
       "startFirst": "Temukan Bakatmu",

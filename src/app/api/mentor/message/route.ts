@@ -3,9 +3,10 @@ import { getChildSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { sanitizeInput } from "@/lib/sanitize";
 import { SendMessageInputSchema } from "@/lib/ai/mentor-schemas";
-import { mentorChat, detectFrustration } from "@/lib/ai/mentor";
+import { mentorChat, detectFrustration, resolveCheckinAction, applyCheckinOverride } from "@/lib/ai/mentor";
 import { buildBadgeContext, evaluateBadges, awardBadges } from "@/lib/badges";
 import { getAgeGroup } from "@/lib/age";
+import { recordZpdEvent } from "@/lib/zpd";
 
 /**
  * POST /api/mentor/message
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { sessionId, content } = parsed.data;
+    const { sessionId, content, behavioralSignals } = parsed.data;
     const isGreeting = content === "";
 
     // Sanitize child message
@@ -135,15 +136,27 @@ export async function POST(request: NextRequest) {
 
     const sessionDurationMinutes = (Date.now() - mentorSession.createdAt.getTime()) / 60_000;
 
+    const inactivityMinutes = behavioralSignals?.lastInputAt
+      ? (Date.now() - new Date(behavioralSignals.lastInputAt).getTime()) / 60_000
+      : undefined;
+
     const frustrationLevel = detectFrustration(
       {
         messageCount: mentorSession.messages.length + (isGreeting ? 0 : 1),
         childMessageCount: childMessages.length,
         sessionDurationMinutes,
         recentChildMessages: childMessages.slice(-5),
+        inactivityMinutes,
+        editEvents: behavioralSignals?.editEvents,
+        voiceProsody: behavioralSignals?.voiceProsody,
+        pendingCheckin: mentorSession.checkinPending,
       },
       ageGroup,
     );
+
+    const checkinAction = resolveCheckinAction(frustrationLevel, mentorSession.checkinPending);
+
+    const mentorFrustrationLevel = applyCheckinOverride(frustrationLevel, checkinAction);
 
     // Get mentor response
     const chatHistory = mentorSession.messages.map((m) => ({
@@ -153,7 +166,7 @@ export async function POST(request: NextRequest) {
 
     const mentorResponse = await mentorChat(
       isGreeting ? null : sanitizedContent,
-      frustrationLevel,
+      mentorFrustrationLevel,
       {
         day: mission.day,
         title: mission.title,
@@ -165,6 +178,36 @@ export async function POST(request: NextRequest) {
       isGreeting,
       ageGroup,
     );
+
+    // Update checkin state machine
+    if (checkinAction === "checkin") {
+      await prisma.mentorSession.update({
+        where: { id: sessionId },
+        data: { checkinPending: true },
+      });
+    } else if (checkinAction === "adjustment" || checkinAction === null) {
+      if (mentorSession.checkinPending) {
+        await prisma.mentorSession.update({
+          where: { id: sessionId },
+          data: { checkinPending: false },
+        });
+      }
+    }
+
+    // Sustained frustration (check-in pending + still ≥ medium) → record ZPD event.
+    // recordZpdEvent dedupes per mission internally so repeated triggers in one
+    // mission still produce only one snapshot.
+    if (checkinAction === "adjustment") {
+      try {
+        await recordZpdEvent({
+          childId: session.childId,
+          outcome: "frustration_sustained",
+          missionId: mentorSession.missionId,
+        });
+      } catch (zpdError) {
+        console.error("ZPD event recording failed for sustained frustration, continuing:", zpdError);
+      }
+    }
 
     // Save mentor message
     const savedMentorMessage = await prisma.mentorMessage.create({

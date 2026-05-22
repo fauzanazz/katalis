@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
@@ -8,13 +8,8 @@ import { useRouter, usePathname } from "@/i18n/navigation";
 import { TalentCategoryFilter } from "@/components/gallery/TalentCategoryFilter";
 import { ClusterBrowseView } from "@/components/gallery/ClusterBrowseView";
 import { SquadBrowseView } from "@/components/gallery/SquadBrowseView";
+import { cn } from "@/lib/utils";
 import type { GalleryEntryFeatureCollection } from "@/types/gallery";
-
-// Dynamic import with SSR disabled to avoid WebGL hydration mismatch
-const Galaxy = dynamic(() => import("@/components/gallery/Galaxy"), {
-  ssr: false,
-  loading: () => null,
-});
 
 const GalleryMap = dynamic(
   () => import("@/components/map/GalleryMap").then((mod) => mod.GalleryMap),
@@ -43,14 +38,6 @@ export default function GalleryPage() {
   const urlCluster = searchParams.get("cluster");
   const urlView = searchParams.get("view") as ViewMode | null;
   const urlSquad = searchParams.get("squad");
-
-  // Apply dark theme to entire page (including Header/Footer) while on gallery
-  useEffect(() => {
-    document.documentElement.classList.add("gallery-dark");
-    return () => {
-      document.documentElement.classList.remove("gallery-dark");
-    };
-  }, []);
 
   const [data, setData] = useState<GalleryEntryFeatureCollection | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -173,102 +160,73 @@ export default function GalleryPage() {
     [updateUrl],
   );
 
+  const viewTabs: { id: ViewMode; label: string; activeColor: string; activeBg: string; icon: React.ReactNode }[] = [
+    {
+      id: "map",
+      label: t("views.map"),
+      activeColor: "text-blue-ocean-deep",
+      activeBg: "bg-[#eef4ff] ring-1 ring-blue-ocean/20",
+      icon: (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
+        </svg>
+      ),
+    },
+    {
+      id: "clusters",
+      label: t("views.clusters"),
+      activeColor: "text-yellow-sun-deep",
+      activeBg: "bg-[#fff9e6] ring-1 ring-yellow-sun/30",
+      icon: (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z" />
+        </svg>
+      ),
+    },
+    {
+      id: "squads",
+      label: t("views.squads"),
+      activeColor: "text-pink-bloom",
+      activeBg: "bg-[#fdf2f8] ring-1 ring-pink-bloom/30",
+      icon: (
+        <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+        </svg>
+      ),
+    },
+  ];
+
   return (
-    <div className="relative min-h-screen">
-      {/* Galaxy background — z-0 so it's above html canvas bg but below content */}
-      <div className="pointer-events-none fixed inset-0 z-0 bg-[#06090f]">
-        <Galaxy
-          hueShift={220}
-          saturation={0.15}
-          glowIntensity={0.22}
-          density={0.9}
-          twinkleIntensity={0.25}
-          rotationSpeed={0.03}
-          mouseInteraction={false}
-          transparent={true}
-        />
-      </div>
-    <div className="relative z-10 container mx-auto px-4 py-6">
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 md:px-8 lg:px-10 sm:py-10">
       {/* Page header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          {t("title")}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-          {t("subtitle")}
-        </p>
+      <div className="mb-8">
+        <h1 className="type-h1">{t("title")}</h1>
+        <p className="type-lede mt-2 max-w-2xl">{t("subtitle")}</p>
       </div>
 
       {/* View mode toggle */}
-      <div className="mb-4 flex items-center gap-2" role="tablist" aria-label="Gallery view mode">
-        <button
-          role="tab"
-          aria-selected={viewMode === "map"}
-          onClick={() => handleViewModeChange("map")}
-          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-            viewMode === "map"
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground hover:bg-muted/80"
-          }`}
-        >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z"
-            />
-          </svg>
-          {t("views.map")}
-        </button>
-        <button
-          role="tab"
-          aria-selected={viewMode === "clusters"}
-          onClick={() => handleViewModeChange("clusters")}
-          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-            viewMode === "clusters"
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground hover:bg-muted/80"
-          }`}
-        >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25Z"
-            />
-          </svg>
-          {t("views.clusters")}
-        </button>
-        <button
-          role="tab"
-          aria-selected={viewMode === "squads"}
-          onClick={() => handleViewModeChange("squads")}
-          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-            viewMode === "squads"
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground hover:bg-muted/80"
-          }`}
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
-          </svg>
-          {t("views.squads")}
-        </button>
-      </div>
+      <nav className="mb-6 flex gap-2" role="tablist" aria-label="Gallery view mode">
+        {viewTabs.map((tab) => {
+          const isActive = viewMode === tab.id;
+          return (
+            <button
+              key={tab.id}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => handleViewModeChange(tab.id)}
+              className={cn(
+                "flex flex-1 items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-150",
+                isActive
+                  ? `${tab.activeBg} ${tab.activeColor}`
+                  : "text-muted-foreground hover:bg-muted hover:text-ink",
+              )}
+            >
+              {tab.icon}
+              <span className="hidden sm:block">{tab.label}</span>
+            </button>
+          );
+        })}
+      </nav>
 
       {/* Talent category filter (shown in map view) */}
       {viewMode === "map" && (
@@ -335,7 +293,6 @@ export default function GalleryPage() {
           onSquadSelect={handleSquadSelect}
         />
       )}
-    </div>
     </div>
   );
 }

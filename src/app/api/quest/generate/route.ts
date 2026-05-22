@@ -13,6 +13,12 @@ import {
   buildAgeConstraintPromptFragment,
   clampOrRejectMissions,
 } from "@/lib/ai/quest/age-caps";
+import {
+  pickExplorationInterests,
+  shouldIncludeExploration,
+  type ProfileSummary,
+} from "@/lib/ai/quest/exploration";
+import { isInterestKey } from "@/lib/interests/taxonomy";
 
 /**
  * POST /api/quest/generate
@@ -96,6 +102,26 @@ export async function POST(request: NextRequest) {
       ageGroup = getAgeGroup(child?.dateOfBirth).band;
     }
 
+    // Pygmalion safeguard (§8.1b): periodically inject interest keys outside
+    // the child's top set so the generator includes an exploration mission.
+    let explorationInterests: string[] | undefined;
+    if (session?.childId) {
+      const profileRows = (await prisma.childInterestProfile.findMany({
+        where: { childId: session.childId },
+        orderBy: { score: "desc" },
+        take: 20,
+        select: { interestKey: true, score: true },
+      })) as Array<{ interestKey: string; score: number }>;
+      const validProfiles: ProfileSummary[] = profileRows.flatMap((p) =>
+        isInterestKey(p.interestKey)
+          ? [{ interestKey: p.interestKey, score: p.score }]
+          : [],
+      );
+      if (shouldIncludeExploration(validProfiles)) {
+        explorationInterests = pickExplorationInterests(validProfiles);
+      }
+    }
+
     // Generate quest; validate per-band duration cap; retry once on violation.
     let result = await generateQuest({
       dream,
@@ -104,6 +130,7 @@ export async function POST(request: NextRequest) {
       discoveryId,
       zpdScore,
       ageGroup,
+      explorationInterests,
     });
 
     let cap = clampOrRejectMissions(result.missions, ageGroup);
@@ -116,6 +143,7 @@ export async function POST(request: NextRequest) {
         discoveryId,
         zpdScore,
         ageGroup,
+        explorationInterests,
       });
       cap = clampOrRejectMissions(result.missions, ageGroup);
       if (!cap.ok) {

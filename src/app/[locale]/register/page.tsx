@@ -49,7 +49,7 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (response.ok) {
-        router.push("/dashboard");
+        router.push("/parent");
         router.refresh();
       } else {
         if (data.error === "email_exists") {

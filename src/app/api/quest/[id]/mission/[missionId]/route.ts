@@ -7,6 +7,11 @@ import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 import { buildBadgeContext, evaluateBadges, awardBadges } from "@/lib/badges";
 import { mapMissionCompletionToInterestSignals } from "@/lib/interests/quest-mapper";
 import { ingestInterestSignals } from "@/lib/interests/ingest-service";
+import {
+  applyAssessmentToSignals,
+  assessMissionEngagement,
+  type MissionEngagementMetrics,
+} from "@/lib/interests/mission-reassessment";
 import { recordZpdEvent } from "@/lib/zpd";
 
 /**
@@ -16,6 +21,35 @@ const MissionUpdateSchema = z.object({
   action: z.enum(["start", "complete"]),
   proofPhotoUrl: z.string().url().optional(),
 });
+
+const FRUSTRATION_RANK = { none: 0, low: 1, medium: 2, high: 3 } as const;
+type FrustrationKey = keyof typeof FRUSTRATION_RANK;
+
+/**
+ * Extract the peak `frustrationLevel` reported across the session's mentor
+ * messages. Each mentor message's `meta` is a JSON string holding the
+ * frustration the response was generated under.
+ */
+function extractPeakFrustration(
+  messages: Array<{ meta: string | null; role: string }>,
+): FrustrationKey {
+  let peak: FrustrationKey = "none";
+  for (const m of messages) {
+    if (m.role !== "mentor" || !m.meta) continue;
+    try {
+      const parsed = JSON.parse(m.meta) as { frustrationLevel?: string };
+      const level = parsed.frustrationLevel;
+      if (level && level in FRUSTRATION_RANK) {
+        if (FRUSTRATION_RANK[level as FrustrationKey] > FRUSTRATION_RANK[peak]) {
+          peak = level as FrustrationKey;
+        }
+      }
+    } catch {
+      // Ignore malformed meta — never let parse error block reassessment.
+    }
+  }
+  return peak;
+}
 
 /**
  * PATCH /api/quest/[id]/mission/[missionId]
@@ -246,23 +280,44 @@ export async function PATCH(
         questId,
       });
 
-      // Ingest mission-completed interest signals (fire-and-forget)
+      // Reassess interest prediction vs actual engagement (spec §6.2).
+      // Fetches mentor session frustration peak + adjustment count, then
+      // scales each predicted signal's strength and emits a frustration
+      // counter-signal when the prediction was contradicted by behavior.
       try {
+        const mentorSession = await prisma.mentorSession.findUnique({
+          where: { missionId },
+          include: {
+            messages: { select: { meta: true, role: true } },
+            adjustments: { select: { id: true } },
+          },
+        });
+        const peakFrustration = mentorSession
+          ? extractPeakFrustration(mentorSession.messages)
+          : "none";
+        const metrics: MissionEngagementMetrics = {
+          completed: true,
+          adjustmentCount: mentorSession?.adjustments.length ?? 0,
+          peakFrustration,
+        };
+        const assessment = assessMissionEngagement(metrics);
+
         const missionSignals = mapMissionCompletionToInterestSignals({
           quest: { dream: quest.dream, localContext: quest.localContext },
           mission: { title: mission.title, description: mission.description },
         });
         if (missionSignals.length > 0) {
+          const adjustedSignals = applyAssessmentToSignals(missionSignals, assessment);
           await ingestInterestSignals({
             childId: session.childId,
             source: "mission_completed",
             questId,
             missionId,
-            signals: missionSignals,
+            signals: adjustedSignals,
           });
         }
       } catch (interestError) {
-        console.error("Interest ingestion failed for mission completion, continuing:", interestError);
+        console.error("Interest reassessment failed for mission completion, continuing:", interestError);
       }
 
       // Record ZPD event (fire-and-forget — failure must not break completion)

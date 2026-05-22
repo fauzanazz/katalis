@@ -34,6 +34,17 @@ const engineeringTalentResponse: AnalysisOutput = {
         "Several design elements suggest the child was thinking about functional challenges — the placement of sensors near the head, the reinforced leg structure for stability, and the articulated fingers designed for gripping. These choices reflect an analytical mindset focused on solving real-world problems through design.",
     },
   ],
+  kidsArtBench: {
+    structure: 0.85,
+    color: 0.45,
+    detail: 0.9,
+    spatial: 0.82,
+    logic: 0.78,
+    composition: 0.65,
+    originality: 0.55,
+    narrative: 0.35,
+    technique: 0.7,
+  },
 };
 
 /** Artistic talent mock — e.g., a colorful painting with expressive composition */
@@ -58,6 +69,17 @@ const artisticTalentResponse: AnalysisOutput = {
         "The scene combines real-world elements with fantastical additions — realistic trees alongside floating lanterns and imaginary creatures. This blending of reality and imagination shows a creative mind that doesn't just copy what is seen, but actively transforms and reimagines the world.",
     },
   ],
+  kidsArtBench: {
+    structure: 0.78,
+    color: 0.92,
+    detail: 0.72,
+    spatial: 0.7,
+    logic: 0.5,
+    composition: 0.88,
+    originality: 0.85,
+    narrative: 0.6,
+    technique: 0.8,
+  },
 };
 
 /** Narrative talent mock — e.g., an audio recording with storytelling patterns */
@@ -82,6 +104,7 @@ const narrativeTalentResponse: AnalysisOutput = {
         "The story's characters experience a range of emotions — joy, fear, determination — and the child accurately conveys these through both narrative description and vocal performance. The way the protagonist helps a friend in need suggests the child naturally thinks about others' feelings and perspectives.",
     },
   ],
+  // Audio artifacts: KidsArtBench is image-specific; omitted by design.
 };
 
 /** All mock response variants indexed for rotation */

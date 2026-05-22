@@ -13,6 +13,7 @@ interface ChildCardProps {
     claimedAt: string;
     latestTalents?: string[];
     questCount?: number;
+    quests?: Array<{ id: string; dream: string; status: string }>;
     tips?: Array<{
       title: string;
       description: string;
@@ -108,6 +109,36 @@ export function ChildCard({ child }: ChildCardProps) {
       <div className="mt-4 border-t pt-3">
         <InterestInsightsClient childId={child.id} />
       </div>
+
+      {child.quests && child.quests.length > 0 && (
+        <div className="mt-3">
+          <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {t("quests")}
+          </p>
+          <div className="space-y-1">
+            {child.quests.slice(0, 3).map((q) => (
+              <Link
+                key={q.id}
+                href={`/parent/quest/${q.id}`}
+                className="flex items-center justify-between rounded bg-muted/50 px-2.5 py-1.5 text-xs hover:bg-muted"
+              >
+                <span className="truncate font-medium">{q.dream}</span>
+                <span
+                  className={`ml-2 shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                    q.status === "completed"
+                      ? "bg-green-100 text-green-700"
+                      : q.status === "abandoned"
+                        ? "bg-zinc-100 text-zinc-500"
+                        : "bg-amber-100 text-amber-700"
+                  }`}
+                >
+                  {q.status}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="mt-3 flex flex-wrap gap-2">
         <button

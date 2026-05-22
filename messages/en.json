@@ -380,7 +380,10 @@
       "artifactType": "Image Discovery",
       "storyType": "Story Discovery",
       "audioType": "Voice Discovery",
-      "dateLabel": "Discovered on {date}"
+      "dateLabel": "Discovered on {date}",
+      "readyForQuest": "Ready for your quest?",
+      "questDesc": "Turn your {talent} talent into a 7-day creative adventure.",
+      "startQuest": "Start a Quest"
     },
     "story": {
       "imagePromptTitle": "Look at these pictures!",
@@ -446,6 +449,7 @@
     "list": {
       "title": "Your Quests",
       "subtitle": "Track your 7-day adventure quests!",
+      "greetingSubtitle": "Pick up where you left off, or start a new adventure.",
       "empty": "No quests yet!",
       "emptyDesc": "Complete a talent discovery first, then create your first 7-day quest adventure!",
       "startFirst": "Discover Your Talents",

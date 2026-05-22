@@ -29,8 +29,13 @@ export type UpsertChildInterestProfileInput = {
   score: number;
   confidence: number;
   signalCount: number;
+  /** Distinct calendar days the interest was observed. */
+  distinctDays?: number;
+  firstSignalAt?: Date | null;
   lastSignalAt?: Date | null;
   trend?: string;
+  /** "fleeting" | "emerging" | "sustained" — see scoring.computeStability. */
+  stability?: string;
   summary?: string | null;
 };
 
@@ -115,8 +120,11 @@ export async function upsertChildInterestProfile(input: UpsertChildInterestProfi
     score: clamp(input.score, 0, 1),
     confidence: clamp(input.confidence, 0, 1),
     signalCount: input.signalCount,
+    distinctDays: input.distinctDays ?? 0,
+    firstSignalAt: input.firstSignalAt,
     lastSignalAt: input.lastSignalAt,
     trend: input.trend ?? "stable",
+    stability: input.stability ?? "fleeting",
     summary: input.summary,
   };
 

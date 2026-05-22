@@ -26,7 +26,11 @@ let _client: StorageClient | null = null;
  */
 export function getStorageClient(): StorageClient {
   if (!_client) {
-    const useMock = process.env.USE_MOCK_AI === "true";
+    // USE_MOCK_STORAGE takes precedence; falls back to USE_MOCK_AI for compat
+    const useMock =
+      process.env.USE_MOCK_STORAGE !== undefined
+        ? process.env.USE_MOCK_STORAGE === "true"
+        : process.env.USE_MOCK_AI === "true";
     _client = useMock ? createMockStorageClient() : createR2StorageClient();
   }
   return _client;

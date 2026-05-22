@@ -20,12 +20,25 @@ export type ScoringSignal = {
 
 const DAY = 24 * 60 * 60 * 1000;
 
+/**
+ * Half-life (days) of an interest signal's contribution under exponential
+ * decay. After RECENCY_HALF_LIFE_DAYS the signal contributes half. Spec ref:
+ * Katalis.docx §6.1c — "Use exponential moving average (EMA) to balance
+ * historical data and new observations."
+ */
+export const RECENCY_HALF_LIFE_DAYS = 21;
+const RECENCY_LAMBDA = Math.LN2 / RECENCY_HALF_LIFE_DAYS;
+
+/**
+ * Exponential decay recency weight. weight(t) = 0.5^(ageDays / half-life).
+ * Replaces the previous bin-based weighting (1.0 / 0.75 / 0.5 / 0.25).
+ *
+ * Spot-check values (half-life = 21d): 0d → 1.0, 7d → 0.79, 21d → 0.5,
+ * 42d → 0.25, 63d → 0.125.
+ */
 export function computeRecencyWeight(observedAt: Date, now: Date): number {
-  const ageDays = (now.getTime() - observedAt.getTime()) / DAY;
-  if (ageDays <= 7) return 1;
-  if (ageDays <= 30) return 0.75;
-  if (ageDays <= 90) return 0.5;
-  return 0.25;
+  const ageDays = Math.max(0, (now.getTime() - observedAt.getTime()) / DAY);
+  return Math.exp(-RECENCY_LAMBDA * ageDays);
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -72,4 +85,50 @@ export function computeTrend(
   if (diff > 0.15) return "rising";
   if (diff < -0.15) return "falling";
   return "stable";
+}
+
+/**
+ * Classify an interest's persistence based on observation history.
+ *
+ * - `fleeting` — single observation, or all observations within one day
+ * - `emerging` — multiple sessions but span < 14 days
+ * - `sustained` — ≥3 distinct days AND span ≥14 days
+ *
+ * Spec ref: Katalis.docx §6.1 — "Distinguish between fleeting interests
+ * (appear once) and sustained interests (appear across multiple
+ * sessions/weeks)."
+ */
+export type InterestStability = "fleeting" | "emerging" | "sustained";
+
+export function computeStability(
+  observations: Date[],
+  now: Date,
+): InterestStability {
+  if (observations.length === 0) return "fleeting";
+
+  const dayIndices = new Set<number>();
+  let earliest = observations[0].getTime();
+  for (const obs of observations) {
+    const t = obs.getTime();
+    if (t < earliest) earliest = t;
+    dayIndices.add(Math.floor(t / DAY));
+  }
+
+  const distinctDays = dayIndices.size;
+  if (distinctDays < 2) return "fleeting";
+
+  const spanDays = (now.getTime() - earliest) / DAY;
+  if (distinctDays >= 3 && spanDays >= 14) return "sustained";
+
+  return "emerging";
+}
+
+/**
+ * Count distinct calendar days (UTC) covered by the observation set.
+ * Used to populate ChildInterestProfile.distinctDays.
+ */
+export function countDistinctDays(observations: Date[]): number {
+  const days = new Set<number>();
+  for (const o of observations) days.add(Math.floor(o.getTime() / DAY));
+  return days.size;
 }

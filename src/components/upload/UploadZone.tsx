@@ -17,18 +17,20 @@ import {
 } from "@/lib/storage/validation";
 import type { UploadResultData, UploadState } from "@/types/upload";
 
-const SESSION_STORAGE_KEY = "katalis-upload-session";
+const DEFAULT_STORAGE_KEY = "katalis-upload-default";
 
 interface UploadZoneProps {
   onUploadComplete: (result: UploadResultData) => void;
   onError?: (error: string) => void;
   disabled?: boolean;
+  storageKey?: string;
 }
 
 export function UploadZone({
   onUploadComplete,
   onError,
   disabled = false,
+  storageKey = DEFAULT_STORAGE_KEY,
 }: UploadZoneProps) {
   const t = useTranslations("discover.upload");
   const tProgress = useTranslations("discover.progress");
@@ -47,19 +49,22 @@ export function UploadZone({
   // Session recovery: check for pending upload on mount
   useEffect(() => {
     try {
-      const saved = sessionStorage.getItem(SESSION_STORAGE_KEY);
+      const saved = sessionStorage.getItem(storageKey);
       if (saved) {
         const parsed = JSON.parse(saved) as UploadResultData;
         if (parsed?.url && parsed?.key) {
           setUploadResult(parsed);
           setPreview(parsed.url);
           setUploadState("complete");
+          onUploadComplete(parsed);
         }
       }
     } catch {
       // Ignore invalid session storage
     }
-  }, []);
+    // Recovery runs once per mount per storageKey scope.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageKey]);
 
   const clearError = useCallback(() => {
     setError(null);
@@ -174,7 +179,7 @@ export function UploadZone({
 
         // Save to session storage for recovery
         try {
-          sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(result));
+          sessionStorage.setItem(storageKey, JSON.stringify(result));
         } catch {
           // Ignore storage errors
         }
@@ -201,7 +206,7 @@ export function UploadZone({
         abortControllerRef.current = null;
       }
     },
-    [clearError, validateFile, handleError, onUploadComplete, t],
+    [clearError, validateFile, handleError, onUploadComplete, t, storageKey],
   );
 
   const handleDragOver = useCallback(
@@ -276,11 +281,11 @@ export function UploadZone({
     setProgress(0);
     setError(null);
     try {
-      sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      sessionStorage.removeItem(storageKey);
     } catch {
       // Ignore
     }
-  }, []);
+  }, [storageKey]);
 
   const handleRetry = useCallback(() => {
     setError(null);

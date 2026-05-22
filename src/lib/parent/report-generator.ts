@@ -83,6 +83,45 @@ export async function generateParentReport(options: GenerateReportOptions) {
     },
   });
 
+  // Mission engagement detail for §7.1c: frustration events + adjustments.
+  // We classify a mentor message as a "frustration event" when its meta JSON
+  // carries frustrationLevel ∈ {medium, high} — soft check-in triggers.
+  const recentMentorMessages = await prisma.mentorMessage.findMany({
+    where: {
+      session: { childId },
+      role: "mentor",
+      createdAt: { gte: periodStart },
+    },
+    select: { meta: true },
+  });
+  let frustrationEvents = 0;
+  for (const m of recentMentorMessages) {
+    if (!m.meta) continue;
+    try {
+      const parsed = JSON.parse(m.meta) as { frustrationLevel?: string };
+      if (parsed.frustrationLevel === "medium" || parsed.frustrationLevel === "high") {
+        frustrationEvents += 1;
+      }
+    } catch {
+      // Ignore malformed meta.
+    }
+  }
+  const adjustmentEvents = await prisma.adjustmentEvent.count({
+    where: {
+      session: { childId },
+      createdAt: { gte: periodStart },
+    },
+  });
+
+  const engagementMetadata = {
+    completedMissions,
+    completedQuests: child.quests.length,
+    frustrationEvents,
+    adjustmentEvents,
+    reflectionsCount,
+    mentorInteractions,
+  };
+
   const aiReport = await generateAIReport({
     childTalents: uniqueTalents,
     completedQuests: child.quests.length,
@@ -108,6 +147,7 @@ export async function generateParentReport(options: GenerateReportOptions) {
       tips: JSON.stringify(aiReport.tips),
       summary: aiReport.summary,
       badgeHighlights: JSON.stringify(aiReport.badgeHighlights),
+      metadata: JSON.stringify({ engagement: engagementMetadata }),
     },
   });
 
@@ -139,6 +179,25 @@ export async function getReportById(reportId: string, parentId: string) {
   return toReportResponse(report);
 }
 
+interface EngagementMetadata {
+  completedMissions: number;
+  completedQuests: number;
+  frustrationEvents: number;
+  adjustmentEvents: number;
+  reflectionsCount: number;
+  mentorInteractions: number;
+}
+
+function parseEngagement(metadata: string | null | undefined): EngagementMetadata | null {
+  if (!metadata) return null;
+  try {
+    const parsed = JSON.parse(metadata) as { engagement?: EngagementMetadata };
+    return parsed.engagement ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function toReportResponse(r: {
   id: string;
   childId: string;
@@ -149,6 +208,7 @@ function toReportResponse(r: {
   tips: string;
   summary: string;
   badgeHighlights: string;
+  metadata?: string | null;
   createdAt: Date;
 }) {
   return {
@@ -161,6 +221,7 @@ function toReportResponse(r: {
     tips: JSON.parse(r.tips),
     summary: r.summary,
     badgeHighlights: JSON.parse(r.badgeHighlights) as string[],
+    engagement: parseEngagement(r.metadata),
     createdAt: r.createdAt.toISOString(),
   };
 }

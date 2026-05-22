@@ -1,27 +1,57 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { ClaimChildDialog } from "@/components/parent/ClaimChildDialog";
 import { AddChildDialog } from "@/components/parent/AddChildDialog";
+import { BackfillDoBPrompt } from "@/components/parent/BackfillDoBPrompt";
 import { ChildCard } from "@/components/parent/ChildCard";
+import { CapabilityTrajectoryCard } from "@/components/parent/CapabilityTrajectoryCard";
+import type { ZpdBand } from "@/lib/zpd";
+
+type ZpdSnapshotData = {
+  id: string;
+  score: number;
+  band: string;
+  createdAt: string;
+};
 
 interface LinkedChildData {
   id: string;
+  name?: string;
   locale: string;
   claimedAt: string;
+  dateOfBirth?: string | null;
+  ageGroup?: "3-6" | "7-9" | "10-12" | "unknown";
   latestTalents?: string[];
   questCount?: number;
+  quests?: Array<{ id: string; dream: string; status: string }>;
   tips?: Array<{
     title: string;
     description: string;
     materials: string[];
     category: string;
   }>;
+  zpdSnapshots?: ZpdSnapshotData[];
+  accessCode?: string;
 }
 
 export default function ParentDashboardPage() {
   const t = useTranslations("parent.dashboard");
+  const tZpd = useTranslations("parent.dashboard.zpd");
+  const zpdLabels = useMemo(
+    () => ({
+      title: tZpd("title"),
+      placeholder: tZpd("placeholder"),
+      bands: {
+        emerging: tZpd("bands.emerging"),
+        developing: tZpd("bands.developing"),
+        proficient: tZpd("bands.proficient"),
+        extending: tZpd("bands.extending"),
+      } satisfies Record<ZpdBand, string>,
+    }),
+    [tZpd],
+  );
   const [children, setChildren] = useState<LinkedChildData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showClaimDialog, setShowClaimDialog] = useState(false);
@@ -52,6 +82,14 @@ export default function ParentDashboardPage() {
   const handleClaimSuccess = () => {
     fetchChildren();
   };
+
+  const childrenMissingDob = useMemo(
+    () =>
+      children
+        .filter((c) => !c.dateOfBirth)
+        .map((c) => ({ id: c.id, name: c.name })),
+    [children],
+  );
 
   if (isLoading) {
     return (
@@ -90,6 +128,11 @@ export default function ParentDashboardPage() {
         </div>
       </div>
 
+      <BackfillDoBPrompt
+        childrenMissingDob={childrenMissingDob}
+        onUpdated={() => fetchChildren()}
+      />
+
       {children.length === 0 ? (
         <div className="rounded-lg border bg-muted/30 p-8 text-center">
           <p className="text-lg font-medium text-muted-foreground">{t("noChildren")}</p>
@@ -112,7 +155,14 @@ export default function ParentDashboardPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {children.map((child) => (
-            <ChildCard key={child.id} child={child} />
+            <div key={child.id} className="flex flex-col gap-3">
+              <ChildCard child={child} />
+              <CapabilityTrajectoryCard
+                childId={child.id}
+                snapshots={child.zpdSnapshots ?? []}
+                labels={zpdLabels}
+              />
+            </div>
           ))}
         </div>
       )}

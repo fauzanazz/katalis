@@ -30,7 +30,7 @@ const TIER_COLORS: Record<string, string> = {
   gold: "border-yellow-400 bg-yellow-50",
 };
 
-export function BadgeGrid() {
+export function BadgeGrid({ refreshKey }: { refreshKey?: number }) {
   const t = useTranslations("badges");
   const [badges, setBadges] = useState<BadgeData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,7 +51,7 @@ export function BadgeGrid() {
 
   useEffect(() => {
     fetchBadges();
-  }, [fetchBadges]);
+  }, [fetchBadges, refreshKey]);
 
   const filtered =
     activeCategory === "all"

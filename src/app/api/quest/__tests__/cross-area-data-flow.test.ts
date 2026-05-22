@@ -35,8 +35,22 @@ vi.mock("@/lib/db", () => ({
       findUnique: (...args: unknown[]) => mockPrismaGalleryEntryFindUnique(...args),
       create: (...args: unknown[]) => mockPrismaGalleryEntryCreate(...args),
     },
+    child: {
+      findUnique: vi.fn().mockResolvedValue({ dateOfBirth: null }),
+    },
+    childInterestProfile: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
     $transaction: (...args: unknown[]) => mockPrismaTransaction(...args),
   },
+}));
+
+vi.mock("@/lib/interests/quest-mapper", () => ({
+  mapQuestToInterestSignals: vi.fn().mockReturnValue([]),
+}));
+
+vi.mock("@/lib/interests/ingest-service", () => ({
+  ingestInterestSignals: vi.fn().mockResolvedValue(undefined),
 }));
 
 // --- Mock Auth ---
@@ -62,6 +76,21 @@ vi.mock("@/lib/ai/client", () => ({
 // --- Mock URL allowlist ---
 vi.mock("@/lib/url-allowlist", () => ({
   isAllowedStorageUrl: () => true,
+}));
+
+vi.mock("@/lib/zpd", () => ({
+  getZpdScore: vi.fn().mockResolvedValue(0.3),
+  recordZpdEvent: vi.fn(),
+  listSnapshots: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock("@/lib/age", () => ({
+  getAgeGroup: vi.fn().mockReturnValue({ band: "unknown", years: null }),
+}));
+
+vi.mock("@/lib/ai/quest/age-caps", () => ({
+  clampOrRejectMissions: vi.fn().mockReturnValue({ ok: true }),
+  buildAgeConstraintPromptFragment: vi.fn().mockReturnValue(""),
 }));
 
 vi.mock("@/lib/moderation", () => ({

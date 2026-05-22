@@ -14,6 +14,7 @@
   },
   "nav": {
     "home": "首页",
+    "dashboard": "仪表板",
     "discover": "发现",
     "quest": "任务",
     "gallery": "画廊",
@@ -21,6 +22,27 @@
     "logout": "退出",
     "register": "注册",
     "admin": "管理"
+  },
+  "childHome": {
+    "kicker": "孩子专区",
+    "cta": "出发",
+    "greetingNamed": "{dayPart, select, morning {早安，{name}！} afternoon {你好，{name}！} evening {晚上好，{name}！} other {嗨，{name}！}}",
+    "greetingAnon": "{dayPart, select, morning {早安，小探险家！} afternoon {你好，小探险家！} evening {晚上好，小探险家！} other {嗨，小探险家！}}",
+    "subtitle": "今天想去哪里冒险？",
+    "cards": {
+      "discover": {
+        "title": "发现",
+        "description": "上传画作、语音或故事，发现新的天赋。"
+      },
+      "quest": {
+        "title": "任务",
+        "description": "继续你的学习冒险。"
+      },
+      "gallery": {
+        "title": "画廊",
+        "description": "查看你创作的一切。"
+      }
+    }
   },
   "landing": {
     "brandName": "Katalis AI",
@@ -181,6 +203,30 @@
         "general": "出了点问题，请重试。"
       }
     },
+    "child": {
+      "title": "准备好探索了吗？",
+      "subtitle": "输入你的秘密代码开始！",
+      "back": "返回",
+      "codePlaceholder": "输入你的秘密代码",
+      "submit": "出发！",
+      "errors": {
+        "empty": "请输入你的访问码",
+        "invalid": "访问码无效",
+        "expired": "此访问码已过期"
+      },
+      "noCode": "没有代码？",
+      "noCodeDialog": {
+        "title": "如何获取代码",
+        "step1Title": "请家长登录",
+        "step1Desc": "家长或监护人需要先登录他们的 Katalis 账户。",
+        "step2Title": "家长创建你的账户",
+        "step2Desc": "在家长仪表板中，他们点击「添加孩子」并设置你的档案。",
+        "step3Title": "获取你的秘密代码",
+        "step3Desc": "家长会把秘密代码给你，在这里输入即可。",
+        "parentLoginCta": "前往家长登录",
+        "close": "明白了！"
+      }
+    },
     "parent": {
       "features": {
         "heading": "为孩子的未来赋能",
@@ -209,7 +255,9 @@
   "notFound": {
     "title": "页面未找到",
     "description": "哎呀！您要查找的页面不存在或已被移动。",
-    "backHome": "返回首页"
+    "backHome": "返回首页",
+    "backToDiscovery": "返回发现",
+    "backToDashboard": "返回仪表板"
   },
   "error": {
     "title": "出了点问题",
@@ -234,6 +282,7 @@
     "moderation": "审核"
   },
   "discover": {
+    "kicker": "天赋侦探",
     "title": "发现你的天赋",
     "subtitle": "上传画作、照片，或录制你的声音，来发现你独特的天赋！",
     "flowSelection": {
@@ -357,7 +406,16 @@
       "artifactType": "图片发现",
       "storyType": "故事发现",
       "audioType": "语音发现",
-      "dateLabel": "发现于 {date}"
+      "dateLabel": "发现于 {date}",
+      "readyForQuest": "准备好开始你的任务了吗？",
+      "questDesc": "把你的{talent}天赋变成 7 天创意冒险。",
+      "startQuest": "开始任务",
+      "topTalent": "顶级天赋",
+      "moreTalents": "更多天赋",
+      "naturalGift": "天生才能",
+      "strongTalent": "强大天赋",
+      "genuineInterest": "真正兴趣",
+      "emergingSkill": "新兴技能"
     },
     "story": {
       "imagePromptTitle": "看这些图片！",
@@ -421,8 +479,14 @@
       "goToDiscovery": "开始发现"
     },
     "list": {
+      "kicker": "你的任务",
       "title": "你的任务",
       "subtitle": "追踪你的7天冒险任务！",
+      "greetingGuest": "你好，冒险家！",
+      "greetingMorning": "早上好，{name}！",
+      "greetingAfternoon": "下午好，{name}！",
+      "greetingEvening": "晚上好，{name}！",
+      "greetingSubtitle": "从上次中断处继续，或开启新的冒险。",
       "empty": "还没有任务！",
       "emptyDesc": "先完成天赋发现，然后创建你的第一个7天冒险任务！",
       "startFirst": "发现你的天赋",
@@ -438,6 +502,7 @@
       "createQuest": "创建任务"
     },
     "overview": {
+      "kicker": "7天冒险",
       "title": "你的任务",
       "subtitle": "你的7天任务计划",
       "dreamLabel": "你的梦想",
@@ -568,6 +633,7 @@
     }
   },
   "gallery": {
+    "kicker": "Squad 画廊",
     "title": "全球画廊",
     "subtitle": "探索世界各地有天赋的孩子们的作品！",
     "retry": "重试",
@@ -666,17 +732,47 @@
       "viewReports": "查看报告",
       "openAsChild": "以孩子身份登录",
       "switching": "切换中...",
-      "reportError": "生成报告失败，请重试。"
+      "reportError": "生成报告失败，请重试。",
+      "zpd": {
+        "title": "能力轨迹",
+        "placeholder": "我们正在了解孩子的进步…",
+        "bands": {
+          "emerging": "萌芽中",
+          "developing": "发展中",
+          "proficient": "熟练",
+          "extending": "拓展"
+        }
+      },
+      "quests": "任务"
     },
     "createChild": {
       "title": "添加新孩子",
       "description": "为您的孩子创建个人资料。输入他们的名字以便识别。",
       "nameLabel": "孩子姓名",
       "namePlaceholder": "例如：小明",
+      "dobLabel": "出生日期",
+      "dobHelp": "我们使用它为孩子选择年龄合适的活动。孩子年龄需在 3-12 岁之间。",
       "submit": "创建孩子资料",
       "cancel": "取消",
       "creating": "创建中...",
-      "errorDefault": "无法创建孩子资料，请重试。"
+      "errorDefault": "无法创建孩子资料，请重试。",
+      "successTitle": "子账号已创建！",
+      "successDescription": "将此访问码分享给{name}以登录",
+      "accessCodeLabel": "访问码",
+      "accessCodeHint": "孩子在登录界面输入此码。",
+      "copyTooltip": "点击复制",
+      "copied": "已复制！",
+      "done": "完成"
+    },
+    "backfillDob": {
+      "title": "添加出生日期",
+      "description": "我们根据出生日期为每个孩子量身定制任务、提示和导师支持。请为以下孩子补充信息。",
+      "submit": "保存",
+      "saving": "保存中...",
+      "success": "已为 {name} 保存。",
+      "dateInputLabel": "{name} 的出生日期",
+      "unnamed": "此孩子",
+      "errorDefault": "无法保存出生日期，请重试。"
     },
     "claim": {
       "title": "关联您的孩子",

@@ -11,7 +11,7 @@ export default async function AdminLayout({
   const { locale } = await params;
   const admin = await getAdminSession();
   if (!admin) {
-    redirect({ href: "/dashboard", locale });
+    redirect({ href: "/parent", locale });
   }
 
   return <>{children}</>;

@@ -31,9 +31,13 @@ const mockInsights = {
       score: 0.8,
       confidence: 0.9,
       trend: "rising" as const,
+      stability: "sustained" as const,
       signalCount: 5,
+      distinctDays: 3,
+      firstSignalAt: "2026-01-01T00:00:00.000Z",
       lastSignalAt: "2026-01-10T00:00:00.000Z",
       summary: null,
+      recentEvidence: [],
     },
   ],
   recentSignals: [

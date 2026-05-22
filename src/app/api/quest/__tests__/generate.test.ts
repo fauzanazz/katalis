@@ -19,7 +19,36 @@ vi.mock("@/lib/db", () => ({
     discovery: {
       count: vi.fn(),
     },
+    child: {
+      findUnique: vi.fn().mockResolvedValue({ dateOfBirth: null }),
+    },
+    childInterestProfile: {
+      findMany: vi.fn().mockResolvedValue([]),
+    },
   },
+}));
+
+vi.mock("@/lib/interests/quest-mapper", () => ({
+  mapQuestToInterestSignals: vi.fn().mockReturnValue([]),
+}));
+
+vi.mock("@/lib/interests/ingest-service", () => ({
+  ingestInterestSignals: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/zpd", () => ({
+  getZpdScore: vi.fn().mockResolvedValue(0.3),
+  recordZpdEvent: vi.fn(),
+  listSnapshots: vi.fn().mockResolvedValue([]),
+}));
+
+vi.mock("@/lib/age", () => ({
+  getAgeGroup: vi.fn().mockReturnValue({ band: "unknown", years: null }),
+}));
+
+vi.mock("@/lib/ai/quest/age-caps", () => ({
+  clampOrRejectMissions: vi.fn().mockReturnValue({ ok: true }),
+  buildAgeConstraintPromptFragment: vi.fn().mockReturnValue(""),
 }));
 
 vi.mock("@/lib/moderation", () => ({
@@ -100,8 +129,9 @@ describe("POST /api/quest/generate", () => {
     mockedDiscoveryCount.mockResolvedValue(1);
   });
 
-  it("returns 401 when not authenticated", async () => {
+  it("returns 200 guest preview when not authenticated", async () => {
     mockedGetSession.mockResolvedValue(null);
+    mockedGenerateQuest.mockResolvedValue(mockQuestResult);
 
     const res = await POST(
       createRequest({
@@ -109,9 +139,10 @@ describe("POST /api/quest/generate", () => {
         localContext: "I live in a village near a river",
       }),
     );
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.error).toBe("unauthorized");
+    expect(data.guest).toBe(true);
+    expect(data.missions).toHaveLength(7);
   });
 
   it("returns 200 with quest data on success", async () => {

@@ -4,13 +4,16 @@ import { AnalysisOutputSchema } from "../schemas";
 import type { AnalysisInput, AnalysisOutput } from "../schemas";
 import type { StoryAnalysisInput, StoryAnalysisOutput } from "../story-schemas";
 import { QuestGenerationOutputSchema } from "../quest-schemas";
+import { buildZpdPromptBlock } from "../zpd-prompt";
 import type { QuestGenerationInput, QuestGenerationOutput } from "../quest-schemas";
 import { ClusteringOutputSchema } from "../clustering-schemas";
 import type { ClusterEntry, ClusteringOutput } from "../clustering-schemas";
 import type { ModerationResult } from "@/lib/moderation/schemas";
 import { mapToModerationResult } from "@/lib/moderation/map-result";
+import { resolveModel, type ModelTier } from "../models";
 
 const API_TIMEOUT_MS = 30_000;
+const BASE_MODEL = "gpt-4o";
 
 const TEXT_MODERATION_PROMPT = `You are a child safety content moderator. Analyze the following text content for any harmful, inappropriate, or unsafe material for children (ages 6-12).
 
@@ -73,7 +76,20 @@ For each detected talent:
 2. Rate your confidence from 0.0 to 1.0
 3. Explain your reasoning in detail — describe WHAT specific elements you observed and WHY they indicate this talent
 
-Respond ONLY with valid JSON in this exact format:
+In addition, for IMAGE artifacts ONLY, rate the artwork on the 9-dimensional KidsArtBench rubric (each score 0.0 to 1.0, where 0 = absent/weak, 1 = clearly developed for the child's age):
+- structure: overall visual organization, balance, weight distribution
+- color: use and harmony of color (variety, intentional contrast, palette coherence)
+- detail: fine-grained observation captured (textures, parts, features)
+- spatial: depth, perspective, scale, spatial relationships
+- logic: internal consistency (cause/effect, plausibility within the world depicted)
+- composition: layout, focal points, use of negative space and visual rhythm
+- originality: creative novelty vs. learned templates
+- narrative: presence of story, sequence, or implied action
+- technique: motor execution (line control, brushwork, pressure, rendering)
+
+These scores describe the artwork; they do NOT rank children. Use them descriptively.
+
+Respond ONLY with valid JSON in this exact format. Include "kidsArtBench" ONLY for image artifacts; omit it entirely for audio recordings:
 {
   "talents": [
     {
@@ -81,7 +97,18 @@ Respond ONLY with valid JSON in this exact format:
       "confidence": 0.85,
       "reasoning": "Detailed explanation of why this talent was detected..."
     }
-  ]
+  ],
+  "kidsArtBench": {
+    "structure": 0.7,
+    "color": 0.6,
+    "detail": 0.85,
+    "spatial": 0.75,
+    "logic": 0.5,
+    "composition": 0.7,
+    "originality": 0.6,
+    "narrative": 0.4,
+    "technique": 0.65
+  }
 }
 
 Detect 2-4 talents per artifact. Be encouraging but honest.`;
@@ -187,6 +214,7 @@ async function chatJSON<T>(
   userContent: string | ChatCompletionContentPart[],
   maxTokens: number,
   parse: (raw: unknown) => T,
+  tier: ModelTier = "default",
 ): Promise<T> {
   const client = await getClient();
   const controller = new AbortController();
@@ -195,7 +223,7 @@ async function chatJSON<T>(
   try {
     const response = await client.chat.completions.create(
       {
-        model: "gpt-4o",
+        model: resolveModel("openai", tier, BASE_MODEL),
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userContent },
@@ -266,6 +294,12 @@ export const openaiProvider: AIProvider = {
           .join("\n")
       : "No specific talents detected yet.";
 
+    const explorationBlock =
+      input.explorationInterests && input.explorationInterests.length > 0
+        ? `\n\n**Exploration Interests (Pygmalion safeguard — broaden the child's horizons):**
+The child's profile shows strong existing interests. To prevent interest fixation, include at least ONE mission in the 7-day plan that explores one of these less-touched interest areas: ${input.explorationInterests.join(", ")}. Frame it as "trying something new" rather than as off-topic.`
+        : "";
+
     const userMessage = `Create a 7-day quest for a child with these details:
 
 **Dream:** "${input.dream}"
@@ -273,12 +307,17 @@ export const openaiProvider: AIProvider = {
 **Local Context:** "${input.localContext}"
 
 **Detected Talents:**
-${talentSummary}
+${talentSummary}${explorationBlock}
 
-Design missions that connect their dream with their talents, using materials available in their local environment. Make it practical, fun, and progressively challenging.`;
+Design missions that connect their dream with their talents, using materials available in their local environment. Make it practical, fun, and progressively challenging.
+${buildZpdPromptBlock(input.zpdScore)}`;
 
-    return chatJSON(QUEST_SYSTEM_PROMPT, userMessage, 4000, (raw) =>
-      QuestGenerationOutputSchema.parse(raw),
+    return chatJSON(
+      QUEST_SYSTEM_PROMPT,
+      userMessage,
+      4000,
+      (raw) => QuestGenerationOutputSchema.parse(raw),
+      "smart",
     );
   },
 
@@ -292,8 +331,12 @@ Design missions that connect their dream with their talents, using materials ava
 
     const userMessage = `Group these ${entries.length} gallery entries into meaningful clusters:\n\n${entrySummary}\n\nCreate clusters that highlight talent themes and geographic connections. Make labels child-friendly and encouraging.`;
 
-    return chatJSON(CLUSTERING_SYSTEM_PROMPT, userMessage, 2000, (raw) =>
-      ClusteringOutputSchema.parse(raw),
+    return chatJSON(
+      CLUSTERING_SYSTEM_PROMPT,
+      userMessage,
+      2000,
+      (raw) => ClusteringOutputSchema.parse(raw),
+      "fast",
     );
   },
 

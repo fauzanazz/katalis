@@ -17,6 +17,12 @@ vi.mock("next-intl", () => {
     "quest.list.viewQuest": "View Quest",
     "quest.list.startNewQuest": "Start New Quest",
     "quest.list.createQuest": "Create a Quest",
+    "quest.list.kicker": "Your quests",
+    "quest.list.greetingGuest": "Hello, Adventurer!",
+    "quest.list.greetingMorning": "Good morning, {name}!",
+    "quest.list.greetingAfternoon": "Good afternoon, {name}!",
+    "quest.list.greetingEvening": "Good evening, {name}!",
+    "quest.list.greetingSubtitle": "Pick up where you left off, or start a new adventure.",
 
     // Quest overview page
     "quest.overview.title": "Your Quest",

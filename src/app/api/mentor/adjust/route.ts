@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { AdjustmentInputSchema } from "@/lib/ai/mentor-schemas";
 import { simplifyMission } from "@/lib/ai/mentor";
 import { buildBadgeContext, evaluateBadges, awardBadges } from "@/lib/badges";
+import { getZpdScore, scoreToBand } from "@/lib/zpd";
 
 /**
  * POST /api/mentor/adjust
@@ -86,11 +87,16 @@ export async function POST(request: NextRequest) {
       try { return JSON.parse(mission.materials); } catch { return []; }
     })();
 
+    // Derive ZPD floor band for this child so the simplification stays in-band
+    const currentZpdScore = await getZpdScore(session.childId);
+    const currentBand = scoreToBand(currentZpdScore);
+
     // Generate simplified instructions
     const simplified = await simplifyMission(
       originalInstructions,
       mission.title,
       materials,
+      currentBand,
     );
 
     // Save adjustment event + update session in transaction

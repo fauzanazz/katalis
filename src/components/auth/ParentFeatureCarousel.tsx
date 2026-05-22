@@ -82,18 +82,18 @@ export function ParentFeatureCarousel() {
       ))}
 
       {/* Top gradient + vision text */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-64 bg-gradient-to-b from-black/85 via-black/50 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-gradient-to-b from-black/90 via-black/65 to-transparent" />
       <div className="absolute inset-x-0 top-0 px-8 pt-8 text-center">
-        <p className="text-xs font-semibold uppercase tracking-widest text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.8)]">Katalis</p>
-        <h2 className="mt-1 font-display text-xl font-bold leading-snug text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.9)]">{t("heading")}</h2>
-        <p className="mt-1 text-xs leading-relaxed text-white [text-shadow:0_1px_6px_rgba(0,0,0,0.8)]">{t("vision")}</p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-white [text-shadow:0_1px_8px_rgba(0,0,0,1)]">Katalis</p>
+        <h2 className="mt-1 font-display text-xl font-bold leading-snug !text-white [text-shadow:0_2px_12px_rgba(0,0,0,1),0_0_40px_rgba(0,0,0,0.8)]">{t("heading")}</h2>
+        <p className="mt-1 text-xs leading-relaxed text-white [text-shadow:0_1px_8px_rgba(0,0,0,1)]">{t("vision")}</p>
       </div>
 
       {/* Bottom gradient + feature text */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-black/80 to-transparent" />
       <div className="absolute inset-x-0 bottom-0 px-8 pb-16">
         <p className="text-lg font-bold text-white">{t(slide.titleKey)}</p>
-        <p className="mt-1 text-sm leading-relaxed text-white/75">{t(slide.descKey)}</p>
+        <p className="mt-1 text-sm leading-relaxed text-white">{t(slide.descKey)}</p>
       </div>
 
       {/* Controls */}

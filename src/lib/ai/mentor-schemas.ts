@@ -21,6 +21,36 @@ export const CreateSessionInputSchema = z.object({
 });
 export type CreateSessionInput = z.infer<typeof CreateSessionInputSchema>;
 
+/**
+ * Voice prosody features for frustration detection. Optional — supplied only
+ * when the child interacts via voice. Computed client-side from recorded audio
+ * (or server-side post-transcription) and forwarded with the next message.
+ *
+ * Spec ref: Katalis.docx §4.1 — "Pitch drop, speaking rate decrease, longer
+ * pauses correlate with frustration in children."
+ */
+export const VoiceProsodySchema = z.object({
+  /** Pitch drop ratio vs. child's session baseline (0-1; ≥0.3 elevated). */
+  pitchDropRatio: z.number().min(0).max(1).optional(),
+  /** Speaking rate in words per minute (children typical 80-130). */
+  speechRateWpm: z.number().min(0).max(300).optional(),
+  /** Fraction of speech window spent in silence/pauses (0-1; ≥0.4 elevated). */
+  pauseRatioPct: z.number().min(0).max(1).optional(),
+});
+export type VoiceProsody = z.infer<typeof VoiceProsodySchema>;
+
+export const BehavioralSignalsSchema = z.object({
+  lastInputAt: z.string().datetime().optional(),
+  editEvents: z
+    .object({
+      deletes: z.number().int().min(0),
+      redos: z.number().int().min(0),
+    })
+    .optional(),
+  voiceProsody: VoiceProsodySchema.optional(),
+});
+export type BehavioralSignals = z.infer<typeof BehavioralSignalsSchema>;
+
 /** Sending a message to the mentor */
 export const SendMessageInputSchema = z.object({
   sessionId: z.string().cuid(),
@@ -28,6 +58,7 @@ export const SendMessageInputSchema = z.object({
     .string()
     .min(1, "Message cannot be empty")
     .max(1000, "Message is too long"),
+  behavioralSignals: BehavioralSignalsSchema.optional(),
 });
 export type SendMessageInput = z.infer<typeof SendMessageInputSchema>;
 

@@ -7,6 +7,18 @@ import { prisma } from "@/lib/db";
 import { moderateContent } from "@/lib/moderation";
 import { mapQuestToInterestSignals } from "@/lib/interests/quest-mapper";
 import { ingestInterestSignals } from "@/lib/interests/ingest-service";
+import { getZpdScore } from "@/lib/zpd";
+import { getAgeGroup } from "@/lib/age";
+import {
+  buildAgeConstraintPromptFragment,
+  clampOrRejectMissions,
+} from "@/lib/ai/quest/age-caps";
+import {
+  pickExplorationInterests,
+  shouldIncludeExploration,
+  type ProfileSummary,
+} from "@/lib/ai/quest/exploration";
+import { isInterestKey } from "@/lib/interests/taxonomy";
 
 /**
  * POST /api/quest/generate
@@ -51,7 +63,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { dream, localContext, talents, discoveryId } = parsed.data;
+    const { dream, localContext, talents, discoveryId, guestDob } = parsed.data;
 
     // Moderate dream and context text for child safety
     const combinedText = `${dream} ${localContext}`;
@@ -75,13 +87,80 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate quest via Claude AI
-    const result = await generateQuest({
+    // Read ZPD anchor for this child (default baseline for guests / first-time)
+    const zpdScore = session
+      ? await getZpdScore(session.childId)
+      : undefined;
+
+    // Resolve child age band (drives mission duration caps). Authed children
+    // resolve DoB from DB; guests pass guestDob in the body.
+    let ageGroup: ReturnType<typeof getAgeGroup>["band"] = "unknown";
+    if (session?.childId) {
+      const child = await prisma.child.findUnique({
+        where: { id: session.childId },
+        select: { dateOfBirth: true },
+      });
+      ageGroup = getAgeGroup(child?.dateOfBirth).band;
+    } else if (guestDob) {
+      ageGroup = getAgeGroup(new Date(guestDob)).band;
+    }
+
+    // Pygmalion safeguard (§8.1b): periodically inject interest keys outside
+    // the child's top set so the generator includes an exploration mission.
+    let explorationInterests: string[] | undefined;
+    if (session?.childId) {
+      const profileRows = (await prisma.childInterestProfile.findMany({
+        where: { childId: session.childId },
+        orderBy: { score: "desc" },
+        take: 20,
+        select: { interestKey: true, score: true },
+      })) as Array<{ interestKey: string; score: number }>;
+      const validProfiles: ProfileSummary[] = profileRows.flatMap((p) =>
+        isInterestKey(p.interestKey)
+          ? [{ interestKey: p.interestKey, score: p.score }]
+          : [],
+      );
+      if (shouldIncludeExploration(validProfiles)) {
+        explorationInterests = pickExplorationInterests(validProfiles);
+      }
+    }
+
+    // Generate quest; validate per-band duration cap; retry once on violation.
+    let result = await generateQuest({
       dream,
       localContext,
       talents,
       discoveryId,
+      zpdScore,
+      ageGroup,
+      explorationInterests,
     });
+
+    let cap = clampOrRejectMissions(result.missions, ageGroup);
+    if (!cap.ok) {
+      const stricterContext = `${localContext}\n\n${buildAgeConstraintPromptFragment(ageGroup)}`;
+      result = await generateQuest({
+        dream,
+        localContext: stricterContext,
+        talents,
+        discoveryId,
+        zpdScore,
+        ageGroup,
+        explorationInterests,
+      });
+      cap = clampOrRejectMissions(result.missions, ageGroup);
+      if (!cap.ok) {
+        console.error("Quest generation exceeded age-band duration cap after retry:", cap.reason);
+        return NextResponse.json(
+          {
+            error: "ai_failure",
+            message:
+              "We couldn't tailor a quest for this age right now. Please try again!",
+          },
+          { status: 502 },
+        );
+      }
+    }
 
     // Guest path: skip DB and return preview only
     if (!session) {
@@ -92,6 +171,7 @@ export async function POST(request: NextRequest) {
         instructions: mission.instructions,
         materials: mission.materials,
         tips: mission.tips,
+        estimatedMinutes: mission.estimatedMinutes,
         status: mission.day === 1 ? "available" : "locked",
       }));
       return NextResponse.json(
@@ -134,6 +214,10 @@ export async function POST(request: NextRequest) {
             materials: JSON.stringify(mission.materials),
             tips: JSON.stringify(mission.tips),
             status: mission.day === 1 ? "available" : "locked",
+            phase: mission.phase ?? null,
+            intensityHint: mission.intensityHint ?? null,
+            intent: mission.intent ?? null,
+            estimatedMinutes: mission.estimatedMinutes,
           })),
         },
       },
@@ -153,6 +237,7 @@ export async function POST(request: NextRequest) {
       materials: JSON.parse(m.materials) as string[],
       tips: JSON.parse(m.tips) as string[],
       status: m.status,
+      estimatedMinutes: m.estimatedMinutes,
     }));
 
     // Ingest quest-started interest signals (fire-and-forget)

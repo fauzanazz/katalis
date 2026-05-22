@@ -53,6 +53,8 @@ export function MissionActions({
     null,
   );
 
+  const uploadStorageKey = `katalis-upload-mission-${questId}-${missionId}`;
+
   const handleStartMission = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -105,6 +107,14 @@ export function MissionActions({
       const data = await res.json();
       setShowConfirmDialog(false);
 
+      // Clear scoped upload session so this mission's proof doesn't reappear elsewhere.
+      try {
+        sessionStorage.removeItem(uploadStorageKey);
+      } catch {
+        // Ignore
+      }
+      setUploadedProof(null);
+
       // Forward any newly earned badges
       if (data.newBadges && onBadgesEarned) {
         onBadgesEarned(data.newBadges);
@@ -127,7 +137,7 @@ export function MissionActions({
     } finally {
       setLoading(false);
     }
-  }, [questId, missionId, missionDay, uploadedProof, t, onStatusChange, onBadgesEarned]);
+  }, [questId, missionId, missionDay, uploadedProof, uploadStorageKey, t, onStatusChange, onBadgesEarned]);
 
   const handleUploadComplete = useCallback(
     (result: UploadResultData) => {
@@ -255,6 +265,7 @@ export function MissionActions({
               <UploadZone
                 onUploadComplete={handleUploadComplete}
                 onError={(err) => setError(err)}
+                storageKey={uploadStorageKey}
               />
             ) : (
               <div className="flex flex-col items-center gap-3 rounded-lg border border-green-300 bg-green-50 p-4">

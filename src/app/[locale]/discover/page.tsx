@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { ImageIcon, Mic, Sparkles, BookOpen, Users } from "lucide-react";
+import { ImageIcon, Mic, Sparkles, BookOpen, Users, History, Clock, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { UploadZone } from "@/components/upload/UploadZone";
@@ -12,11 +12,26 @@ import { AnalysisLoading } from "@/components/discovery/AnalysisLoading";
 import { AnalysisError } from "@/components/discovery/AnalysisError";
 import { StoryPrompt } from "@/components/discovery/StoryPrompt";
 import { DiscoverIdleScene } from "@/components/discovery/DiscoverIdleScene";
-import Image from "next/image";
+import {
+  GuestProfileModal,
+  readGuestProfile,
+  type GuestProfile,
+} from "@/components/discovery/GuestProfileModal";
 import { getRandomStoryPrompts } from "@/lib/story-prompts";
 import { useRouter, Link } from "@/i18n/navigation";
+import { useChildId } from "@/hooks/use-child-id";
+import { KidPageShell } from "@/components/layout/KidPageShell";
 import type { UploadResultData } from "@/types/upload";
 import type { AnalysisOutput } from "@/lib/ai/schemas";
+import type { Talent } from "@/lib/ai/schemas";
+
+interface DiscoveryItem {
+  id: string;
+  type: string;
+  fileUrl: string | null;
+  talents: Talent[];
+  createdAt: string;
+}
 
 type DiscoveryFlow = "image" | "audio" | "story";
 type AnalysisState = "idle" | "analyzing" | "done" | "error";
@@ -47,11 +62,25 @@ export default function DiscoverPage() {
   const router = useRouter();
 
   const [authState, setAuthState] = useState<AuthState>("loading");
+  const [childName, setChildName] = useState<string | null>(null);
+  const [sessionChildId, setSessionChildId] = useState<string | null>(null);
+  useChildId(authState, sessionChildId);
   const [flow, setFlow] = useState<DiscoveryFlow | null>(null);
   const [analysisState, setAnalysisState] = useState<AnalysisState>("idle");
   const [analysisResults, setAnalysisResults] = useState<AnalysisOutput | null>(null);
   const [errorType, setErrorType] = useState<ErrorType>("ai_failure");
   const [currentUpload, setCurrentUpload] = useState<UploadResultData | null>(null);
+
+  const [historyItems, setHistoryItems] = useState<DiscoveryItem[]>([]);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const HISTORY_LIMIT = 5;
+
+  const [guestProfile, setGuestProfile] = useState<GuestProfile | null>(null);
+  const [guestModalOpen, setGuestModalOpen] = useState(false);
+  const [pendingAnalyze, setPendingAnalyze] = useState<(() => void) | null>(null);
+  const guestStoryGateRef = React.useRef<((allowed: boolean) => void) | null>(null);
 
   const storyImages = useMemo(() => getRandomStoryPrompts(3), []);
 
@@ -62,21 +91,47 @@ export default function DiscoverPage() {
         const data = await res.json();
         if (!data.authenticated) {
           setAuthState("unauthenticated");
+          setGuestProfile(readGuestProfile());
         } else if (data.type === "user") {
           setAuthState("parent");
         } else {
           setAuthState("child");
+          setChildName(data.childName ?? null);
+          setSessionChildId(data.childId ?? null);
         }
       } catch {
         setAuthState("unauthenticated");
+        setGuestProfile(readGuestProfile());
       }
     }
     checkAuth();
   }, []);
 
+  const fetchHistory = useCallback(async (page: number) => {
+    setHistoryLoading(true);
+    try {
+      const res = await fetch(`/api/discovery/history?page=${page}&limit=${HISTORY_LIMIT}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setHistoryItems(data.discoveries ?? []);
+      setHistoryTotal(data.total ?? 0);
+      setHistoryPage(page);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (authState === "child") fetchHistory(1);
+  }, [authState, fetchHistory]);
+
   const runAnalysis = useCallback(async (upload: UploadResultData) => {
     setAnalysisState("analyzing");
     setAnalysisResults(null);
+
+    const guestDob = authState === "unauthenticated"
+      ? readGuestProfile()?.dob ?? null
+      : null;
 
     try {
       const response = await fetch("/api/discovery/analyze", {
@@ -85,6 +140,7 @@ export default function DiscoverPage() {
         body: JSON.stringify({
           artifactUrl: upload.url,
           artifactType: upload.category,
+          ...(guestDob ? { guestDob } : {}),
         }),
       });
 
@@ -115,15 +171,77 @@ export default function DiscoverPage() {
       setErrorType("network");
       setAnalysisState("error");
     }
-  }, [router]);
+  }, [router, authState]);
 
   const handleUploadComplete = useCallback((result: UploadResultData) => {
     setCurrentUpload(result);
   }, []);
 
+  const ensureGuestProfile = useCallback(
+    (run: () => void) => {
+      if (authState !== "unauthenticated") {
+        run();
+        return;
+      }
+      const existing = readGuestProfile();
+      if (existing) {
+        setGuestProfile(existing);
+        run();
+        return;
+      }
+      setPendingAnalyze(() => run);
+      setGuestModalOpen(true);
+    },
+    [authState],
+  );
+
   const handleAnalyze = useCallback(() => {
-    if (currentUpload) runAnalysis(currentUpload);
-  }, [currentUpload, runAnalysis]);
+    if (!currentUpload) return;
+    const upload = currentUpload;
+    ensureGuestProfile(() => {
+      try {
+        sessionStorage.removeItem("katalis-upload-discover");
+      } catch {
+        // Ignore
+      }
+      runAnalysis(upload);
+    });
+  }, [currentUpload, ensureGuestProfile, runAnalysis]);
+
+  const handleStoryBeforeSubmit = useCallback((): Promise<boolean> => {
+    if (authState !== "unauthenticated") return Promise.resolve(true);
+    if (readGuestProfile()) return Promise.resolve(true);
+    return new Promise<boolean>((resolve) => {
+      guestStoryGateRef.current = resolve;
+      setGuestModalOpen(true);
+    });
+  }, [authState]);
+
+  const handleGuestModalSubmit = useCallback(
+    (profile: GuestProfile) => {
+      setGuestProfile(profile);
+      setGuestModalOpen(false);
+      if (guestStoryGateRef.current) {
+        guestStoryGateRef.current(true);
+        guestStoryGateRef.current = null;
+      }
+      if (pendingAnalyze) {
+        const run = pendingAnalyze;
+        setPendingAnalyze(null);
+        run();
+      }
+    },
+    [pendingAnalyze],
+  );
+
+  const handleGuestModalCancel = useCallback(() => {
+    setGuestModalOpen(false);
+    if (guestStoryGateRef.current) {
+      guestStoryGateRef.current(false);
+      guestStoryGateRef.current = null;
+    }
+    setPendingAnalyze(null);
+  }, []);
 
   const handleRetry = useCallback(() => {
     if (currentUpload) runAnalysis(currentUpload);
@@ -135,6 +253,11 @@ export default function DiscoverPage() {
     setAnalysisState("idle");
     setAnalysisResults(null);
     setCurrentUpload(null);
+    try {
+      sessionStorage.removeItem("katalis-upload-discover");
+    } catch {
+      // Ignore
+    }
   }, []);
 
   const handleNewDiscovery = useCallback(() => {
@@ -142,6 +265,11 @@ export default function DiscoverPage() {
     setAnalysisState("idle");
     setAnalysisResults(null);
     setCurrentUpload(null);
+    try {
+      sessionStorage.removeItem("katalis-upload-discover");
+    } catch {
+      // Ignore
+    }
   }, []);
 
   const handleStoryAnalysisComplete = useCallback(
@@ -237,20 +365,36 @@ export default function DiscoverPage() {
     },
   ];
 
+  const displayName =
+    (authState === "child" && childName) ||
+    (authState === "unauthenticated" && guestProfile?.name) ||
+    null;
+  const personalTitle = displayName ? `${t("title")}, ${displayName}!` : t("title");
+
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col">
-      {/* Two-column content row */}
-      <div className="flex flex-col px-4 py-10 lg:min-h-[calc(100svh-20rem)] lg:flex-row lg:items-center lg:gap-16 lg:py-8">
-
-      {/* Left column: title + persistent flow tabs */}
-      <div className="mb-8 shrink-0 lg:mb-0 lg:w-5/12">
-        <div className="text-center lg:text-left">
-          <h1 className="type-h1 mb-3">{t("title")}</h1>
-          <p className="type-lede mx-auto max-w-md lg:mx-0">{t("subtitle")}</p>
-        </div>
-
-        {/* Flow tab nav — horizontal on mobile, vertical on desktop */}
-        <nav className="mt-8 flex gap-2 lg:flex-col" aria-label={t("flowSelection.title")}>
+    <KidPageShell
+      kicker={t("kicker")}
+      title={personalTitle}
+      subtitle={t("subtitle")}
+      actions={
+        authState === "child" ? (
+          <Link href="/discover/history">
+            <Button
+              size="sm"
+              variant="outline"
+              className="rounded-full border-2 border-black bg-white font-black text-black shadow-[3px_3px_0_#000] hover:bg-white hover:brightness-95 active:shadow-[1px_1px_0_#000]"
+            >
+              <History className="mr-1.5 size-4" />
+              {t("results.viewHistory")}
+            </Button>
+          </Link>
+        ) : null
+      }
+    >
+      <div className="flex flex-col lg:flex-row lg:items-start lg:gap-10">
+      {/* Left column: persistent flow tabs */}
+      <div className="mb-6 shrink-0 lg:mb-0 lg:w-4/12">
+        <nav className="flex gap-2 lg:flex-col" aria-label={t("flowSelection.title")}>
           {flowTabs.map((tab) => {
             const isActive = flow === tab.id;
             return (
@@ -259,10 +403,10 @@ export default function DiscoverPage() {
                 type="button"
                 onClick={() => handleSwitchFlow(tab.id)}
                 className={cn(
-                  "flex flex-1 items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium transition-all duration-150",
+                  "flex flex-1 items-center gap-3 rounded-xl border-2 border-black px-4 py-3 text-left text-sm font-black tracking-tight transition-all",
                   isActive
-                    ? `${tab.activeBg} ${tab.activeColor}`
-                    : "text-muted-foreground hover:bg-muted hover:text-ink",
+                    ? "bg-white text-black shadow-[3px_3px_0_#000]"
+                    : "bg-white/60 text-black/60 hover:bg-white hover:text-black hover:shadow-[3px_3px_0_#000]",
                 )}
               >
                 {tab.icon}
@@ -316,7 +460,10 @@ export default function DiscoverPage() {
 
         {analysisState === "idle" && flow === "image" && (
           <div className="flex flex-col gap-6">
-            <UploadZone onUploadComplete={handleUploadComplete} />
+            <UploadZone
+              onUploadComplete={handleUploadComplete}
+              storageKey="katalis-upload-discover"
+            />
             {currentUpload && (
               <Button
                 onClick={handleAnalyze}
@@ -352,22 +499,117 @@ export default function DiscoverPage() {
             onAnalysisComplete={handleStoryAnalysisComplete}
             onAnalysisStart={handleStoryAnalysisStart}
             onError={handleStoryError}
+            beforeSubmit={authState === "unauthenticated" ? handleStoryBeforeSubmit : undefined}
+            guestDob={guestProfile?.dob ?? null}
           />
         )}
       </div>
 
       </div>{/* end two-column content row */}
 
-      {/* Garden strip — in-flow below content, always visible on desktop */}
-      <div className="pointer-events-none hidden overflow-hidden lg:block" aria-hidden="true">
-        <Image
-          src="/images/discover/garden-strip.webp"
-          alt=""
-          width={1792}
-          height={1024}
-          className="h-64 w-full object-cover object-bottom"
-        />
-      </div>
-    </div>
+      <GuestProfileModal
+        open={guestModalOpen}
+        onCancel={handleGuestModalCancel}
+        onSubmit={handleGuestModalSubmit}
+      />
+
+
+      {/* Discovery history — child only */}
+      {authState === "child" && (
+        <div className="border-t border-border px-4 py-8">
+          <div className="mx-auto max-w-6xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-ink">{t("history.title")}</h2>
+              {historyTotal > 0 && (
+                <span className="text-sm text-muted-foreground">
+                  {t("history.totalDiscoveries", { count: historyTotal })}
+                </span>
+              )}
+            </div>
+
+            {historyLoading && (
+              <div className="flex justify-center py-8">
+                <div className="size-8 animate-spin rounded-full border-2 border-border border-t-amber-500" />
+              </div>
+            )}
+
+            {!historyLoading && historyItems.length === 0 && (
+              <p className="py-6 text-center text-sm text-muted-foreground">{t("history.empty")}</p>
+            )}
+
+            {!historyLoading && historyItems.length > 0 && (
+              <>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {historyItems.map((item) => {
+                    const typeLabel =
+                      item.type === "artifact" ? t("history.artifact") :
+                      item.type === "story" ? t("history.story") :
+                      t("history.audio");
+                    const TypeIcon =
+                      item.type === "artifact" ? ImageIcon :
+                      item.type === "story" ? BookOpen :
+                      Mic;
+                    return (
+                      <Link key={item.id} href={`/discover/results/${item.id}`}>
+                        <div className="group flex items-start gap-3 rounded-xl border border-border bg-card p-4 transition-shadow hover:border-amber-300 hover:shadow-sm">
+                          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-50">
+                            <TypeIcon className="size-4 text-amber-600" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-ink">{typeLabel}</p>
+                            <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                              <Clock className="size-3" />
+                              <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <div className="mt-1.5 flex flex-wrap gap-1">
+                              {item.talents.slice(0, 2).map((talent, i) => (
+                                <span key={i} className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                                  {talent.name}
+                                </span>
+                              ))}
+                              {item.talents.length > 2 && (
+                                <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                                  +{item.talents.length - 2}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <ArrowRight className="mt-1 size-4 shrink-0 text-border transition-transform group-hover:translate-x-1" />
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+
+                {/* Pagination */}
+                {historyTotal > HISTORY_LIMIT && (
+                  <div className="mt-5 flex items-center justify-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={historyPage === 1}
+                      onClick={() => fetchHistory(historyPage - 1)}
+                    >
+                      <ChevronLeft className="size-4" />
+                    </Button>
+                    <span className="text-sm text-muted-foreground">
+                      {historyPage} / {Math.ceil(historyTotal / HISTORY_LIMIT)}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={historyPage >= Math.ceil(historyTotal / HISTORY_LIMIT)}
+                      onClick={() => fetchHistory(historyPage + 1)}
+                    >
+                      <ChevronRight className="size-4" />
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </KidPageShell>
   );
 }

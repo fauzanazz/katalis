@@ -1,0 +1,36 @@
+services:
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001" # MinIO console
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    # Local dev only. Bucket is anonymous read-only so served file URLs work
+    # without signing; writes/deletes still require the root credentials above.
+    # Do not reuse this compose file in shared or production environments.
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set local http://minio:9000 minioadmin minioadmin123 &&
+        mc mb --ignore-existing local/katalis-uploads &&
+        mc anonymous set download local/katalis-uploads &&
+        echo 'MinIO ready: bucket katalis-uploads created'
+      "
+
+volumes:
+  minio_data:

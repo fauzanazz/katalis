@@ -21,6 +21,19 @@ vi.mock("@/lib/moderation", () => ({
   getUncertaintyFallback: vi.fn(() => "Keep exploring your amazing talents!"),
 }));
 
+// Mock prisma so the age-band lookup doesn't hit the real dev DB. Use a DoB
+// in the 10-12 band so the analyze-story modality gate allows `text` and
+// existing test expectations (timeout, success, etc.) keep working.
+vi.mock("@/lib/db", () => ({
+  prisma: {
+    child: {
+      findUnique: vi.fn().mockResolvedValue({
+        dateOfBirth: new Date(Date.now() - 10 * 365.25 * 24 * 60 * 60 * 1000),
+      }),
+    },
+  },
+}));
+
 import { POST } from "../analyze-story/route";
 import { getChildSession } from "@/lib/auth";
 import { analyzeStory } from "@/lib/ai/client";
@@ -60,8 +73,9 @@ describe("POST /api/discovery/analyze-story", () => {
     vi.clearAllMocks();
   });
 
-  it("returns 401 when not authenticated", async () => {
+  it("allows guest analysis without authentication", async () => {
     mockedGetSession.mockResolvedValue(null);
+    mockedAnalyzeStory.mockResolvedValue(mockStoryResult);
 
     const res = await POST(
       createRequest({
@@ -70,9 +84,9 @@ describe("POST /api/discovery/analyze-story", () => {
         submissionType: "text",
       }),
     );
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(200);
     const data = await res.json();
-    expect(data.error).toBe("unauthorized");
+    expect(data.talents).toBeDefined();
   });
 
   it("returns 200 with talent analysis for valid text story", async () => {

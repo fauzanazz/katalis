@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db";
 import { mapDiscoveryAnalysisToInterestSignals } from "@/lib/interests/discovery-mapper";
 import { ingestInterestSignals } from "@/lib/interests/ingest-service";
 
+import { KidsArtBenchScoreSchema } from "@/lib/ai/kidsartbench-schemas";
+
 /** Schema for saving a discovery result */
 const SaveDiscoverySchema = z.object({
   type: z.enum(["artifact", "story"], {
@@ -20,6 +22,7 @@ const SaveDiscoverySchema = z.object({
       }),
     )
     .min(1, "At least one talent must be provided"),
+  kidsArtBench: KidsArtBenchScoreSchema.optional(),
 });
 
 /**
@@ -60,15 +63,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { type, fileUrl, talents } = parsed.data;
+    const { type, fileUrl, talents, kidsArtBench } = parsed.data;
 
-    // Save discovery to database
+    // Save discovery to database. KidsArtBench scores (when present) are
+    // co-located in aiAnalysis JSON alongside talents — Discovery.aiAnalysis
+    // is the long-term store for the structured analysis payload.
     const discovery = await prisma.discovery.create({
       data: {
         childId: session.childId,
         type,
         fileUrl: fileUrl ?? null,
-        aiAnalysis: JSON.stringify({ talents }),
+        aiAnalysis: JSON.stringify(
+          kidsArtBench ? { talents, kidsArtBench } : { talents },
+        ),
         detectedTalents: JSON.stringify(talents),
       },
     });

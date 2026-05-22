@@ -23,14 +23,6 @@ import { getNextHeaderHiddenState } from "./stickyHeader";
 import { PillTag } from "./PillTag";
 import MagicBento, { type MagicBentoItem } from "./MagicBento";
 
-const STEP_ACCENTS = [
-  { circle: "bg-blue-ocean", label: "1" },
-  { circle: "bg-yellow-sun", label: "2" },
-  { circle: "bg-green-leaf", label: "3" },
-  { circle: "bg-pink-bloom", label: "4" },
-  { circle: "bg-lavender-mist", label: "5" },
-] as const;
-
 const JOURNEY_STEP_STYLES = [
   { panel: "bg-blue-ocean", text: "text-ink", muted: "!text-ink/60" },
   { panel: "bg-yellow-sun-deep", text: "text-ink", muted: "!text-ink/60" },
@@ -617,52 +609,3 @@ export function HomeLanding() {
   );
 }
 
-/**
- * Hero atmosphere: full-bleed washes (readable on motion-reduce) + Figma-style soft blurs.
- * On lg+, blurs span the section so the headline column is not left visually flat.
- */
-function HeroFigmaDecor() {
-  return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
-      {/* Base wash — always on */}
-      <div className="absolute inset-0 bg-gradient-to-b from-plain-surface via-blue-ocean-light/15 to-blue-ocean-light/25" />
-      <div className="absolute inset-y-0 left-0 w-[min(74%,560px)] bg-gradient-to-r from-blue-ocean-light/20 via-blue-ocean-light/10 to-transparent lg:w-[52%]" />
-      <div className="absolute inset-y-0 right-0 w-[min(82%,640px)] bg-gradient-to-l from-blue-ocean/20 via-blue-ocean-light/15 to-transparent lg:w-[58%]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_88%_58%_at_50%_-8%,var(--blue-ocean-light),transparent_58%)] opacity-30" />
-
-      {/* Soft sun-warm accent behind illustration side (desktop) */}
-      <div className="absolute bottom-[-20%] right-[-10%] h-[min(380px,48vh)] w-[min(420px,55vw)] rounded-full bg-blue-ocean-light/20 blur-3xl sm:right-0 lg:bottom-[-12%] lg:right-[2%] lg:h-[min(440px,52vh)] lg:w-[min(520px,42vw)]" />
-
-      {/* Blur ornaments: centered ~430 on small screens; full section width on lg+ */}
-      <div className="absolute inset-y-0 left-1/2 w-full max-w-[430px] -translate-x-1/2 overflow-hidden sm:max-w-[min(480px,94vw)] lg:left-0 lg:max-w-none lg:translate-x-0">
-        <div className="absolute inset-0 overflow-hidden motion-reduce:hidden">
-          {/* Vector 5 — widens with viewport on lg */}
-          <div className="absolute inset-x-0 top-[-18%] flex justify-center lg:inset-x-[6%] lg:top-[-15%]">
-            <div className="h-[min(524px,78vh)] w-full max-w-[min(430px,92vw)] rounded-[42%] bg-blue-ocean-light/45 blur-[100px] sm:blur-[160px] md:blur-[200px] lg:max-w-[min(1040px,88vw)] lg:blur-[220px]" />
-          </div>
-
-          {/* Group 309 — kiri bawah */}
-          <div className="absolute bottom-[-10%] left-[-14%] sm:left-[-8%] md:left-0 lg:left-[max(0.5rem,calc((100%-72rem)/2-2rem))]">
-            <div className="absolute left-0 top-0 h-[312px] w-[171px] rounded-full bg-blue-ocean-light/55 blur-3xl lg:h-[340px] lg:w-[200px]" />
-            <div className="absolute left-0 top-[52px] h-[261px] w-[120px] rounded-full bg-blue-ocean-light/80 blur-2xl lg:h-[288px] lg:w-[140px]" />
-            <div className="absolute left-0 top-[99px] h-[213px] w-[73px] rounded-full bg-blue-ocean-light/80 blur-xl opacity-95 lg:h-[236px] lg:w-[86px]" />
-          </div>
-
-          {/* Group 307 — kanan atas */}
-          <div className="absolute right-[-8%] top-[5%] sm:right-0 md:right-[2%] lg:right-[max(0.5rem,calc((100%-72rem)/2-0.5rem))]">
-            <div className="absolute right-0 top-0 h-[336px] w-[118px] rounded-full bg-blue-ocean-light/25 blur-3xl lg:h-[380px] lg:w-[140px]" />
-            <div className="absolute right-[22px] top-[24px] h-[289px] w-[70px] rounded-full bg-blue-ocean-light/20 blur-2xl" />
-            <div className="absolute right-[48px] top-[48px] h-[241px] w-[23px] rounded-full bg-blue-ocean-light/20 blur-xl" />
-          </div>
-
-          {/* Group 308 — kanan tengah */}
-          <div className="absolute right-[-6%] top-[12%] sm:right-[2%] md:right-[4%] lg:right-[max(1rem,calc((100%-72rem)/2+1rem))]">
-            <div className="absolute right-0 top-0 h-[338px] w-[100px] rounded-full bg-blue-ocean-light/50 blur-3xl lg:h-[380px] lg:w-[120px]" />
-            <div className="absolute right-[26px] top-[26px] h-[290px] w-[53px] rounded-full bg-blue-ocean/35 blur-2xl" />
-            <div className="absolute right-[52px] top-[52px] h-[242px] w-[5px] rounded-full bg-blue-ocean/40 blur-lg opacity-90" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}

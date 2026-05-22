@@ -6,6 +6,7 @@ import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 import { ReflectionInputSchema } from "@/lib/ai/mentor-schemas";
 import { summarizeReflection } from "@/lib/ai/mentor";
 import { buildBadgeContext, evaluateBadges, awardBadges } from "@/lib/badges";
+import { recordZpdEvent } from "@/lib/zpd";
 
 /**
  * POST /api/reflection/daily
@@ -120,6 +121,17 @@ export async function POST(request: NextRequest) {
       trigger: "reflection",
       questId,
     });
+
+    // Record ZPD event — reflecting on a mission is a strong engagement signal
+    try {
+      await recordZpdEvent({
+        childId: session.childId,
+        outcome: "completion_strong_reflection",
+        missionId: mission?.id ?? null,
+      });
+    } catch (zpdError) {
+      console.error("ZPD event recording failed for reflection, continuing:", zpdError);
+    }
 
     return NextResponse.json({
       id: reflection.id,

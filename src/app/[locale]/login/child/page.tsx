@@ -1,10 +1,17 @@
 "use client";
 
 import { useState, type FormEvent, Suspense } from "react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useRouter, Link } from "@/i18n/navigation";
 import { useSearchParams } from "next/navigation";
-import { ArrowRight, Sparkles, Rocket } from "lucide-react";
+import { ArrowRight, Sparkles, Rocket, HelpCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 function ChildLoginPageContent() {
   const t = useTranslations("auth");
@@ -16,6 +23,7 @@ function ChildLoginPageContent() {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showNoCodeDialog, setShowNoCodeDialog] = useState(false);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -150,6 +158,15 @@ function ChildLoginPageContent() {
                   </>
                 )}
               </button>
+
+              <button
+                type="button"
+                onClick={() => setShowNoCodeDialog(true)}
+                className="flex w-full items-center justify-center gap-1.5 pt-1 text-sm font-semibold text-black/50 hover:text-black"
+              >
+                <HelpCircle className="size-4" aria-hidden />
+                {t("child.noCode")}
+              </button>
             </form>
           </div>
 
@@ -160,15 +177,63 @@ function ChildLoginPageContent() {
 
             {/* Polaroid frame */}
             <div className="relative z-10 rotate-2 border border-black/10 bg-white p-3 pb-8 shadow-2xl">
-              <img
+              <Image
                 src="/images/kit-mascot.webp"
                 alt="Kit the Explorer Fox"
+                width={256}
+                height={256}
                 className="h-56 w-56 object-contain sm:h-64 sm:w-64"
+                priority
               />
             </div>
           </div>
         </div>
       </div>
+
+      <Dialog open={showNoCodeDialog} onOpenChange={setShowNoCodeDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black">
+              {t("child.noCodeDialog.title")}
+            </DialogTitle>
+          </DialogHeader>
+
+          <ol className="mt-2 space-y-4">
+            {([1, 2, 3] as const).map((step) => (
+              <li key={step} className="flex gap-3">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#F5C542] text-sm font-black text-black">
+                  {step}
+                </span>
+                <div>
+                  <p className="font-bold text-sm text-foreground">
+                    {t(`child.noCodeDialog.step${step}Title`)}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {t(`child.noCodeDialog.step${step}Desc`)}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          <div className="mt-4 flex flex-col gap-2">
+            <Link
+              href="/login/parent"
+              className="flex h-11 items-center justify-center rounded-full bg-black px-6 text-sm font-bold text-white hover:bg-black/80"
+              onClick={() => setShowNoCodeDialog(false)}
+            >
+              {t("child.noCodeDialog.parentLoginCta")}
+            </Link>
+            <button
+              type="button"
+              onClick={() => setShowNoCodeDialog(false)}
+              className="h-11 rounded-full border-2 border-black/20 text-sm font-semibold text-black/60 hover:border-black/40 hover:text-black"
+            >
+              {t("child.noCodeDialog.close")}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

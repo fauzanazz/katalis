@@ -9,6 +9,8 @@
  * a simplified version of the mission that avoids failure framing.
  */
 
+import type { AgeGroup } from "@/lib/age";
+
 import type {
   MentorResponse,
   SimplifiedMission,
@@ -17,39 +19,14 @@ import type {
 } from "../mentor-schemas";
 import { MentorResponseSchema, SimplifiedMissionSchema, ReflectionSummarySchema } from "../mentor-schemas";
 import { getMockMentorChat, getMockSimplifiedMission, getMockReflectionSummary } from "./mock-chat";
-import { getProvider } from "../providers";
+import { getMentorSystemPrompt } from "./age-config";
+import { resolveModel, type ModelTier } from "../models";
+import type { ZpdBand } from "@/lib/zpd";
 
 const API_TIMEOUT_MS = 30_000;
-
-/** System prompt for the Socratic mentor */
-const MENTOR_SYSTEM_PROMPT = `You are a warm, encouraging mentor for children aged 6–12. You guide them through creative missions using SOCRATIC QUESTIONING — you NEVER give direct answers or solutions. Instead, you ask questions that help the child think and discover answers themselves.
-
-CRITICAL RULES:
-1. NEVER say: "fail", "wrong", "mistake", "incorrect", "try again", "that's not right"
-2. ALWAYS say: "small adjustment", "different approach", "interesting idea", "let's explore"
-3. Keep responses SHORT (1–3 sentences max). Children lose attention with long text.
-4. Use simple words. The child may be a pre-reader or early reader.
-5. Be genuinely curious about their ideas. Celebrate their thinking process.
-6. Use emojis sparingly (1–2 per message max) for warmth.
-
-FRUSTRATION ADAPTATION:
-- none: Ask open-ended questions ("What do you think would happen if…?")
-- low: Offer gentle hints ("Have you looked at the materials list?")
-- medium: Give guided hints + offer "Small Adjustment" option
-- high: Strongly suggest a "Small Adjustment" — simplify the mission
-
-When offering a "Small Adjustment", explain it as a SMART choice, not a step back.
-Say things like: "Let's try a Small Adjustment — this is what real engineers do when they want to make progress faster!"
-
-RESPONSE FORMAT — respond ONLY with valid JSON:
-{
-  "message": "Your mentor message (1-3 sentences)",
-  "suggestions": ["Quick reply option 1", "Quick reply option 2", "Quick reply option 3"],
-  "frustrationLevel": "none|low|medium|high",
-  "offerAdjustment": false
-}
-
-Always provide exactly 3 quick reply suggestions that the child can tap.`;
+const ANTHROPIC_BASE_MODEL = "claude-sonnet-4-20250514";
+const OPENAI_BASE_MODEL = "gpt-4o";
+const VERTEX_BASE_MODEL = process.env.VERTEX_AI_MODEL ?? "gemini-2.0-flash";
 
 /** Context builder — assembles the conversation context for Claude */
 function buildUserMessage(
@@ -98,12 +75,20 @@ export async function mentorChat(
   },
   chatHistory: Array<{ role: string; content: string }>,
   isGreeting: boolean,
+  ageGroup: AgeGroup | null | undefined = "unknown",
 ): Promise<MentorResponse> {
   if (process.env.USE_MOCK_AI === "true") {
     return getMockMentorChat(childMessage, frustrationLevel, isGreeting);
   }
 
-  return generateMentorResponse(childMessage, frustrationLevel, missionContext, chatHistory, isGreeting);
+  return generateMentorResponse(
+    childMessage,
+    frustrationLevel,
+    missionContext,
+    chatHistory,
+    isGreeting,
+    ageGroup,
+  );
 }
 
 async function generateMentorResponse(
@@ -118,38 +103,16 @@ async function generateMentorResponse(
   },
   chatHistory: Array<{ role: string; content: string }>,
   isGreeting: boolean,
+  ageGroup: AgeGroup | null | undefined,
 ): Promise<MentorResponse> {
-  const provider = getProvider();
   const userMessage = buildUserMessage(childMessage, frustrationLevel, missionContext, chatHistory, isGreeting);
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
   try {
-    // Use provider's text generation capability for mentor chat
-    // Since AIProvider doesn't have a generic generateText method,
-    // we'll leverage the text moderation or use a workaround
-    // For now, create a lightweight wrapper that calls the provider's API
-    
-    // Get the underlying provider implementation
-    const providerImpl = await (async () => {
-      const providers = {
-        anthropic: () => import("../providers/anthropic").then(m => m.anthropicProvider),
-        openai: () => import("../providers/openai").then(m => m.openaiProvider),
-        google: () => import("../providers/google").then(m => m.googleProvider),
-        "vertex-ai": () => import("../providers/vertex-ai").then(m => m.vertexAiProvider),
-        openrouter: () => import("../providers/openrouter").then(m => m.openrouterProvider),
-        nvidia: () => import("../providers/nvidia").then(m => m.nvidiaProvider),
-        grok: () => import("../providers/grok").then(m => m.grokProvider),
-      };
-      
-      const providerName = (process.env.AI_PROVIDER ?? "openai") as keyof typeof providers;
-      return providers[providerName]?.() ?? import("../providers/openai").then(m => m.openaiProvider);
-    })();
-
-    // This is a fallback - ideally we'd have a generic generateJSON method on AIProvider
-    // For now, we'll use the direct client approach as before but make it provider-aware
-    const response = await callProviderForMentor(userMessage);
+    // Provider selection happens inside callProviderForMentor via AI_PROVIDER env.
+    const response = await callProviderForMentor(userMessage, ageGroup, "smart");
 
     clearTimeout(timeoutId);
     return MentorResponseSchema.parse(response);
@@ -162,8 +125,13 @@ async function generateMentorResponse(
   }
 }
 
-async function callProviderForMentor(userMessage: string): Promise<unknown> {
+async function callProviderForMentor(
+  userMessage: string,
+  ageGroup: AgeGroup | null | undefined,
+  tier: ModelTier = "default",
+): Promise<unknown> {
   const providerName = process.env.AI_PROVIDER ?? "openai";
+  const systemPrompt = getMentorSystemPrompt(ageGroup);
 
   if (providerName === "anthropic") {
     const Anthropic = (await import("@anthropic-ai/sdk")).default;
@@ -173,9 +141,9 @@ async function callProviderForMentor(userMessage: string): Promise<unknown> {
     });
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: resolveModel("anthropic", tier, ANTHROPIC_BASE_MODEL),
       max_tokens: 500,
-      system: MENTOR_SYSTEM_PROMPT,
+      system: systemPrompt,
       messages: [{ role: "user", content: userMessage }],
     });
 
@@ -189,7 +157,7 @@ async function callProviderForMentor(userMessage: string): Promise<unknown> {
   if (providerName === "google" || providerName === "vertex-ai") {
     const { VertexAI } = await import("@google-cloud/vertexai");
     const projectId = process.env.GOOGLE_CLOUD_PROJECT;
-    
+
     if (!projectId) {
       throw new Error("GOOGLE_CLOUD_PROJECT environment variable required for Vertex AI");
     }
@@ -200,7 +168,11 @@ async function callProviderForMentor(userMessage: string): Promise<unknown> {
     });
 
     const model = vertexAI.preview.getGenerativeModel({
-      model: process.env.VERTEX_AI_MODEL ?? "gemini-2.0-flash",
+      model: resolveModel(
+        providerName === "vertex-ai" ? "vertex-ai" : "google",
+        tier,
+        VERTEX_BASE_MODEL,
+      ),
     });
 
     const response = await model.generateContent({
@@ -208,7 +180,7 @@ async function callProviderForMentor(userMessage: string): Promise<unknown> {
         {
           role: "user",
           parts: [
-            { text: MENTOR_SYSTEM_PROMPT },
+            { text: systemPrompt },
             { text: userMessage },
           ],
         },
@@ -234,9 +206,9 @@ async function callProviderForMentor(userMessage: string): Promise<unknown> {
   });
 
   const response = await client.chat.completions.create({
-    model: "gpt-4o",
+    model: resolveModel("openai", tier, OPENAI_BASE_MODEL),
     messages: [
-      { role: "system", content: MENTOR_SYSTEM_PROMPT },
+      { role: "system", content: systemPrompt },
       { role: "user", content: userMessage },
     ],
     response_format: { type: "json_object" },
@@ -266,23 +238,33 @@ Respond ONLY with valid JSON:
 
 /**
  * Generate simplified mission instructions via AI.
+ *
+ * Optional `currentZpdBand` enforces a ZPD floor — the simplification should
+ * not drop below the child's current capability band. The AI is instructed
+ * to stay within the band so the simplification remains challenging.
  */
 export async function simplifyMission(
   originalInstructions: string[],
   missionTitle: string,
   materials: string[],
+  currentZpdBand?: ZpdBand,
 ): Promise<SimplifiedMission> {
   if (process.env.USE_MOCK_AI === "true") {
     return getMockSimplifiedMission();
   }
 
+  const zpdFloorLine = currentZpdBand
+    ? `\nIMPORTANT — ZPD floor: this child is currently in the "${currentZpdBand}" capability band. The simplification must stay at or above this band: still requires effort and skill, just with fewer steps or simpler materials. Do NOT regress to a clearly trivial task.`
+    : "";
+
   const userMessage = `Mission: "${missionTitle}"
 Original Instructions: ${JSON.stringify(originalInstructions)}
 Available Materials: ${materials.join(", ")}
+${zpdFloorLine}
 
 Create a simplified version of these instructions (3-4 steps max) using the simplest materials.`;
 
-  const response = await callProviderForJSON(SIMPLIFY_SYSTEM_PROMPT, userMessage, 400);
+  const response = await callProviderForJSON(SIMPLIFY_SYSTEM_PROMPT, userMessage, 400, "default");
   return SimplifiedMissionSchema.parse(response);
 }
 
@@ -319,7 +301,7 @@ Child's reflection:
 
 Summarize this reflection with encouragement.`;
 
-  const response = await callProviderForJSON(REFLECTION_SYSTEM_PROMPT, userMessage, 300);
+  const response = await callProviderForJSON(REFLECTION_SYSTEM_PROMPT, userMessage, 300, "fast");
   return ReflectionSummarySchema.parse(response);
 }
 
@@ -327,6 +309,7 @@ async function callProviderForJSON(
   systemPrompt: string,
   userMessage: string,
   maxTokens: number,
+  tier: ModelTier = "default",
 ): Promise<unknown> {
   const providerName = process.env.AI_PROVIDER ?? "openai";
 
@@ -338,7 +321,7 @@ async function callProviderForJSON(
     });
 
     const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: resolveModel("anthropic", tier, ANTHROPIC_BASE_MODEL),
       max_tokens: maxTokens,
       system: systemPrompt,
       messages: [{ role: "user", content: userMessage }],
@@ -354,7 +337,7 @@ async function callProviderForJSON(
   if (providerName === "google" || providerName === "vertex-ai") {
     const { VertexAI } = await import("@google-cloud/vertexai");
     const projectId = process.env.GOOGLE_CLOUD_PROJECT;
-    
+
     if (!projectId) {
       throw new Error("GOOGLE_CLOUD_PROJECT environment variable required for Vertex AI");
     }
@@ -365,7 +348,11 @@ async function callProviderForJSON(
     });
 
     const model = vertexAI.preview.getGenerativeModel({
-      model: process.env.VERTEX_AI_MODEL ?? "gemini-2.0-flash",
+      model: resolveModel(
+        providerName === "vertex-ai" ? "vertex-ai" : "google",
+        tier,
+        VERTEX_BASE_MODEL,
+      ),
     });
 
     const response = await model.generateContent({
@@ -399,7 +386,7 @@ async function callProviderForJSON(
   });
 
   const response = await client.chat.completions.create({
-    model: "gpt-4o",
+    model: resolveModel("openai", tier, OPENAI_BASE_MODEL),
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userMessage },

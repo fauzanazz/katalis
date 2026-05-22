@@ -155,6 +155,10 @@ export default function QuestNewPage() {
       setPageState("generating");
 
       try {
+        const guestDob =
+          typeof window !== "undefined"
+            ? sessionStorage.getItem("guest_dob")
+            : null;
         const response = await fetch("/api/quest/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -166,6 +170,7 @@ export default function QuestNewPage() {
                 ? latestDiscovery.talents
                 : undefined,
             discoveryId: latestDiscovery?.id,
+            ...(guestDob ? { guestDob } : {}),
           }),
         });
 

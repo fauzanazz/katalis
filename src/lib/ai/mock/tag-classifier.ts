@@ -42,7 +42,7 @@ const DEFAULT_TAGS = [
 
 export async function getMockTagClassification(
   talentCategory: string,
-  questContext?: string,
+  _questContext?: string,
 ): Promise<TagClassificationOutput> {
   await new Promise((resolve) => setTimeout(resolve, 300 + Math.random() * 400));
 

@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getChildSession } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import { sanitizeInput } from "@/lib/sanitize";
 import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 import { AnalysisInputSchema } from "@/lib/ai/schemas";
 import { analyzeArtifact } from "@/lib/ai/client";
 import { moderateImageContent, getUncertaintyFallback } from "@/lib/moderation";
+import {
+  bandForDob,
+  isModalityAllowed,
+  modalityFromArtifactType,
+} from "@/lib/discover/age-modality";
 
 /**
  * POST /api/discovery/analyze
@@ -17,14 +23,8 @@ import { moderateImageContent, getUncertaintyFallback } from "@/lib/moderation";
  */
 export async function POST(request: NextRequest) {
   try {
-    // Require authentication
+    // Auth is optional — guests can analyze if they provide a guestDob.
     const session = await getChildSession();
-    if (!session) {
-      return NextResponse.json(
-        { error: "unauthorized", message: "Authentication required" },
-        { status: 401 },
-      );
-    }
 
     // Parse request body
     const body = await request.json().catch(() => null);
@@ -59,11 +59,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Enforce age-band modality gate (defense in depth alongside the UI).
+    // Authed children resolve DoB from DB; guests must pass guestDob in body.
+    let dob: Date | null | undefined;
+    if (session?.childId) {
+      const child = await prisma.child.findUnique({
+        where: { id: session.childId },
+        select: { dateOfBirth: true },
+      });
+      dob = child?.dateOfBirth;
+    } else if (parsed.data.guestDob) {
+      dob = new Date(parsed.data.guestDob);
+    }
+    const band = bandForDob(dob);
+    const modality = modalityFromArtifactType(parsed.data.artifactType);
+    if (!isModalityAllowed(band, modality)) {
+      return NextResponse.json(
+        {
+          error: "modality_not_allowed_for_age",
+          message: "This input type is not available for this child's age.",
+        },
+        { status: 400 },
+      );
+    }
+
     // Moderate image content for child safety
     const moderationResult = await moderateImageContent({
       imageUrl: parsed.data.artifactUrl,
       sourceType: "discovery",
-      childId: session.childId,
+      childId: session?.childId,
     });
 
     if (!moderationResult.allowed) {

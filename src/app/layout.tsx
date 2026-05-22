@@ -6,6 +6,7 @@ import {
   Schoolbell,
 } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 
 const instrumentSans = Instrument_Sans({
   variable: "--font-instrument-sans",
@@ -44,7 +45,10 @@ export default function RootLayout({
       lang="en"
       className={`${instrumentSans.variable} ${montserrat.variable} ${luckiestGuy.variable} ${schoolbell.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col font-sans">{children}</body>
+      <body className="flex min-h-full flex-col font-sans">
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

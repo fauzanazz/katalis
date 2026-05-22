@@ -4,11 +4,13 @@ import { AnalysisOutputSchema } from "../schemas";
 import type { AnalysisInput, AnalysisOutput } from "../schemas";
 import type { StoryAnalysisInput, StoryAnalysisOutput } from "../story-schemas";
 import { QuestGenerationOutputSchema } from "../quest-schemas";
+import { buildZpdPromptBlock } from "../zpd-prompt";
 import type { QuestGenerationInput, QuestGenerationOutput } from "../quest-schemas";
 import { ClusteringOutputSchema } from "../clustering-schemas";
 import type { ClusterEntry, ClusteringOutput } from "../clustering-schemas";
 import type { ModerationResult } from "@/lib/moderation/schemas";
 import { mapToModerationResult } from "@/lib/moderation/map-result";
+import { resolveModel, type ModelTier } from "../models";
 
 const API_TIMEOUT_MS = 30_000;
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/";
@@ -182,11 +184,38 @@ async function getClient() {
   });
 }
 
+function isLocalUrl(url: string): boolean {
+  try {
+    const { hostname } = new URL(url);
+    return (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "0.0.0.0" ||
+      hostname.endsWith(".local")
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function toDataUrl(url: string): Promise<string> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to fetch image ${url}: ${res.status}`);
+  const contentType = res.headers.get("content-type") ?? "image/jpeg";
+  const buf = Buffer.from(await res.arrayBuffer());
+  return `data:${contentType};base64,${buf.toString("base64")}`;
+}
+
+async function resolveImageUrl(url: string): Promise<string> {
+  return isLocalUrl(url) ? toDataUrl(url) : url;
+}
+
 async function chatJSON<T>(
   systemPrompt: string,
   userContent: string | ChatCompletionContentPart[],
   maxTokens: number,
   parse: (raw: unknown) => T,
+  tier: ModelTier = "default",
 ): Promise<T> {
   const client = await getClient();
   const controller = new AbortController();
@@ -195,7 +224,7 @@ async function chatJSON<T>(
   try {
     const response = await client.chat.completions.create(
       {
-        model: MODEL,
+        model: resolveModel("google", tier, MODEL),
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userContent },
@@ -233,7 +262,10 @@ export const googleProvider: AIProvider = {
               type: "text" as const,
               text: "Please analyze this child's artwork and detect their interests and talents. Look beyond surface-level categorization.",
             },
-            { type: "image_url" as const, image_url: { url: input.artifactUrl } },
+            {
+              type: "image_url" as const,
+              image_url: { url: await resolveImageUrl(input.artifactUrl) },
+            },
           ]
         : [
             {
@@ -277,10 +309,15 @@ export const googleProvider: AIProvider = {
 **Detected Talents:**
 ${talentSummary}
 
-Design missions that connect their dream with their talents, using materials available in their local environment. Make it practical, fun, and progressively challenging.`;
+Design missions that connect their dream with their talents, using materials available in their local environment. Make it practical, fun, and progressively challenging.
+${buildZpdPromptBlock(input.zpdScore)}`;
 
-    return chatJSON(QUEST_SYSTEM_PROMPT, userMessage, 4000, (raw) =>
-      QuestGenerationOutputSchema.parse(raw),
+    return chatJSON(
+      QUEST_SYSTEM_PROMPT,
+      userMessage,
+      4000,
+      (raw) => QuestGenerationOutputSchema.parse(raw),
+      "smart",
     );
   },
 
@@ -294,8 +331,12 @@ Design missions that connect their dream with their talents, using materials ava
 
     const userMessage = `Group these ${entries.length} gallery entries into meaningful clusters:\n\n${entrySummary}\n\nCreate clusters that highlight talent themes and geographic connections. Make labels child-friendly and encouraging.`;
 
-    return chatJSON(CLUSTERING_SYSTEM_PROMPT, userMessage, 2000, (raw) =>
-      ClusteringOutputSchema.parse(raw),
+    return chatJSON(
+      CLUSTERING_SYSTEM_PROMPT,
+      userMessage,
+      2000,
+      (raw) => ClusteringOutputSchema.parse(raw),
+      "fast",
     );
   },
 
@@ -323,9 +364,10 @@ Design missions that connect their dream with their talents, using materials ava
 
   async moderateImage(imageUrl: string): Promise<ModerationResult> {
     try {
+      const resolvedUrl = await resolveImageUrl(imageUrl);
       const userContent: ChatCompletionContentPart[] = [
         { type: "text", text: "Analyze this image for child safety concerns:" },
-        { type: "image_url", image_url: { url: imageUrl } },
+        { type: "image_url", image_url: { url: resolvedUrl } },
       ];
       const parsed = await chatJSON(
         IMAGE_MODERATION_PROMPT,

@@ -11,11 +11,13 @@ import { AnalysisOutputSchema } from "../schemas";
 import type { AnalysisInput, AnalysisOutput } from "../schemas";
 import type { StoryAnalysisInput, StoryAnalysisOutput } from "../story-schemas";
 import { QuestGenerationOutputSchema } from "../quest-schemas";
+import { buildZpdPromptBlock } from "../zpd-prompt";
 import type { QuestGenerationInput, QuestGenerationOutput } from "../quest-schemas";
 import { ClusteringOutputSchema } from "../clustering-schemas";
 import type { ClusterEntry, ClusteringOutput } from "../clustering-schemas";
 import type { ModerationResult } from "@/lib/moderation/schemas";
 import { mapToModerationResult } from "@/lib/moderation/map-result";
+import { resolveModel, type ModelTier } from "../models";
 
 const API_TIMEOUT_MS = 30_000;
 const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT ?? "";
@@ -204,10 +206,13 @@ async function generateContent<T>(
   userMessage: string | Part[],
   max_output_tokens: number,
   parse: (raw: unknown) => T,
+  tier: ModelTier = "default",
 ): Promise<T> {
   try {
     const vertexAI = await initializeVertexAI();
-    const model = vertexAI.preview.getGenerativeModel({ model: MODEL_ID });
+    const model = vertexAI.preview.getGenerativeModel({
+      model: resolveModel("vertex-ai", tier, MODEL_ID),
+    });
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
@@ -346,13 +351,15 @@ export const vertexAiProvider: AIProvider = {
 **Detected Talents:**
 ${talentSummary}
 
-Design missions that connect their dream with their talents, using materials available in their local environment. Make it practical, fun, and progressively challenging.`;
+Design missions that connect their dream with their talents, using materials available in their local environment. Make it practical, fun, and progressively challenging.
+${buildZpdPromptBlock(input.zpdScore)}`;
 
     return generateContent(
       QUEST_SYSTEM_PROMPT,
       userMessage,
       4000,
       (raw) => QuestGenerationOutputSchema.parse(raw),
+      "smart",
     );
   },
 
@@ -371,6 +378,7 @@ Design missions that connect their dream with their talents, using materials ava
       userMessage,
       2000,
       (raw) => ClusteringOutputSchema.parse(raw),
+      "fast",
     );
   },
 

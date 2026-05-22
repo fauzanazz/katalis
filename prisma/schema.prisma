@@ -20,6 +20,8 @@ model User {
   parentReports        ParentReport[]
   questFollows         ParentQuestFollow[]
   interestAuditEvents  InterestAuditEvent[]
+  discoveryRatings     DiscoveryRating[]
+  acknowledgedAlerts   ReliabilityAlert[]
 }
 
 model AccessCode {
@@ -37,6 +39,7 @@ model Child {
   accessCodeId       String?
   name               String?
   locale             String              @default("id")
+  dateOfBirth        DateTime?           // Parent-provided. Drives age-band policy via src/lib/age.
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   accessCode         AccessCode?         @relation(fields: [accessCodeId], references: [id])
@@ -50,6 +53,8 @@ model Child {
   interestSignals    InterestSignal[]
   interestProfiles   ChildInterestProfile[]
   interestAssessments MissionInterestAssessment[]
+  zpdState           ChildZpdState?
+  zpdSnapshots       ChildZpdSnapshot[]
 }
 
 model Discovery {
@@ -64,6 +69,7 @@ model Discovery {
   child           Child    @relation(fields: [childId], references: [id])
   quests          Quest[]
   interestSignals InterestSignal[]
+  ratings         DiscoveryRating[]
 }
 
 model Quest {
@@ -95,6 +101,10 @@ model Mission {
   tips             String // JSON stored as text for SQLite
   status           String            @default("locked") // "locked", "available", "in_progress", "completed"
   proofPhotoUrl    String?
+  phase            String?           // ZPD scaffold phase: "high" | "medium" | "low"
+  intensityHint    Float?            // ZPD anchor score used to calibrate this day's task
+  intent           String?           // short text intent (e.g., "stretch", "stabilize", "consolidate")
+  estimatedMinutes Int?              // Upper bound enforced per age band; see src/lib/ai/quest/age-caps.
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   quest            Quest             @relation(fields: [questId], references: [id])
@@ -173,8 +183,15 @@ model ChildInterestProfile {
   score           Float     @default(0)
   confidence      Float     @default(0)
   signalCount     Int       @default(0)
+  /// Distinct observation days seen for this child × interestKey.
+  distinctDays    Int       @default(0)
+  /// First and last observation timestamps used for sustained-vs-fleeting classification.
+  firstSignalAt   DateTime?
   lastSignalAt    DateTime?
   trend           String    @default("stable")
+  /// "fleeting" (one-shot) | "emerging" (multi-session, <14d span) | "sustained" (≥3 days × ≥14d span).
+  /// Spec ref: Katalis.docx §6.1 — distinguish fleeting vs sustained interests.
+  stability       String    @default("fleeting")
   summary         String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
@@ -251,6 +268,9 @@ model MentorSession {
   questId         String
   status          String            @default("active") // "active", "completed"
   adjustmentCount Int               @default(0)
+  /// Tracks the soft check-in state machine: when true, next medium/high
+  /// frustration triggers a Small Adjustment instead of another check-in.
+  checkinPending  Boolean           @default(false)
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   mission         Mission           @relation(fields: [missionId], references: [id])
@@ -412,4 +432,81 @@ model ParentQuestFollow {
   @@unique([parentId, questId])
   @@index([parentId])
   @@index([questId])
+}
+
+model ChildZpdState {
+  id        String   @id @default(cuid())
+  childId   String   @unique
+  child     Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  score     Float    @default(0.30)
+  band      String   @default("developing")
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@index([childId])
+}
+
+model ChildZpdSnapshot {
+  id        String   @id @default(cuid())
+  childId   String
+  child     Child    @relation(fields: [childId], references: [id], onDelete: Cascade)
+  score     Float
+  band      String
+  missionId String?
+  reason    String   // "baseline" | "mission_completed" | "reflection_submitted" | "frustration_sustained" | "mission_abandoned"
+  createdAt DateTime @default(now())
+
+  @@index([childId, createdAt])
+  @@index([missionId])
+}
+
+/// Inter-rater reliability rating: human expert label vs. AI label at rating time.
+/// Used to compute Cohen's Kappa (≥0.6 target). Spec ref: Katalis.docx §1.3.
+model DiscoveryRating {
+  id                    String    @id @default(cuid())
+  discoveryId           String
+  discovery             Discovery @relation(fields: [discoveryId], references: [id])
+  raterUserId           String
+  rater                 User      @relation(fields: [raterUserId], references: [id])
+  /// JSON-encoded string arrays.
+  humanInterestKeys     String
+  humanTagCategories    String
+  aiInterestKeysAtRate  String
+  aiTagCategoriesAtRate String
+  notes                 String?
+  createdAt             DateTime  @default(now())
+
+  @@unique([discoveryId, raterUserId])
+  @@index([createdAt])
+}
+
+/// Periodic Cohen's Kappa snapshot per layer (e.g. interest_keys, tag_categories).
+model ReliabilitySnapshot {
+  id           String             @id @default(cuid())
+  computedAt   DateTime           @default(now())
+  layer        String
+  kappa        Float
+  sampleSize   Int
+  payloadJson  String
+  triggeredBy  String
+  alerts       ReliabilityAlert[]
+
+  @@index([layer, computedAt])
+}
+
+/// Fires when a layer's Kappa drops below the threshold (default 0.6).
+model ReliabilityAlert {
+  id             String              @id @default(cuid())
+  createdAt      DateTime            @default(now())
+  layer          String
+  kappa          Float
+  sampleSize     Int
+  snapshotId     String
+  snapshot       ReliabilitySnapshot @relation(fields: [snapshotId], references: [id])
+  acknowledgedAt DateTime?
+  acknowledgedBy String?
+  ackUser        User?               @relation(fields: [acknowledgedBy], references: [id])
+
+  @@index([layer, createdAt])
+  @@index([acknowledgedAt])
 }

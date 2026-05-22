@@ -46,63 +46,36 @@ describe("DiscoverPage", () => {
     expect(await screen.findByText("Discover Your Talents")).toBeTruthy();
   });
 
-  it("renders flow selection with image, audio, and story options", async () => {
+  it("renders persistent flow tabs (image, audio, story)", async () => {
     render(<DiscoverPage />);
-    expect(await screen.findByText("How would you like to share?")).toBeTruthy();
+    await screen.findByText("Discover Your Talents");
     expect(screen.getByText("Upload an Image")).toBeTruthy();
     expect(screen.getByText("Record Your Voice")).toBeTruthy();
     expect(screen.getByText("Story Mode")).toBeTruthy();
   });
 
-  it("shows image upload zone when image option is selected", async () => {
+  it("shows image upload zone when image tab is clicked", async () => {
     render(<DiscoverPage />);
     const imageBtn = await screen.findByText("Upload an Image");
     fireEvent.click(imageBtn);
-    expect(screen.getByText("Drag and drop your image here")).toBeTruthy();
-    expect(screen.getByText("Back to choices")).toBeTruthy();
+    expect(await screen.findByText("Drag and drop your image here")).toBeTruthy();
   });
 
-  it("shows audio recorder when audio option is selected", async () => {
+  it("shows audio recorder when audio tab is clicked", async () => {
     render(<DiscoverPage />);
     const audioBtn = await screen.findByText("Record Your Voice");
     fireEvent.click(audioBtn);
-    expect(screen.getByText("Start Recording")).toBeTruthy();
-    expect(screen.getByText("Back to choices")).toBeTruthy();
+    expect(await screen.findByText("Start Recording")).toBeTruthy();
   });
 
-  it("shows story prompt when story mode is selected", async () => {
+  it("shows story prompt when story tab is clicked", async () => {
     render(<DiscoverPage />);
     const storyBtn = await screen.findByText("Story Mode");
     fireEvent.click(storyBtn);
-    expect(screen.getByText("Look at these pictures!")).toBeTruthy();
-    expect(screen.getByText("Back to choices")).toBeTruthy();
+    expect(await screen.findByText("Look at these pictures!")).toBeTruthy();
   });
 
-  it("can navigate back to flow selection from story mode", async () => {
-    render(<DiscoverPage />);
-
-    // Go to story flow
-    fireEvent.click(await screen.findByText("Story Mode"));
-    expect(screen.getByText("Look at these pictures!")).toBeTruthy();
-
-    // Go back
-    fireEvent.click(screen.getByText("Back to choices"));
-    expect(await screen.findByText("How would you like to share?")).toBeTruthy();
-  });
-
-  it("can navigate back to flow selection", async () => {
-    render(<DiscoverPage />);
-
-    // Go to image flow
-    fireEvent.click(await screen.findByText("Upload an Image"));
-    expect(screen.getByText("Drag and drop your image here")).toBeTruthy();
-
-    // Go back
-    fireEvent.click(screen.getByText("Back to choices"));
-    expect(await screen.findByText("How would you like to share?")).toBeTruthy();
-  });
-
-  it("flow selection buttons are keyboard accessible", async () => {
+  it("flow tab buttons are keyboard accessible", async () => {
     render(<DiscoverPage />);
     const imageBtn = (await screen.findByText("Upload an Image")).closest("button");
     const audioBtn = screen.getByText("Record Your Voice").closest("button");

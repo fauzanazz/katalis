@@ -13,19 +13,30 @@ interface ChildCardProps {
     claimedAt: string;
     latestTalents?: string[];
     questCount?: number;
+    quests?: Array<{ id: string; dream: string; status: string }>;
     tips?: Array<{
       title: string;
       description: string;
       materials: string[];
       category: string;
     }>;
+    accessCode?: string;
   };
 }
 
 export function ChildCard({ child }: ChildCardProps) {
   const t = useTranslations("parent.dashboard");
+  const tCreate = useTranslations("parent.createChild");
   const router = useRouter();
   const [isSwitching, setIsSwitching] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyCode = async () => {
+    if (!child.accessCode) return;
+    await navigator.clipboard.writeText(child.accessCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleOpenAsChild = async () => {
     setIsSwitching(true);
@@ -108,6 +119,71 @@ export function ChildCard({ child }: ChildCardProps) {
       <div className="mt-4 border-t pt-3">
         <InterestInsightsClient childId={child.id} />
       </div>
+
+      {child.quests && child.quests.length > 0 && (
+        <div className="mt-3">
+          <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {t("quests")}
+          </p>
+          <div className="space-y-1">
+            {child.quests.slice(0, 3).map((q) => (
+              <Link
+                key={q.id}
+                href={`/parent/quest/${q.id}`}
+                className="flex items-center justify-between rounded bg-muted/50 px-2.5 py-1.5 text-xs hover:bg-muted"
+              >
+                <span className="truncate font-medium">{q.dream}</span>
+                <span
+                  className={`ml-2 shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                    q.status === "completed"
+                      ? "bg-green-100 text-green-700"
+                      : q.status === "abandoned"
+                        ? "bg-zinc-100 text-zinc-500"
+                        : "bg-amber-100 text-amber-700"
+                  }`}
+                >
+                  {q.status}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {child.accessCode && (
+        <div className="mt-3 border-t pt-3">
+          <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {tCreate("accessCodeLabel")}
+          </p>
+          <button
+            type="button"
+            onClick={handleCopyCode}
+            title={copied ? tCreate("copied") : tCreate("copyTooltip")}
+            className="flex w-full items-center justify-between rounded-md border bg-muted/30 px-3 py-2 text-left transition-colors hover:bg-muted"
+          >
+            <span className="font-mono text-sm font-semibold tracking-widest text-foreground">
+              {child.accessCode}
+            </span>
+            <span className="ml-2 flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+              {copied ? (
+                <>
+                  <svg className="h-3.5 w-3.5 text-green-500" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                  </svg>
+                  <span className="text-green-500">{tCreate("copied")}</span>
+                </>
+              ) : (
+                <>
+                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" />
+                  </svg>
+                  {tCreate("copyTooltip")}
+                </>
+              )}
+            </span>
+          </button>
+        </div>
+      )}
 
       <div className="mt-3 flex flex-wrap gap-2">
         <button

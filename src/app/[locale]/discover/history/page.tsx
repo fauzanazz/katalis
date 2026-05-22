@@ -9,9 +9,10 @@ import {
   BookOpen,
   Mic,
   ArrowRight,
+  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import type { Talent } from "@/lib/ai/schemas";
 
 interface DiscoveryItem {
@@ -31,6 +32,7 @@ interface HistoryResponse {
 
 export default function DiscoveryHistoryPage() {
   const t = useTranslations("discover");
+  const router = useRouter();
 
   const [discoveries, setDiscoveries] = useState<DiscoveryItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -51,6 +53,10 @@ export default function DiscoveryHistoryPage() {
         const res = await fetch(
           `/api/discovery/history?page=${pageNum}&limit=${limit}`,
         );
+        if (res.status === 401) {
+          router.push("/login?callbackUrl=/discover/history");
+          return;
+        }
         if (!res.ok) return;
 
         const data: HistoryResponse = await res.json();
@@ -66,7 +72,7 @@ export default function DiscoveryHistoryPage() {
         setLoadingMore(false);
       }
     },
-    [limit],
+    [limit, router],
   );
 
   useEffect(() => {
@@ -113,7 +119,17 @@ export default function DiscoveryHistoryPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12 bg-gradient-to-b from-amber-50 to-orange-100 min-h-screen rounded-2xl">
+    <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12">
+      {/* Back nav */}
+      <div className="mb-6">
+        <Link href="/discover">
+          <Button variant="ghost" size="sm">
+            <ArrowLeft className="mr-1 size-4" />
+            {t("results.backToDiscover")}
+          </Button>
+        </Link>
+      </div>
+
       {/* Header */}
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">

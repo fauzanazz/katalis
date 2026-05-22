@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { Link } from "@/i18n/navigation";
 import { ReportView } from "@/components/parent/ReportView";
 
@@ -68,13 +69,13 @@ export default function ParentReportsPage() {
       });
       if (!response.ok) {
         const data = await response.json();
-        alert(data.message || t("generateError"));
+        toast.error(data.message || t("generateError"));
         return;
       }
       const data = await response.json();
       setReports((prev) => [data.report, ...prev]);
     } catch {
-      alert(t("generateError"));
+      toast.error(t("generateError"));
     } finally {
       setGenerating(false);
     }

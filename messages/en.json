@@ -488,7 +488,8 @@
       "success": "Quest created! Let's begin your adventure!",
       "noDiscovery": "Discover Your Talents First!",
       "noDiscoveryDesc": "Before creating a quest, you need to discover your talents. Upload a drawing, record your voice, or tell a story!",
-      "goToDiscovery": "Start Discovering"
+      "goToDiscovery": "Start Discovering",
+      "kicker": "New quest"
     },
     "list": {
       "kicker": "Your quests",

@@ -477,7 +477,8 @@
       "success": "任务创建成功！开始你的冒险吧！",
       "noDiscovery": "先发现你的天赋！",
       "noDiscoveryDesc": "在创建任务之前，你需要先发现你的天赋。上传画作、录制声音或讲述故事！",
-      "goToDiscovery": "开始发现"
+      "goToDiscovery": "开始发现",
+      "kicker": "新任务"
     },
     "list": {
       "kicker": "你的任务",

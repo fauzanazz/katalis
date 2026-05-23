@@ -5,7 +5,7 @@ Every line liability. Best code: no code.
 - YAGNI: build only what's needed NOW
 - KISS: complexity kills maintainability
 - Readability > cleverness
-- Self-documenting: names explain what, comments explain why. Always descriptive names, even in map/filter.
+- Self-documenting: names explain what, comments explain why. Descriptive names always, even in map/filter.
 - Pure functions default; class only for shared mutable state or real polymorphism
 - Compose > inherit
 - Interface/type first; class only when behaviour + state need runtime instances
@@ -16,11 +16,11 @@ Every line liability. Best code: no code.
 
 # Stack
 
-- Next.js 16 (App Router, React 19) — see `node_modules/next/dist/docs/` for the current API; do **not** rely on memorized older Next conventions.
+- Next.js 16 (App Router, React 19) — see `node_modules/next/dist/docs/` for current API; do **not** rely on memorized older Next conventions.
 - TypeScript strict, ESLint (Next vitals + TS), Vitest + jsdom + Testing Library.
 - Prisma 6 (libSQL/Turso adapter) — schema at `prisma/schema.prisma`.
 - next-intl (en/id/zh) — strings in `messages/*.json`; new UI copy goes in all three.
-- Tailwind v4 + shadcn-style primitives. Light-mode only — `dark:` modifiers are banned by `src/app/__tests__/light-mode-only.test.ts`.
+- Tailwind v4 + shadcn-style primitives. Light-mode only — `dark:` modifiers banned by `src/app/__tests__/light-mode-only.test.ts`.
 - Package manager: `bun`. Ask before npm/yarn/pip equivalents.
 
 # Quickstart commands
@@ -37,7 +37,7 @@ Every line liability. Best code: no code.
 | Prisma push (no migration) | `bun run db:push` |
 | Seed | `bun prisma/seed.ts` |
 
-Always run `typecheck`, `lint`, and `test` before claiming a task complete. Lint must finish with `0 errors`; warnings are tolerated and tracked.
+Run `typecheck`, `lint`, `test` before claiming task complete. Lint must finish `0 errors`; warnings tolerated, tracked.
 
 # Repo map
 
@@ -62,39 +62,37 @@ eslint.config.mjs
 
 # UI feedback
 
-- Never use `window.alert`, `window.confirm`, or `window.prompt`. Use `toast` from `sonner`.
-- `import { toast } from "sonner"` — `<Toaster />` already mounts in the root layout.
+- Never use `window.alert`, `window.confirm`, `window.prompt`. Use `toast` from `sonner`.
+- `import { toast } from "sonner"` — `<Toaster />` mounts in root layout.
 - Variants: `toast()` info, `toast.success()`, `toast.error()`, `toast.warning()`.
 
 # i18n
 
-- All user-visible strings flow through `useTranslations` / `getTranslations`.
-- When you add a key, add it to **all** of `messages/en.json`, `messages/id.json`, `messages/zh.json`.
-- Locale routing uses `@/i18n/navigation` (`Link`, `useRouter`, `usePathname`). Don't import from `next/link` or `next/navigation` for app routes.
+- All user-visible strings via `useTranslations` / `getTranslations`.
+- New key → add to **all** `messages/en.json`, `messages/id.json`, `messages/zh.json`.
+- Locale routing uses `@/i18n/navigation` (`Link`, `useRouter`, `usePathname`). Don't import `next/link` or `next/navigation` for app routes.
 
 # Testing
 
-- `vitest.setup.ts` polyfills `ResizeObserver`, `IntersectionObserver`, `window.matchMedia` for jsdom and mocks `server-only`. Add new polyfills there.
-- Mock external boundaries (prisma, providers, auth, navigation) at the top of each test file. For prisma, mock the models actually touched by the route — including `childInterestProfile` for quest endpoints.
-- For route handlers that lazily resolve providers (e.g. `@/lib/ai/mentor/chat`), mock `@/lib/interests/quest-mapper` and `@/lib/interests/ingest-service` alongside the AI client.
-- When a hook's deps include something from a navigation hook, return a **stable object reference** in the mock so React's `useEffect` doesn't re-run forever. Pattern: `const stableRouter = { push: vi.fn(), ... }; useRouter: () => stableRouter`.
-- Async server components must be awaited then rendered: `const ui = await NotFoundPage(); render(ui);`. Mock `next-intl/server`'s `getTranslations` accordingly.
+- `vitest.setup.ts` polyfills `ResizeObserver`, `IntersectionObserver`, `window.matchMedia` for jsdom; mocks `server-only`. New polyfills go there.
+- Mock external boundaries (prisma, providers, auth, navigation) top of each test file. For prisma, mock models actually touched by route — including `childInterestProfile` for quest endpoints.
+- Route handlers lazily resolving providers (e.g. `@/lib/ai/mentor/chat`): mock `@/lib/interests/quest-mapper` + `@/lib/interests/ingest-service` alongside AI client.
+- Hook deps include navigation hook value: return **stable object reference** in mock so `useEffect` no re-run forever. Pattern: `const stableRouter = { push: vi.fn(), ... }; useRouter: () => stableRouter`.
+- Async server components: await then render — `const ui = await NotFoundPage(); render(ui);`. Mock `next-intl/server`'s `getTranslations`.
 
 # Lint notes
 
-- `react-hooks/set-state-in-effect` is **warn**, not error. SSR-safe hydration patterns (`useEffect` → read `sessionStorage`/`localStorage` → `setState`) are intentional in this repo; new refactors should migrate to `useSyncExternalStore` over time.
+- `react-hooks/set-state-in-effect` is **warn**, not error. SSR-safe hydration (`useEffect` → read `sessionStorage`/`localStorage` → `setState`) intentional here; new refactors migrate to `useSyncExternalStore` over time.
 - `react-hooks/static-components` flags `const Icon = lookup(name); <Icon />`. Use `React.createElement(iconComponent, props)` for dispatch-style icon picking.
-- `react-hooks/purity` flags `Math.random()` (or any impurity) called during render — hoist generators to module scope.
-- Unused vars are allowed when prefixed with `_`. Use `_error`, `_imageUrl`, etc. for params required by an interface but unused.
+- `react-hooks/purity` flags `Math.random()` (or any impurity) during render — hoist generators to module scope.
+- Unused vars allowed when prefixed `_`. Use `_error`, `_imageUrl`, etc. for interface-required params unused.
 
 # Operations notes
 
-- `CRON_SECRET` (32-byte hex) must be set in every environment that runs Vercel cron. The
-  `/api/admin/reliability/snapshot` endpoint requires it for the weekly reliability snapshot
-  job defined in `vercel.ts`. Generate with `openssl rand -hex 32`.
-- AI provider selection is driven by `AI_PROVIDER` env (openai default; anthropic, google, vertex-ai, openrouter, nvidia, grok also supported). See `src/lib/ai/providers/` and `src/lib/ai/models.ts`.
-- AI cost telemetry currently logs to console only — `src/lib/ai/cost-tracker.ts` has no DB persistence yet (no `AiUsageLog` Prisma model). Add the model + migration before re-enabling DB writes.
+- `CRON_SECRET` (32-byte hex) must be set in every env running Vercel cron. `/api/admin/reliability/snapshot` requires it for weekly reliability snapshot job in `vercel.ts`. Generate: `openssl rand -hex 32`.
+- AI provider driven by `AI_PROVIDER` env (openai default; anthropic, google, vertex-ai, openrouter, nvidia, grok supported). See `src/lib/ai/providers/` and `src/lib/ai/models.ts`.
+- AI cost telemetry logs to console only — `src/lib/ai/cost-tracker.ts` no DB persistence yet (no `AiUsageLog` Prisma model). Add model + migration before re-enabling DB writes.
 
 # OpenCode operating mode
 
-Follow `opencode.md`: extension sprint, direct-first. Simple/local tasks are handled by main agent without subagent. Delegate only after delegation gate passes.
+Follow `opencode.md`: extension sprint, direct-first. Simple/local tasks handled by main agent without subagent. Delegate only after delegation gate passes.

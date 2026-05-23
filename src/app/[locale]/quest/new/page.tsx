@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Sparkles, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "@/i18n/navigation";
+import { KidPageShell } from "@/components/layout/KidPageShell";
 import {
   DREAM_MIN_LENGTH,
   DREAM_MAX_LENGTH,
@@ -210,280 +211,189 @@ export default function QuestNewPage() {
     setPageState("form");
   }, []);
 
-  // Initial loading state (checking for discovery)
-  if (pageState === "loading") {
-    return (
-      <div className="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-16 sm:py-24">
-        <div className="flex flex-col items-center gap-6 text-center">
-          <div className="flex size-20 items-center justify-center rounded-full bg-amber-100">
-            <Loader2
-              className="size-10 animate-spin text-amber-600"
-              aria-hidden="true"
-            />
-          </div>
-          <p className="text-muted-foreground">
-            {t("title")}...
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const errorMessages: Record<ErrorType, string> = {
+    ai_failure: t("error.general"),
+    timeout: t("error.timeout"),
+    network: t("error.network"),
+  };
 
-  // No discovery found — guide user to discover first
-  if (pageState === "no-discovery") {
-    return (
-      <div className="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-16 sm:py-24">
-        <div className="flex flex-col items-center gap-6 text-center">
-          <div className="flex size-20 items-center justify-center rounded-full bg-amber-100">
-            <Sparkles
-              className="size-10 text-amber-600"
-              aria-hidden="true"
-            />
+  return (
+    <KidPageShell
+      kicker={t("kicker")}
+      title={t("title")}
+      subtitle={t("subtitle")}
+    >
+      {/* Loading state */}
+      {pageState === "loading" && (
+        <div className="flex flex-col items-center gap-6 py-16 text-center">
+          <div className="flex size-20 items-center justify-center rounded-full bg-black/10">
+            <Loader2 className="size-10 animate-spin text-black/60" aria-hidden="true" />
+          </div>
+          <p className="font-semibold text-black/60">{t("title")}...</p>
+        </div>
+      )}
+
+      {/* No discovery state */}
+      {pageState === "no-discovery" && (
+        <div className="flex flex-col items-center gap-6 py-16 text-center">
+          <div className="flex size-20 items-center justify-center rounded-full bg-black/10">
+            <Sparkles className="size-10 text-black/60" aria-hidden="true" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-ink">
-              {t("noDiscovery")}
-            </h2>
-            <p className="mt-2 text-muted-foreground">
-              {t("noDiscoveryDesc")}
-            </p>
+            <h2 className="text-2xl font-black text-black">{t("noDiscovery")}</h2>
+            <p className="mt-2 font-semibold text-black/60">{t("noDiscoveryDesc")}</p>
           </div>
           <Button
             size="lg"
+            className="rounded-full border-2 border-black bg-black font-black text-white shadow-[3px_3px_0_#000] hover:bg-black/80"
             onClick={() => router.push("/discover")}
           >
             <Sparkles className="mr-2 size-5" />
             {t("goToDiscovery")}
           </Button>
         </div>
-      </div>
-    );
-  }
+      )}
 
-  // Quest generation loading state
-  if (pageState === "generating") {
-    return (
-      <div className="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-16 sm:py-24">
-        <div className="flex flex-col items-center gap-6 text-center">
-          <div className="flex size-20 items-center justify-center rounded-full bg-amber-100">
-            <Loader2
-              className="size-10 animate-spin text-amber-600"
-              aria-hidden="true"
-            />
+      {/* Generating state */}
+      {pageState === "generating" && (
+        <div className="flex flex-col items-center gap-6 py-16 text-center">
+          <div className="flex size-20 items-center justify-center rounded-full bg-black/10">
+            <Loader2 className="size-10 animate-spin text-black/60" aria-hidden="true" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-ink">
-              {t("generating")}
-            </h2>
-            <p className="mt-2 text-muted-foreground">
-              {t("generatingSubtext")}
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Error state
-  if (pageState === "error") {
-    const errorMessages: Record<ErrorType, string> = {
-      ai_failure: t("error.general"),
-      timeout: t("error.timeout"),
-      network: t("error.network"),
-    };
-
-    return (
-      <div className="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-16 sm:py-24">
-        <div className="flex flex-col items-center gap-6 text-center">
-          <div className="flex size-20 items-center justify-center rounded-full bg-red-100">
-            <AlertCircle
-              className="size-10 text-red-600"
-              aria-hidden="true"
-            />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-ink">
-              {errorMessages[errorType]}
-            </h2>
-            <p className="mt-2 text-muted-foreground">
-              {t("error.hint")}
-            </p>
-          </div>
-          <Button onClick={handleRetry} size="lg">
-            <RefreshCw className="mr-2 size-5" />
-            {t("error.retry")}
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Form state
-  return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:py-12 bg-gradient-to-b from-amber-50 to-orange-100 min-h-screen">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
-          {t("title")}
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          {t("subtitle")}
-        </p>
-      </div>
-
-      {/* Talent summary from latest discovery */}
-      {latestDiscovery && latestDiscovery.talents.length > 0 && (
-        <div className="mb-8 rounded-xl border border-amber-200 bg-amber-50 p-4">
-          <h2 className="mb-3 text-sm font-semibold text-amber-800">
-            {t("talentSummary")}
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {latestDiscovery.talents.map((talent) => (
-              <span
-                key={talent.name}
-                className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-700"
-              >
-                <Sparkles className="mr-1.5 size-3.5" aria-hidden="true" />
-                {talent.name}
-              </span>
-            ))}
+            <h2 className="text-2xl font-black text-black">{t("generating")}</h2>
+            <p className="mt-2 font-semibold text-black/60">{t("generatingSubtext")}</p>
           </div>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6" noValidate>
-        {/* Dream input */}
-        <div className="flex flex-col gap-2">
-          <label
-            htmlFor="dream-input"
-            className="text-sm font-semibold text-ink"
-          >
-            {t("dreamLabel")}
-          </label>
-          <textarea
-            id="dream-input"
-            value={dream}
-            onChange={handleDreamChange}
-            placeholder={t("dreamPlaceholder")}
-            maxLength={DREAM_MAX_LENGTH}
-            rows={3}
-            className={`w-full resize-none rounded-lg border bg-white px-4 py-3 text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-              dreamError
-                ? "border-red-400 focus:ring-red-500"
-                : "border-zinc-300"
-            }`}
-            aria-invalid={!!dreamError}
-            aria-describedby={
-              dreamError ? "dream-error" : "dream-help"
-            }
-          />
-          <div className="flex items-center justify-between text-xs">
-            {dreamError ? (
-              <p
-                id="dream-error"
-                className="text-red-600"
-                role="alert"
-              >
-                {dreamError}
-              </p>
-            ) : (
-              <p
-                id="dream-help"
-                className="text-zinc-500"
-              >
-                {t("dreamHelp")}
-              </p>
-            )}
-            <span
-              className={`tabular-nums ${
-                dream.length >= DREAM_MAX_LENGTH
-                  ? "text-red-600"
-                  : "text-zinc-400"
-              }`}
-              aria-label={t("charCount", {
-                count: dream.length,
-                max: DREAM_MAX_LENGTH,
-              })}
-            >
-              {t("charCount", {
-                count: dream.length,
-                max: DREAM_MAX_LENGTH,
-              })}
-            </span>
+      {/* Error state */}
+      {pageState === "error" && (
+        <div className="flex flex-col items-center gap-6 py-16 text-center">
+          <div className="flex size-20 items-center justify-center rounded-full bg-red-100">
+            <AlertCircle className="size-10 text-red-600" aria-hidden="true" />
           </div>
-        </div>
-
-        {/* Local context input */}
-        <div className="flex flex-col gap-2">
-          <label
-            htmlFor="context-input"
-            className="text-sm font-semibold text-ink"
-          >
-            {t("contextLabel")}
-          </label>
-          <textarea
-            id="context-input"
-            value={localContext}
-            onChange={handleContextChange}
-            placeholder={t("contextPlaceholder")}
-            maxLength={CONTEXT_MAX_LENGTH}
-            rows={3}
-            className={`w-full resize-none rounded-lg border bg-white px-4 py-3 text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-amber-500 ${
-              contextError
-                ? "border-red-400 focus:ring-red-500"
-                : "border-zinc-300"
-            }`}
-            aria-invalid={!!contextError}
-            aria-describedby={
-              contextError ? "context-error" : "context-help"
-            }
-          />
-          <div className="flex items-center justify-between text-xs">
-            {contextError ? (
-              <p
-                id="context-error"
-                className="text-red-600"
-                role="alert"
-              >
-                {contextError}
-              </p>
-            ) : (
-              <p
-                id="context-help"
-                className="text-zinc-500"
-              >
-                {t("contextHelp")}
-              </p>
-            )}
-            <span
-              className={`tabular-nums ${
-                localContext.length >= CONTEXT_MAX_LENGTH
-                  ? "text-red-600"
-                  : "text-zinc-400"
-              }`}
-              aria-label={t("charCount", {
-                count: localContext.length,
-                max: CONTEXT_MAX_LENGTH,
-              })}
-            >
-              {t("charCount", {
-                count: localContext.length,
-                max: CONTEXT_MAX_LENGTH,
-              })}
-            </span>
+          <div>
+            <h2 className="text-xl font-black text-black">{errorMessages[errorType]}</h2>
+            <p className="mt-2 font-semibold text-black/60">{t("error.hint")}</p>
           </div>
+          <Button
+            onClick={handleRetry}
+            size="lg"
+            className="rounded-full border-2 border-black bg-black font-black text-white shadow-[3px_3px_0_#000] hover:bg-black/80"
+          >
+            <RefreshCw className="mr-2 size-5" />
+            {t("error.retry")}
+          </Button>
         </div>
+      )}
 
-        {/* Submit button */}
-        <Button
-          type="submit"
-          size="lg"
-          disabled={pageState !== "form"}
-          className="w-full"
-        >
-          <Sparkles className="mr-2 size-5" />
-          {t("generateButton")}
-        </Button>
-      </form>
-    </div>
+      {/* Form state */}
+      {pageState === "form" && (
+        <div className="mx-auto w-full max-w-2xl">
+          {/* Talent summary from latest discovery */}
+          {latestDiscovery && latestDiscovery.talents.length > 0 && (
+            <div className="mb-6 rounded-xl border-2 border-black bg-white p-4 shadow-[3px_3px_0_#000]">
+              <h2 className="mb-3 text-sm font-black uppercase tracking-widest text-black">
+                {t("talentSummary")}
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {latestDiscovery.talents.map((talent) => (
+                  <span
+                    key={talent.name}
+                    className="inline-flex items-center rounded-full border-2 border-black bg-[#C8A4E0] px-3 py-1 text-sm font-black text-black"
+                  >
+                    <Sparkles className="mr-1.5 size-3.5" aria-hidden="true" />
+                    {talent.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6" noValidate>
+            {/* Dream input */}
+            <div className="flex flex-col gap-2">
+              <label htmlFor="dream-input" className="text-sm font-black uppercase tracking-widest text-black">
+                {t("dreamLabel")}
+              </label>
+              <textarea
+                id="dream-input"
+                value={dream}
+                onChange={handleDreamChange}
+                placeholder={t("dreamPlaceholder")}
+                maxLength={DREAM_MAX_LENGTH}
+                rows={3}
+                className={`w-full resize-none rounded-lg border-2 bg-white px-4 py-3 font-semibold text-zinc-900 placeholder:font-normal placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-black ${
+                  dreamError ? "border-red-500 focus:ring-red-500" : "border-black"
+                }`}
+                aria-invalid={!!dreamError}
+                aria-describedby={dreamError ? "dream-error" : "dream-help"}
+              />
+              <div className="flex items-center justify-between text-xs">
+                {dreamError ? (
+                  <p id="dream-error" className="font-semibold text-red-600" role="alert">
+                    {dreamError}
+                  </p>
+                ) : (
+                  <p id="dream-help" className="text-black/50">{t("dreamHelp")}</p>
+                )}
+                <span
+                  className={`tabular-nums font-semibold ${dream.length >= DREAM_MAX_LENGTH ? "text-red-600" : "text-black/40"}`}
+                  aria-label={t("charCount", { count: dream.length, max: DREAM_MAX_LENGTH })}
+                >
+                  {t("charCount", { count: dream.length, max: DREAM_MAX_LENGTH })}
+                </span>
+              </div>
+            </div>
+
+            {/* Local context input */}
+            <div className="flex flex-col gap-2">
+              <label htmlFor="context-input" className="text-sm font-black uppercase tracking-widest text-black">
+                {t("contextLabel")}
+              </label>
+              <textarea
+                id="context-input"
+                value={localContext}
+                onChange={handleContextChange}
+                placeholder={t("contextPlaceholder")}
+                maxLength={CONTEXT_MAX_LENGTH}
+                rows={3}
+                className={`w-full resize-none rounded-lg border-2 bg-white px-4 py-3 font-semibold text-zinc-900 placeholder:font-normal placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-black ${
+                  contextError ? "border-red-500 focus:ring-red-500" : "border-black"
+                }`}
+                aria-invalid={!!contextError}
+                aria-describedby={contextError ? "context-error" : "context-help"}
+              />
+              <div className="flex items-center justify-between text-xs">
+                {contextError ? (
+                  <p id="context-error" className="font-semibold text-red-600" role="alert">
+                    {contextError}
+                  </p>
+                ) : (
+                  <p id="context-help" className="text-black/50">{t("contextHelp")}</p>
+                )}
+                <span
+                  className={`tabular-nums font-semibold ${localContext.length >= CONTEXT_MAX_LENGTH ? "text-red-600" : "text-black/40"}`}
+                  aria-label={t("charCount", { count: localContext.length, max: CONTEXT_MAX_LENGTH })}
+                >
+                  {t("charCount", { count: localContext.length, max: CONTEXT_MAX_LENGTH })}
+                </span>
+              </div>
+            </div>
+
+            {/* Submit button */}
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full rounded-full border-2 border-black bg-black font-black text-white shadow-[3px_3px_0_#000] hover:bg-black/80 active:shadow-[1px_1px_0_#000]"
+            >
+              <Sparkles className="mr-2 size-5" />
+              {t("generateButton")}
+            </Button>
+          </form>
+        </div>
+      )}
+    </KidPageShell>
   );
 }

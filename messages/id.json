@@ -488,7 +488,8 @@
       "success": "Misi berhasil dibuat! Ayo mulai petualanganmu!",
       "noDiscovery": "Temukan Bakatmu Dulu!",
       "noDiscoveryDesc": "Sebelum membuat misi, kamu perlu menemukan bakatmu terlebih dahulu. Unggah gambar, rekam suaramu, atau ceritakan sebuah kisah!",
-      "goToDiscovery": "Mulai Menemukan"
+      "goToDiscovery": "Mulai Menemukan",
+      "kicker": "Misi baru"
     },
     "list": {
       "kicker": "Misi kamu",

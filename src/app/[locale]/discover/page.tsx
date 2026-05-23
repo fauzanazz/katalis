@@ -374,6 +374,14 @@ export default function DiscoverPage() {
     setAnalysisState("error");
   }, []);
 
+  const handleViewGuestHistoryItem = useCallback((item: GuestHistoryItem) => {
+    setAnalysisResults({ talents: item.talents });
+    setAnalysisState("done");
+    setFlow(null);
+    setCurrentUpload(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
   const handleCreateGuestQuest = useCallback(() => {
     if (analysisResults) {
       sessionStorage.setItem("guest_talents", JSON.stringify(analysisResults.talents));
@@ -655,9 +663,11 @@ export default function DiscoverPage() {
                   item.type === "story" ? BookOpen :
                   Mic;
                 return (
-                  <div
+                  <button
                     key={item.id}
-                    className="flex items-start gap-3 rounded-xl border border-border bg-card p-4"
+                    type="button"
+                    onClick={() => handleViewGuestHistoryItem(item)}
+                    className="group flex w-full items-start gap-3 rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-amber-300 hover:shadow-sm active:scale-[0.98]"
                   >
                     <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-50">
                       {React.createElement(TypeIcon, { className: "size-4 text-amber-600" })}
@@ -681,7 +691,8 @@ export default function DiscoverPage() {
                         )}
                       </div>
                     </div>
-                  </div>
+                    <ArrowRight className="mt-1 size-4 shrink-0 text-border transition-transform group-hover:translate-x-1" />
+                  </button>
                 );
               })}
             </div>

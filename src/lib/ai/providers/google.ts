@@ -210,6 +210,94 @@ async function resolveImageUrl(url: string): Promise<string> {
   return isLocalUrl(url) ? toDataUrl(url) : url;
 }
 
+function parseDataUrl(
+  dataUrl: string,
+): { mimeType: string; data: string } | null {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) return null;
+  return { mimeType: match[1], data: match[2] };
+}
+
+async function geminiNativeImageJSON<T>(
+  systemPrompt: string,
+  textPart: string,
+  dataUrl: string,
+  maxTokens: number,
+  parse: (raw: unknown) => T,
+  tier: ModelTier = "default",
+): Promise<T> {
+  const apiKey = process.env.GOOGLE_AI_API_KEY;
+  if (!apiKey) throw new Error("GOOGLE_AI_API_KEY is not set");
+
+  const model = resolveModel("google", tier, MODEL);
+  const parsedImage = parseDataUrl(dataUrl);
+  if (!parsedImage) {
+    throw new Error("geminiNativeImageJSON requires a data URL");
+  }
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: textPart },
+              {
+                inline_data: {
+                  mime_type: parsedImage.mimeType,
+                  data: parsedImage.data,
+                },
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          responseMimeType: "application/json",
+          maxOutputTokens: maxTokens,
+          temperature: 0.7,
+        },
+      }),
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(`Gemini ${res.status}: ${body.slice(0, 500)}`);
+    }
+
+    const json = (await res.json()) as {
+      candidates?: Array<{
+        content?: { parts?: Array<{ text?: string }> };
+      }>;
+    };
+
+    const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error("Empty response from Gemini native API");
+
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("No JSON found in Gemini response");
+
+    return parse(JSON.parse(jsonMatch[0]));
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("Request timed out. Please try again.");
+    }
+    throw error;
+  }
+}
+
 async function chatJSON<T>(
   systemPrompt: string,
   userContent: string | ChatCompletionContentPart[],
@@ -255,24 +343,23 @@ async function chatJSON<T>(
 
 export const googleProvider: AIProvider = {
   async analyzeArtifact(input: AnalysisInput): Promise<AnalysisOutput> {
-    const userContent =
-      input.artifactType === "image"
-        ? [
-            {
-              type: "text" as const,
-              text: "Please analyze this child's artwork and detect their interests and talents. Look beyond surface-level categorization.",
-            },
-            {
-              type: "image_url" as const,
-              image_url: { url: await resolveImageUrl(input.artifactUrl) },
-            },
-          ]
-        : [
-            {
-              type: "text" as const,
-              text: `Please analyze this child's audio recording (available at: ${input.artifactUrl}) and detect their interests and talents based on vocal patterns, narrative structure, and content themes. Look beyond surface-level categorization.`,
-            },
-          ];
+    if (input.artifactType === "image") {
+      const dataUrl = await resolveImageUrl(input.artifactUrl);
+      return geminiNativeImageJSON(
+        ARTIFACT_SYSTEM_PROMPT,
+        "Please analyze this child's artwork and detect their interests and talents. Look beyond surface-level categorization.",
+        dataUrl,
+        1500,
+        (raw) => AnalysisOutputSchema.parse(raw),
+      );
+    }
+
+    const userContent = [
+      {
+        type: "text" as const,
+        text: `Please analyze this child's audio recording (available at: ${input.artifactUrl}) and detect their interests and talents based on vocal patterns, narrative structure, and content themes. Look beyond surface-level categorization.`,
+      },
+    ];
 
     return chatJSON(ARTIFACT_SYSTEM_PROMPT, userContent, 1500, (raw) =>
       AnalysisOutputSchema.parse(raw),
@@ -365,15 +452,19 @@ ${buildZpdPromptBlock(input.zpdScore)}`;
   async moderateImage(imageUrl: string): Promise<ModerationResult> {
     try {
       const resolvedUrl = await resolveImageUrl(imageUrl);
-      const userContent: ChatCompletionContentPart[] = [
-        { type: "text", text: "Analyze this image for child safety concerns:" },
-        { type: "image_url", image_url: { url: resolvedUrl } },
-      ];
-      const parsed = await chatJSON(
+      const parsed = await geminiNativeImageJSON(
         IMAGE_MODERATION_PROMPT,
-        userContent,
+        "Analyze this image for child safety concerns:",
+        resolvedUrl,
         300,
-        (raw) => raw as { isHarmful: boolean; category?: string; severity?: string; confidence: number; reasoning: string },
+        (raw) =>
+          raw as {
+            isHarmful: boolean;
+            category?: string;
+            severity?: string;
+            confidence: number;
+            reasoning: string;
+          },
       );
       return mapToModerationResult(parsed);
     } catch (error) {

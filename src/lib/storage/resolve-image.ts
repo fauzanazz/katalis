@@ -29,14 +29,25 @@ export function extractKeyFromUrl(url: string): string | null {
 
 export async function resolveImageToDataUrl(url: string): Promise<string> {
   const key = extractKeyFromUrl(url);
-  if (!key) return url;
+  if (!key) {
+    console.warn(
+      "[resolveImageToDataUrl] No matching prefix for URL; passing through:",
+      url.slice(0, 80),
+    );
+    return url;
+  }
 
   try {
     const storage = getStorageClient();
     const { data, contentType } = await storage.getObjectBytes(key);
+    console.log("[resolveImageToDataUrl] Resolved key:", key, "size:", data.length);
     return `data:${contentType};base64,${data.toString("base64")}`;
   } catch (error) {
-    console.error("[resolveImageToDataUrl] Failed to fetch object:", error);
+    console.error(
+      "[resolveImageToDataUrl] Failed to fetch object for key:",
+      key,
+      error,
+    );
     return url;
   }
 }

@@ -27,7 +27,7 @@ export function AnalysisError({ errorType, onRetry, onResetUpload }: AnalysisErr
           <p className="text-lg font-bold text-ink">{t("errorGuestLimit")}</p>
           <p className="mt-1.5 text-sm text-muted-foreground">{t("errorGuestLimitHint")}</p>
         </div>
-        <Link href="/login">
+        <Link href="/register">
           <Button className="bg-yellow-sun-deep font-bold text-white hover:bg-yellow-sun">
             {t("loginCta")}
           </Button>

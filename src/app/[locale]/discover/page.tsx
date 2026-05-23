@@ -521,7 +521,7 @@ export default function DiscoverPage() {
                   {t("analysis.createQuestCta")}
                 </Button>
                 <p className="text-sm text-muted-foreground">
-                  <Link href="/login" className="underline underline-offset-2">
+                  <Link href="/register" className="underline underline-offset-2">
                     {t("analysis.loginCta")}
                   </Link>
                 </p>
@@ -689,7 +689,7 @@ export default function DiscoverPage() {
               <div className="mt-4 rounded-lg bg-yellow-sun/10 px-4 py-3 text-center text-sm text-amber-800">
                 {t("guestHistory.limitReached")}
                 {" "}
-                <Link href="/login" className="font-semibold underline underline-offset-2">
+                <Link href="/register" className="font-semibold underline underline-offset-2">
                   {t("analysis.loginCta")}
                 </Link>
               </div>

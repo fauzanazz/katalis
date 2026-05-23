@@ -304,6 +304,62 @@ export function UploadZone({
     [],
   );
 
+  useEffect(() => {
+    if (disabled || uploadState === "uploading") return;
+
+    let dragDepth = 0;
+    const hasDraggedFiles = (event: globalThis.DragEvent) =>
+      Array.from(event.dataTransfer?.types ?? []).includes("Files");
+
+    const handleWindowDragEnter = (e: globalThis.DragEvent) => {
+      if (!hasDraggedFiles(e)) return;
+      e.preventDefault();
+      dragDepth += 1;
+      setIsDragOver(true);
+    };
+
+    const handleWindowDragOver = (e: globalThis.DragEvent) => {
+      if (!hasDraggedFiles(e)) return;
+      e.preventDefault();
+      e.dataTransfer!.dropEffect = "copy";
+      setIsDragOver(true);
+    };
+
+    const handleWindowDragLeave = (e: globalThis.DragEvent) => {
+      if (!hasDraggedFiles(e)) return;
+      e.preventDefault();
+      dragDepth = Math.max(0, dragDepth - 1);
+      if (dragDepth === 0) setIsDragOver(false);
+    };
+
+    const handleWindowDrop = (e: globalThis.DragEvent) => {
+      if (!hasDraggedFiles(e)) return;
+      e.preventDefault();
+      dragDepth = 0;
+      setIsDragOver(false);
+
+      const files = e.dataTransfer?.files;
+      if (!files) return;
+      if (files.length > 1) {
+        handleError(t("errors.multipleFiles"));
+        return;
+      }
+      if (files.length === 1) uploadFile(files[0]);
+    };
+
+    window.addEventListener("dragenter", handleWindowDragEnter);
+    window.addEventListener("dragover", handleWindowDragOver);
+    window.addEventListener("dragleave", handleWindowDragLeave);
+    window.addEventListener("drop", handleWindowDrop);
+
+    return () => {
+      window.removeEventListener("dragenter", handleWindowDragEnter);
+      window.removeEventListener("dragover", handleWindowDragOver);
+      window.removeEventListener("dragleave", handleWindowDragLeave);
+      window.removeEventListener("drop", handleWindowDrop);
+    };
+  }, [disabled, handleError, t, uploadFile, uploadState]);
+
   // Upload complete state: show preview
   if (uploadState === "complete" && uploadResult && preview) {
     return (
@@ -356,12 +412,7 @@ export function UploadZone({
   }
 
   return (
-    <div
-      className="relative flex min-h-[calc(100svh-19rem)] flex-col justify-center gap-4 pt-12 sm:min-h-[calc(100svh-22rem)] lg:min-h-[calc(100svh-14rem)]"
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
+    <div className="relative flex flex-col gap-4 pt-12">
       {/* Hint arrow — floats above top-right of dropzone */}
       {!disabled && uploadState === "idle" && (
         <div
@@ -402,6 +453,9 @@ export function UploadZone({
         tabIndex={disabled || uploadState === "uploading" ? -1 : 0}
         aria-label={t("dropzone")}
         aria-disabled={disabled || uploadState === "uploading"}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         onClick={() => {
           if (!disabled && uploadState !== "uploading") {
             fileInputRef.current?.click();

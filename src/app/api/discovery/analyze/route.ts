@@ -11,6 +11,18 @@ import {
   isModalityAllowed,
   modalityFromArtifactType,
 } from "@/lib/discover/age-modality";
+import { checkRateLimit } from "@/lib/rate-limit";
+
+const GUEST_ANALYZE_LIMIT = 2;
+const GUEST_ANALYZE_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+function getClientIp(request: NextRequest): string {
+  return (
+    (request.headers.get("x-forwarded-for") ?? "")
+      .split(",")[0]
+      ?.trim() || "unknown"
+  );
+}
 
 /**
  * POST /api/discovery/analyze
@@ -25,6 +37,21 @@ export async function POST(request: NextRequest) {
   try {
     // Auth is optional — guests can analyze if they provide a guestDob.
     const session = await getChildSession();
+
+    // IP-based rate limit for unauthenticated guests (max 2 per 24 h)
+    if (!session?.childId) {
+      const ip = getClientIp(request);
+      const rl = await checkRateLimit(`analyze:${ip}`, "guest-analyze", {
+        maxAttempts: GUEST_ANALYZE_LIMIT,
+        windowMs: GUEST_ANALYZE_WINDOW_MS,
+      });
+      if (rl.limited) {
+        return NextResponse.json(
+          { error: "guest_limit_reached", message: "Guest analysis limit reached. Create a free account to keep discovering!" },
+          { status: 429 },
+        );
+      }
+    }
 
     // Parse request body
     const body = await request.json().catch(() => null);

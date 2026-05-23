@@ -396,7 +396,9 @@
       "retry": "Coba Lagi",
       "uploadNewImage": "Unggah Gambar Baru",
       "lowConfidence": "Kami masih mempelajari bakat unikmu! Teruslah berkarya dan menjelajah — setiap karyamu membantu kami mengenalmu lebih baik.",
-      "contentBlocked": "Ayo coba membuat sesuatu yang berbeda! Bagaimana kalau menggambar hewan favoritmu atau dunia ajaib?"
+      "contentBlocked": "Ayo coba membuat sesuatu yang berbeda! Bagaimana kalau menggambar hewan favoritmu atau dunia ajaib?",
+      "errorGuestLimit": "Kamu sudah menggunakan semua analisis gratismu!",
+      "errorGuestLimitHint": "Buat akun gratis untuk terus menemukan bakat unikmu."
     },
     "results": {
       "pageTitle": "Bakatmu Ditemukan!",
@@ -458,6 +460,12 @@
       "warning": "Kamu belum masuk. Data lokal tidak tersimpan dan akan hilang.",
       "confirm": "Reset & Mulai Ulang",
       "cancel": "Tetap sebagai {name}"
+    },
+    "guestHistory": {
+      "title": "Penemuan Kamu",
+      "count": "{count} dari {max} analisis gratis terpakai",
+      "limitReached": "Kamu sudah menggunakan semua analisis gratis.",
+      "empty": "Belum ada penemuan."
     }
   },
   "quest": {

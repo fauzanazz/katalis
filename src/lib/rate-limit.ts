@@ -1,12 +1,17 @@
 import { prisma } from "@/lib/db";
 
-const MAX_ATTEMPTS = 10;
-const WINDOW_MS = 60 * 1000; // 1 minute
+const DEFAULT_MAX_ATTEMPTS = 10;
+const DEFAULT_WINDOW_MS = 60 * 1000; // 1 minute
 
 interface RateLimitResult {
   limited: boolean;
   remaining: number;
   resetAt: Date;
+}
+
+interface RateLimitOptions {
+  maxAttempts?: number;
+  windowMs?: number;
 }
 
 /**
@@ -16,7 +21,10 @@ interface RateLimitResult {
 export async function checkRateLimit(
   identifier: string,
   endpoint: string = "default",
+  options: RateLimitOptions = {},
 ): Promise<RateLimitResult> {
+  const MAX_ATTEMPTS = options.maxAttempts ?? DEFAULT_MAX_ATTEMPTS;
+  const WINDOW_MS = options.windowMs ?? DEFAULT_WINDOW_MS;
   const now = new Date();
 
   // Periodically clean up expired entries (1% chance per check)

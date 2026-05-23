@@ -27,6 +27,14 @@ import {
   GUEST_DOB_KEY,
   type GuestProfile,
 } from "@/components/discovery/GuestProfileModal";
+import {
+  readGuestHistory,
+  addToGuestHistory,
+  clearGuestHistory,
+  getGuestAnalysisCount,
+  GUEST_ANALYSIS_LIMIT,
+  type GuestHistoryItem,
+} from "@/lib/guest-analysis-history";
 import { getRandomStoryPrompts } from "@/lib/story-prompts";
 import { useRouter, Link } from "@/i18n/navigation";
 import { useChildId } from "@/hooks/use-child-id";
@@ -45,7 +53,7 @@ interface DiscoveryItem {
 
 type DiscoveryFlow = "image" | "audio" | "story";
 type AnalysisState = "idle" | "analyzing" | "done" | "error";
-type ErrorType = "ai_failure" | "timeout" | "network" | "content_blocked";
+type ErrorType = "ai_failure" | "timeout" | "network" | "content_blocked" | "guest_limit_reached";
 type AuthState = "loading" | "child" | "parent" | "unauthenticated";
 
 async function saveDiscoveryResults(
@@ -88,6 +96,7 @@ export default function DiscoverPage() {
   const HISTORY_LIMIT = 5;
 
   const [guestProfile, setGuestProfile] = useState<GuestProfile | null>(null);
+  const [guestHistory, setGuestHistory] = useState<GuestHistoryItem[]>([]);
   const [guestModalOpen, setGuestModalOpen] = useState(false);
   const [guestResetModalOpen, setGuestResetModalOpen] = useState(false);
   const [pendingAnalyze, setPendingAnalyze] = useState<(() => void) | null>(null);
@@ -103,6 +112,7 @@ export default function DiscoverPage() {
         if (!data.authenticated) {
           setAuthState("unauthenticated");
           setGuestProfile(readGuestProfile());
+          setGuestHistory(readGuestHistory());
         } else if (data.type === "user") {
           setAuthState("parent");
         } else {
@@ -113,6 +123,7 @@ export default function DiscoverPage() {
       } catch {
         setAuthState("unauthenticated");
         setGuestProfile(readGuestProfile());
+        setGuestHistory(readGuestHistory());
       }
     }
     checkAuth();
@@ -161,6 +172,8 @@ export default function DiscoverPage() {
           setErrorType("timeout");
         } else if (response.status === 403 || data.error === "content_blocked") {
           setErrorType("content_blocked");
+        } else if (response.status === 429 || data.error === "guest_limit_reached") {
+          setErrorType("guest_limit_reached");
         } else {
           setErrorType("ai_failure");
         }
@@ -174,6 +187,13 @@ export default function DiscoverPage() {
       if (discoveryId) {
         router.push(`/discover/results/${discoveryId}`);
         return;
+      }
+
+      // Guest: persist to localStorage history
+      if (authState === "unauthenticated") {
+        const artifactType = upload.category === "audio" ? "audio" : "artifact";
+        addToGuestHistory({ type: artifactType as GuestHistoryItem["type"], fileUrl: upload.url, talents: data.talents });
+        setGuestHistory(readGuestHistory());
       }
 
       setAnalysisResults(data);
@@ -192,6 +212,12 @@ export default function DiscoverPage() {
     (run: () => void) => {
       if (authState !== "unauthenticated") {
         run();
+        return;
+      }
+      // Client-side guard: refuse if local history already at limit
+      if (getGuestAnalysisCount() >= GUEST_ANALYSIS_LIMIT) {
+        setErrorType("guest_limit_reached");
+        setAnalysisState("error");
         return;
       }
       const existing = readGuestProfile();
@@ -221,6 +247,12 @@ export default function DiscoverPage() {
 
   const handleStoryBeforeSubmit = useCallback((): Promise<boolean> => {
     if (authState !== "unauthenticated") return Promise.resolve(true);
+    // Client-side guard: refuse if local history already at limit
+    if (getGuestAnalysisCount() >= GUEST_ANALYSIS_LIMIT) {
+      setErrorType("guest_limit_reached");
+      setAnalysisState("error");
+      return Promise.resolve(false);
+    }
     if (readGuestProfile()) return Promise.resolve(true);
     return new Promise<boolean>((resolve) => {
       guestStoryGateRef.current = resolve;
@@ -263,7 +295,9 @@ export default function DiscoverPage() {
     } catch {
       // Ignore
     }
+    clearGuestHistory();
     setGuestProfile(null);
+    setGuestHistory([]);
     setGuestResetModalOpen(false);
     setFlow(null);
     setAnalysisState("idle");
@@ -318,11 +352,16 @@ export default function DiscoverPage() {
           router.push(`/discover/results/${discoveryId}`);
           return;
         }
+        // Guest: persist story result to localStorage history
+        if (authState === "unauthenticated") {
+          addToGuestHistory({ type: "story", fileUrl: null, talents: results.talents });
+          setGuestHistory(readGuestHistory());
+        }
         setAnalysisResults(results);
         setAnalysisState("done");
       });
     },
-    [router],
+    [router, authState],
   );
 
   const handleStoryAnalysisStart = useCallback(() => {
@@ -594,6 +633,70 @@ export default function DiscoverPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Discovery history — guest */}
+      {authState === "unauthenticated" && guestHistory.length > 0 && (
+        <div className="border-t border-border px-4 py-8">
+          <div className="mx-auto max-w-6xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-ink">{t("guestHistory.title")}</h2>
+              <span className="text-sm text-muted-foreground">
+                {t("guestHistory.count", { count: guestHistory.length, max: GUEST_ANALYSIS_LIMIT })}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {guestHistory.map((item) => {
+                const typeLabel =
+                  item.type === "artifact" ? t("history.artifact") :
+                  item.type === "story" ? t("history.story") :
+                  t("history.audio");
+                const TypeIcon =
+                  item.type === "artifact" ? ImageIcon :
+                  item.type === "story" ? BookOpen :
+                  Mic;
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-start gap-3 rounded-xl border border-border bg-card p-4"
+                  >
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-50">
+                      {React.createElement(TypeIcon, { className: "size-4 text-amber-600" })}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-ink">{typeLabel}</p>
+                      <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Clock className="size-3" />
+                        <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        {item.talents.slice(0, 2).map((talent, i) => (
+                          <span key={i} className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                            {talent.name}
+                          </span>
+                        ))}
+                        {item.talents.length > 2 && (
+                          <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                            +{item.talents.length - 2}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {guestHistory.length >= GUEST_ANALYSIS_LIMIT && (
+              <div className="mt-4 rounded-lg bg-yellow-sun/10 px-4 py-3 text-center text-sm text-amber-800">
+                {t("guestHistory.limitReached")}
+                {" "}
+                <Link href="/login" className="font-semibold underline underline-offset-2">
+                  {t("analysis.loginCta")}
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Discovery history — child only */}
       {authState === "child" && (

@@ -396,7 +396,9 @@
       "retry": "Try Again",
       "uploadNewImage": "Upload New Image",
       "lowConfidence": "We're still learning about your unique talents! Keep creating and exploring — every piece helps us understand you better.",
-      "contentBlocked": "Let's try creating something different! How about drawing your favorite animal or a magical world?"
+      "contentBlocked": "Let's try creating something different! How about drawing your favorite animal or a magical world?",
+      "errorGuestLimit": "You've used all your free analyses!",
+      "errorGuestLimitHint": "Create a free account to keep discovering your unique talents."
     },
     "results": {
       "pageTitle": "Your Talents Discovered!",
@@ -458,6 +460,12 @@
       "warning": "You are not logged in. Your local data is not saved and will be lost.",
       "confirm": "Reset & Start Over",
       "cancel": "Stay as {name}"
+    },
+    "guestHistory": {
+      "title": "Your Discoveries",
+      "count": "{count} of {max} free analyses used",
+      "limitReached": "You've used all your free analyses.",
+      "empty": "No discoveries yet."
     }
   },
   "quest": {

@@ -385,7 +385,9 @@
       "retry": "重试",
       "uploadNewImage": "上传新图片",
       "lowConfidence": "我们正在发现你独特的才能！继续创作和探索——每一件作品都能帮助我们更好地了解你。",
-      "contentBlocked": "让我们尝试创作不同的东西！画一幅你最喜欢的动物或魔法世界怎么样？"
+      "contentBlocked": "让我们尝试创作不同的东西！画一幅你最喜欢的动物或魔法世界怎么样？",
+      "errorGuestLimit": "你已用完所有免费分析次数！",
+      "errorGuestLimitHint": "注册免费账户，继续探索你的独特才能。"
     },
     "results": {
       "pageTitle": "你的天赋被发现！",
@@ -447,6 +449,12 @@
       "warning": "你尚未登录。本地数据未保存，将会丢失。",
       "confirm": "重置并重新开始",
       "cancel": "继续作为{name}"
+    },
+    "guestHistory": {
+      "title": "你的发现",
+      "count": "已使用 {count} / {max} 次免费分析",
+      "limitReached": "你已用完所有免费分析次数。",
+      "empty": "还没有发现。"
     }
   },
   "quest": {

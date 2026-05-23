@@ -1,17 +1,40 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { ImagePlus, RefreshCw } from "lucide-react";
+import { ImagePlus, RefreshCw, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 
 interface AnalysisErrorProps {
-  errorType: "ai_failure" | "timeout" | "network" | "content_blocked";
+  errorType: "ai_failure" | "timeout" | "network" | "content_blocked" | "guest_limit_reached";
   onRetry: () => void;
   onResetUpload?: () => void;
 }
 
 export function AnalysisError({ errorType, onRetry, onResetUpload }: AnalysisErrorProps) {
   const t = useTranslations("discover.analysis");
+
+  if (errorType === "guest_limit_reached") {
+    return (
+      <div
+        className="flex flex-col items-center gap-5 rounded-2xl bg-yellow-sun/10 px-6 py-12 text-center"
+        role="alert"
+      >
+        <div className="flex size-14 items-center justify-center rounded-full bg-yellow-sun/20">
+          <Sparkles className="size-7 text-yellow-sun-deep" />
+        </div>
+        <div>
+          <p className="text-lg font-bold text-ink">{t("errorGuestLimit")}</p>
+          <p className="mt-1.5 text-sm text-muted-foreground">{t("errorGuestLimitHint")}</p>
+        </div>
+        <Link href="/login">
+          <Button className="bg-yellow-sun-deep font-bold text-white hover:bg-yellow-sun">
+            {t("loginCta")}
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   const messageKey =
     errorType === "timeout"

@@ -11,6 +11,7 @@ import path from "node:path";
 import {
   S3Client,
   PutObjectCommand,
+  GetObjectCommand,
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -143,6 +144,25 @@ export function createR2StorageClient(): StorageClient {
 
     getPublicUrl(key: string): string {
       return `${publicUrl}/${key}`;
+    },
+
+    async getObjectBytes(
+      key: string,
+    ): Promise<{ data: Buffer; contentType: string }> {
+      const res = await s3.send(
+        new GetObjectCommand({ Bucket: bucketName, Key: key }),
+      );
+      if (!res.Body) {
+        throw new Error(`Object not found: ${key}`);
+      }
+      const chunks: Buffer[] = [];
+      for await (const chunk of res.Body as AsyncIterable<Uint8Array>) {
+        chunks.push(Buffer.from(chunk));
+      }
+      return {
+        data: Buffer.concat(chunks),
+        contentType: res.ContentType ?? "application/octet-stream",
+      };
     },
 
     async deleteFile(key: string): Promise<void> {

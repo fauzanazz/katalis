@@ -79,6 +79,12 @@ export interface StorageClient {
   getPublicUrl(key: string): string;
 
   /**
+   * Read raw object bytes for a key. Used by server-side flows (e.g.
+   * moderation) that need the file content without exposing a public URL.
+   */
+  getObjectBytes(key: string): Promise<{ data: Buffer; contentType: string }>;
+
+  /**
    * Delete a file identified by its key.
    */
   deleteFile(key: string): Promise<void>;

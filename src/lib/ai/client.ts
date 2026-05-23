@@ -11,6 +11,7 @@ import { getMockQuestGeneration } from "./mock/quest-generation";
 import { getMockClustering } from "./mock/clustering";
 import { getProvider } from "./providers";
 import { fillPhaseMetadata } from "./zpd-prompt";
+import { resolveImageToDataUrl } from "@/lib/storage/resolve-image";
 import type { AnalysisInput, AnalysisOutput } from "./schemas";
 import type { StoryAnalysisInput, StoryAnalysisOutput } from "./story-schemas";
 import type { QuestGenerationInput, QuestGenerationOutput } from "./quest-schemas";
@@ -20,7 +21,11 @@ const isMock = () => process.env.USE_MOCK_AI === "true";
 
 export async function analyzeArtifact(input: AnalysisInput): Promise<AnalysisOutput> {
   if (isMock()) return getMockMultimodalAnalysis(input.artifactType);
-  return getProvider().analyzeArtifact(input);
+  const resolvedInput =
+    input.artifactType === "image"
+      ? { ...input, artifactUrl: await resolveImageToDataUrl(input.artifactUrl) }
+      : input;
+  return getProvider().analyzeArtifact(resolvedInput);
 }
 
 export async function analyzeStory(input: StoryAnalysisInput): Promise<StoryAnalysisOutput> {

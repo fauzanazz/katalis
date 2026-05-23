@@ -9,7 +9,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { mkdir, writeFile, unlink, access } from "node:fs/promises";
+import { mkdir, writeFile, readFile, unlink, access } from "node:fs/promises";
 import path from "node:path";
 import type {
   StorageClient,
@@ -127,6 +127,29 @@ export function createMockStorageClient(): StorageClient {
 
     getPublicUrl(key: string): string {
       return `${getBaseUrl()}/uploads/${key}`;
+    },
+
+    async getObjectBytes(
+      key: string,
+    ): Promise<{ data: Buffer; contentType: string }> {
+      const filePath = path.join(UPLOADS_ROOT, key);
+      const data = await readFile(filePath);
+      const ext = path.extname(key).toLowerCase();
+      const contentType =
+        ext === ".jpg" || ext === ".jpeg"
+          ? "image/jpeg"
+          : ext === ".png"
+            ? "image/png"
+            : ext === ".webp"
+              ? "image/webp"
+              : ext === ".mp3"
+                ? "audio/mpeg"
+                : ext === ".wav"
+                  ? "audio/wav"
+                  : ext === ".m4a"
+                    ? "audio/mp4"
+                    : "application/octet-stream";
+      return { data, contentType };
     },
 
     async deleteFile(key: string): Promise<void> {

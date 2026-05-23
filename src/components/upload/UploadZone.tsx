@@ -407,8 +407,8 @@ export function UploadZone({
         }}
         onKeyDown={handleKeyDown}
         className={`
-          relative flex min-h-[240px] cursor-pointer flex-col items-center justify-center
-          rounded-2xl border-2 border-dashed p-8 transition-all duration-200
+          relative flex min-h-[calc(100svh-19rem)] cursor-pointer flex-col items-center justify-center
+          rounded-2xl border-2 border-dashed p-8 transition-all duration-200 sm:min-h-[calc(100svh-22rem)] lg:min-h-[calc(100svh-14rem)]
           focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2
           ${
             isDragOver

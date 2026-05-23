@@ -243,6 +243,17 @@ export default function DiscoverPage() {
     setPendingAnalyze(null);
   }, []);
 
+  const resetDiscoveryUpload = useCallback(() => {
+    setCurrentUpload(null);
+    setAnalysisState("idle");
+    setAnalysisResults(null);
+    try {
+      sessionStorage.removeItem("katalis-upload-discover");
+    } catch {
+      // Ignore
+    }
+  }, []);
+
   const handleRetry = useCallback(() => {
     if (currentUpload) runAnalysis(currentUpload);
     else setAnalysisState("idle");
@@ -451,7 +462,11 @@ export default function DiscoverPage() {
         {analysisState === "analyzing" && <AnalysisLoading />}
 
         {analysisState === "error" && (
-          <AnalysisError errorType={errorType} onRetry={handleRetry} />
+          <AnalysisError
+            errorType={errorType}
+            onRetry={handleRetry}
+            onResetUpload={flow === "image" ? resetDiscoveryUpload : undefined}
+          />
         )}
 
         {analysisState === "idle" && flow === null && (

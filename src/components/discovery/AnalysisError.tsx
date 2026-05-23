@@ -1,15 +1,16 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { RefreshCw } from "lucide-react";
+import { ImagePlus, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface AnalysisErrorProps {
   errorType: "ai_failure" | "timeout" | "network" | "content_blocked";
   onRetry: () => void;
+  onResetUpload?: () => void;
 }
 
-export function AnalysisError({ errorType, onRetry }: AnalysisErrorProps) {
+export function AnalysisError({ errorType, onRetry, onResetUpload }: AnalysisErrorProps) {
   const t = useTranslations("discover.analysis");
 
   const messageKey =
@@ -50,13 +51,21 @@ export function AnalysisError({ errorType, onRetry }: AnalysisErrorProps) {
         <p className="mt-1.5 text-sm text-muted-foreground">{t("errorHint")}</p>
       </div>
 
-      <Button
-        onClick={onRetry}
-        className="bg-yellow-sun-deep font-bold text-white hover:bg-yellow-sun"
-      >
-        <RefreshCw className="mr-2 size-4" />
-        {t("retry")}
-      </Button>
+      <div className="flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
+        <Button
+          onClick={onRetry}
+          className="bg-yellow-sun-deep font-bold text-white hover:bg-yellow-sun"
+        >
+          <RefreshCw className="mr-2 size-4" />
+          {t("retry")}
+        </Button>
+        {onResetUpload && (
+          <Button onClick={onResetUpload} variant="outline" className="font-bold">
+            <ImagePlus className="mr-2 size-4" />
+            {t("uploadNewImage")}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

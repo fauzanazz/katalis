@@ -48,6 +48,19 @@ describe("AnalysisError", () => {
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
+  it("calls onResetUpload when upload new image button is clicked", () => {
+    const onResetUpload = vi.fn();
+    render(
+      <AnalysisError
+        errorType="ai_failure"
+        onRetry={() => {}}
+        onResetUpload={onResetUpload}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /upload new image/i }));
+    expect(onResetUpload).toHaveBeenCalledTimes(1);
+  });
+
   it("has alert role for accessibility", () => {
     render(<AnalysisError errorType="ai_failure" onRetry={() => {}} />);
     expect(screen.getByRole("alert")).toBeDefined();

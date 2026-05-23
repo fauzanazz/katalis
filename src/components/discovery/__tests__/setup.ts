@@ -17,6 +17,7 @@ vi.mock("next-intl", () => {
     "discover.analysis.errorNetwork": "It seems you're not connected.",
     "discover.analysis.errorHint": "Don't worry, your upload is safe. Just tap the button to try again!",
     "discover.analysis.retry": "Try Again",
+    "discover.analysis.uploadNewImage": "Upload New Image",
     // discover flow selection
     "discover.title": "Discover Your Talents",
     "discover.subtitle": "Upload a drawing, photo, or record your voice to discover your unique talents!",

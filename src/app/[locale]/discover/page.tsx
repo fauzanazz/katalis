@@ -2,9 +2,17 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { useTranslations } from "next-intl";
-import { ImageIcon, Mic, Sparkles, BookOpen, Users, History, Clock, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ImageIcon, Mic, Sparkles, BookOpen, Users, History, Clock, ArrowRight, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { UploadZone } from "@/components/upload/UploadZone";
 import { AudioRecorder } from "@/components/upload/AudioRecorder";
 import { AnalysisResults } from "@/components/discovery/AnalysisResults";
@@ -15,6 +23,8 @@ import { DiscoverIdleScene } from "@/components/discovery/DiscoverIdleScene";
 import {
   GuestProfileModal,
   readGuestProfile,
+  GUEST_NAME_KEY,
+  GUEST_DOB_KEY,
   type GuestProfile,
 } from "@/components/discovery/GuestProfileModal";
 import { getRandomStoryPrompts } from "@/lib/story-prompts";
@@ -79,6 +89,7 @@ export default function DiscoverPage() {
 
   const [guestProfile, setGuestProfile] = useState<GuestProfile | null>(null);
   const [guestModalOpen, setGuestModalOpen] = useState(false);
+  const [guestResetModalOpen, setGuestResetModalOpen] = useState(false);
   const [pendingAnalyze, setPendingAnalyze] = useState<(() => void) | null>(null);
   const guestStoryGateRef = React.useRef<((allowed: boolean) => void) | null>(null);
 
@@ -243,6 +254,23 @@ export default function DiscoverPage() {
     setPendingAnalyze(null);
   }, []);
 
+  const handleResetGuest = useCallback(() => {
+    try {
+      sessionStorage.removeItem(GUEST_NAME_KEY);
+      sessionStorage.removeItem(GUEST_DOB_KEY);
+      sessionStorage.removeItem("guest_talents");
+      sessionStorage.removeItem("guest_quest");
+    } catch {
+      // Ignore
+    }
+    setGuestProfile(null);
+    setGuestResetModalOpen(false);
+    setFlow(null);
+    setAnalysisState("idle");
+    setAnalysisResults(null);
+    setCurrentUpload(null);
+  }, []);
+
   const resetDiscoveryUpload = useCallback(() => {
     setCurrentUpload(null);
     setAnalysisState("idle");
@@ -399,6 +427,15 @@ export default function DiscoverPage() {
               {t("results.viewHistory")}
             </Button>
           </Link>
+        ) : authState === "unauthenticated" && guestProfile ? (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setGuestResetModalOpen(true)}
+            className="rounded-full border-2 border-black bg-white font-black text-black shadow-[3px_3px_0_#000] hover:bg-white hover:brightness-95 active:shadow-[1px_1px_0_#000]"
+          >
+            {t("notYou", { name: guestProfile.name })}
+          </Button>
         ) : null
       }
     >
@@ -528,6 +565,35 @@ export default function DiscoverPage() {
         onSubmit={handleGuestModalSubmit}
       />
 
+      {/* Guest reset confirmation modal */}
+      <Dialog open={guestResetModalOpen} onOpenChange={setGuestResetModalOpen}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>{t("resetGuest.title")}</DialogTitle>
+            <DialogDescription>{t("resetGuest.warning")}</DialogDescription>
+          </DialogHeader>
+          <div className="flex items-start gap-2 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+            <span>{t("resetGuest.warning")}</span>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setGuestResetModalOpen(false)}
+            >
+              {t("resetGuest.cancel", { name: guestProfile?.name ?? "" })}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleResetGuest}
+            >
+              {t("resetGuest.confirm")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Discovery history — child only */}
       {authState === "child" && (

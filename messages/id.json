@@ -451,6 +451,13 @@
       "message": "Untuk menggunakan fitur Discover, Anda perlu membuka aplikasi sebagai salah satu anak Anda.",
       "goToParent": "Ke Dashboard Orang Tua",
       "hint": "Anda dapat beralih ke akun anak Anda dari Dashboard Orang Tua."
+    },
+    "notYou": "Bukan {name}?",
+    "resetGuest": {
+      "title": "Bukan kamu?",
+      "warning": "Kamu belum masuk. Data lokal tidak tersimpan dan akan hilang.",
+      "confirm": "Reset & Mulai Ulang",
+      "cancel": "Tetap sebagai {name}"
     }
   },
   "quest": {

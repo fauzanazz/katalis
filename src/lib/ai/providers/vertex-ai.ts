@@ -285,6 +285,8 @@ function getMimeType(url: string): string {
 }
 
 export const vertexAiProvider: AIProvider = {
+  capabilities: new Set(["text", "image"] as const),
+
   async analyzeArtifact(input: AnalysisInput): Promise<AnalysisOutput> {
     if (input.artifactType === "image") {
       const base64Image = await fetchImageAsBase64(input.artifactUrl);

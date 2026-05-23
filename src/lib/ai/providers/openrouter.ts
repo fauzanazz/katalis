@@ -232,6 +232,8 @@ async function chatJSON<T>(
 }
 
 export const openrouterProvider: AIProvider = {
+  capabilities: new Set(["text"] as const),
+
   async analyzeArtifact(input: AnalysisInput): Promise<AnalysisOutput> {
     const userContent =
       input.artifactType === "image"

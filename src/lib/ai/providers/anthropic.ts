@@ -229,6 +229,8 @@ async function messageJSON<T>(
 }
 
 export const anthropicProvider: AIProvider = {
+  capabilities: new Set(["text", "image"] as const),
+
   async analyzeArtifact(input: AnalysisInput): Promise<AnalysisOutput> {
     const userContent: ContentBlock[] =
       input.artifactType === "image"

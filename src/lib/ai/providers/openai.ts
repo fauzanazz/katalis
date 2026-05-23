@@ -251,6 +251,8 @@ async function chatJSON<T>(
 }
 
 export const openaiProvider: AIProvider = {
+  capabilities: new Set(["text", "image"] as const),
+
   async analyzeArtifact(input: AnalysisInput): Promise<AnalysisOutput> {
     const userContent =
       input.artifactType === "image"

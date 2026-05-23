@@ -218,27 +218,22 @@ function parseDataUrl(
   return { mimeType: match[1], data: match[2] };
 }
 
-async function geminiNativeImageJSON<T>(
+async function geminiNativeGenerateContent<T>(
   systemPrompt: string,
-  textPart: string,
-  dataUrl: string,
+  parts: Array<Record<string, unknown>>,
   maxTokens: number,
   parse: (raw: unknown) => T,
   tier: ModelTier = "default",
+  timeoutMs: number = API_TIMEOUT_MS,
 ): Promise<T> {
   const apiKey = process.env.GOOGLE_AI_API_KEY;
   if (!apiKey) throw new Error("GOOGLE_AI_API_KEY is not set");
 
   const model = resolveModel("google", tier, MODEL);
-  const parsedImage = parseDataUrl(dataUrl);
-  if (!parsedImage) {
-    throw new Error("geminiNativeImageJSON requires a data URL");
-  }
-
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const res = await fetch(url, {
@@ -247,20 +242,7 @@ async function geminiNativeImageJSON<T>(
       signal: controller.signal,
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemPrompt }] },
-        contents: [
-          {
-            role: "user",
-            parts: [
-              { text: textPart },
-              {
-                inline_data: {
-                  mime_type: parsedImage.mimeType,
-                  data: parsedImage.data,
-                },
-              },
-            ],
-          },
-        ],
+        contents: [{ role: "user", parts }],
         generationConfig: {
           responseMimeType: "application/json",
           maxOutputTokens: maxTokens,
@@ -296,6 +278,58 @@ async function geminiNativeImageJSON<T>(
     }
     throw error;
   }
+}
+
+async function geminiNativeImageJSON<T>(
+  systemPrompt: string,
+  textPart: string,
+  dataUrl: string,
+  maxTokens: number,
+  parse: (raw: unknown) => T,
+  tier: ModelTier = "default",
+): Promise<T> {
+  const parsedImage = parseDataUrl(dataUrl);
+  if (!parsedImage) throw new Error("geminiNativeImageJSON requires a data URL");
+
+  return geminiNativeGenerateContent(
+    systemPrompt,
+    [
+      { text: textPart },
+      { inline_data: { mime_type: parsedImage.mimeType, data: parsedImage.data } },
+    ],
+    maxTokens,
+    parse,
+    tier,
+  );
+}
+
+async function geminiNativeAudioJSON<T>(
+  systemPrompt: string,
+  textPart: string,
+  audioUrl: string,
+  maxTokens: number,
+  parse: (raw: unknown) => T,
+  tier: ModelTier = "default",
+): Promise<T> {
+  // Download audio from R2 → base64 inline_data
+  const res = await fetch(audioUrl);
+  if (!res.ok) throw new Error(`Failed to fetch audio ${audioUrl}: ${res.status}`);
+  const mimeType = res.headers.get("content-type") ?? "audio/webm";
+  const buf = Buffer.from(await res.arrayBuffer());
+  const data = buf.toString("base64");
+
+  // Audio files can be larger — allow 45s
+  return geminiNativeGenerateContent(
+    systemPrompt,
+    [
+      { text: textPart },
+      { inline_data: { mime_type: mimeType, data } },
+    ],
+    maxTokens,
+    parse,
+    tier,
+    45_000,
+  );
 }
 
 async function chatJSON<T>(
@@ -342,6 +376,8 @@ async function chatJSON<T>(
 }
 
 export const googleProvider: AIProvider = {
+  capabilities: new Set(["text", "image", "audio"]),
+
   async analyzeArtifact(input: AnalysisInput): Promise<AnalysisOutput> {
     if (input.artifactType === "image") {
       const dataUrl = await resolveImageUrl(input.artifactUrl);
@@ -354,15 +390,12 @@ export const googleProvider: AIProvider = {
       );
     }
 
-    const userContent = [
-      {
-        type: "text" as const,
-        text: `Please analyze this child's audio recording (available at: ${input.artifactUrl}) and detect their interests and talents based on vocal patterns, narrative structure, and content themes. Look beyond surface-level categorization.`,
-      },
-    ];
-
-    return chatJSON(ARTIFACT_SYSTEM_PROMPT, userContent, 1500, (raw) =>
-      AnalysisOutputSchema.parse(raw),
+    return geminiNativeAudioJSON(
+      ARTIFACT_SYSTEM_PROMPT,
+      "Please listen to this child's audio recording and detect their interests and talents based on vocal patterns, narrative structure, content themes, and language use. Look beyond surface-level categorization.",
+      input.artifactUrl,
+      1500,
+      (raw) => AnalysisOutputSchema.parse(raw),
     );
   },
 

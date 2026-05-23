@@ -222,6 +222,8 @@ async function chatJSON<T>(
 }
 
 export const nvidiaProvider: AIProvider = {
+  capabilities: new Set(["text", "image"] as const),
+
   async analyzeArtifact(input: AnalysisInput): Promise<AnalysisOutput> {
     console.log("[NVIDIA] analyzeArtifact called for:", input.artifactType);
 

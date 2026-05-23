@@ -9,7 +9,7 @@ import { getMockMultimodalAnalysis } from "./mock/multimodal-analysis";
 import { getMockStoryAnalysis } from "./mock/story-analysis";
 import { getMockQuestGeneration } from "./mock/quest-generation";
 import { getMockClustering } from "./mock/clustering";
-import { getProvider } from "./providers";
+import { getProvider, getImageProvider, getAudioProvider } from "./providers";
 import { fillPhaseMetadata } from "./zpd-prompt";
 import { resolveImageToDataUrl } from "@/lib/storage/resolve-image";
 import type { AnalysisInput, AnalysisOutput } from "./schemas";
@@ -21,11 +21,12 @@ const isMock = () => process.env.USE_MOCK_AI === "true";
 
 export async function analyzeArtifact(input: AnalysisInput): Promise<AnalysisOutput> {
   if (isMock()) return getMockMultimodalAnalysis(input.artifactType);
-  const resolvedInput =
-    input.artifactType === "image"
-      ? { ...input, artifactUrl: await resolveImageToDataUrl(input.artifactUrl) }
-      : input;
-  return getProvider().analyzeArtifact(resolvedInput);
+  if (input.artifactType === "image") {
+    const resolvedInput = { ...input, artifactUrl: await resolveImageToDataUrl(input.artifactUrl) };
+    return getImageProvider().analyzeArtifact(resolvedInput);
+  }
+  // audio — provider selected via AI_PROVIDER_AUDIO (falls back to AI_PROVIDER)
+  return getAudioProvider().analyzeArtifact(input);
 }
 
 export async function analyzeStory(input: StoryAnalysisInput): Promise<StoryAnalysisOutput> {

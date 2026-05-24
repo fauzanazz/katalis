@@ -260,6 +260,39 @@ export const childInterestProfiles = sqliteTable(
   ],
 );
 
+// ─── Child Gardner Profiles ───────────────────────────────────────────────────
+
+/**
+ * Longitudinal Gardner multiple-intelligence scores per child.
+ * Updated via EMA (α=0.3) each time a KidsArtBench score is available.
+ * One row per (childId, intelligence). Intelligences: spatial, logical_mathematical,
+ * visual_arts, naturalist, intrapersonal, linguistic, interpersonal, bodily_kinesthetic.
+ */
+export const childGardnerProfiles = sqliteTable(
+  "child_gardner_profiles",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    childId: text("child_id").notNull(),
+    intelligence: text("intelligence").notNull(),
+    score: real("score").notNull().default(0),
+    sessionCount: integer("session_count").notNull().default(0),
+    lastComputedAt: ts("last_computed_at"),
+    createdAt: ts("created_at")
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: ts("updated_at")
+      .notNull()
+      .$defaultFn(() => new Date())
+      .$onUpdateFn(() => new Date()),
+  },
+  (t) => [
+    uniqueIndex("child_gardner_profiles_unique_idx").on(t.childId, t.intelligence),
+    index("child_gardner_profiles_child_idx").on(t.childId),
+  ],
+);
+
 // ─── Mission Interest Assessments ────────────────────────────────────────────
 
 export const missionInterestAssessments = sqliteTable(
@@ -889,6 +922,16 @@ export const childInterestProfilesRelations = relations(
   ({ one }) => ({
     child: one(children, {
       fields: [childInterestProfiles.childId],
+      references: [children.id],
+    }),
+  }),
+);
+
+export const childGardnerProfilesRelations = relations(
+  childGardnerProfiles,
+  ({ one }) => ({
+    child: one(children, {
+      fields: [childGardnerProfiles.childId],
       references: [children.id],
     }),
   }),

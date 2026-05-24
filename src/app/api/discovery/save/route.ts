@@ -6,8 +6,9 @@ import { discoveries } from "@/lib/schema";
 import { mapDiscoveryAnalysisToInterestSignals } from "@/lib/interests/discovery-mapper";
 import { ingestInterestSignals } from "@/lib/interests/ingest-service";
 
-import { KidsArtBenchScoreSchema } from "@/lib/ai/kidsartbench-schemas";
+import { KidsArtBenchScoreSchema, mapToGardner } from "@/lib/ai/kidsartbench-schemas";
 import { recordZpdEvent } from "@/lib/zpd/service";
+import { upsertGardnerScores } from "@/lib/interests/gardner-service";
 
 /** Schema for saving a discovery result */
 const SaveDiscoverySchema = z.object({
@@ -113,6 +114,16 @@ export async function POST(request: NextRequest) {
         }
       } catch (zpdError) {
         console.error("ZPD nudge failed for artwork, continuing:", zpdError);
+      }
+
+      // Persist Gardner intelligence scores derived from KidsArtBench.
+      // EMA-blended so each discovery session contributes to longitudinal profile.
+      // (fire-and-forget; failure must not block response)
+      try {
+        const gardnerScores = mapToGardner(kidsArtBench);
+        await upsertGardnerScores(session.childId, gardnerScores);
+      } catch (gardnerError) {
+        console.error("Gardner upsert failed for artwork, continuing:", gardnerError);
       }
     }
 

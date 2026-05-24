@@ -9,6 +9,7 @@
  */
 
 import { getStorageClient } from "./index";
+import { stripExif } from "@/lib/privacy/strip-exif";
 
 function getStoragePrefixes(): string[] {
   const prefixes: string[] = [];
@@ -40,8 +41,19 @@ export async function resolveImageToDataUrl(url: string): Promise<string> {
   try {
     const storage = getStorageClient();
     const { data, contentType } = await storage.getObjectBytes(key);
-    console.log("[resolveImageToDataUrl] Resolved key:", key, "size:", data.length);
-    return `data:${contentType};base64,${data.toString("base64")}`;
+    // Strip EXIF before encoding — COPPA: remove GPS/device metadata before
+    // any external AI provider receives the image bytes.
+    const clean = await stripExif(data, contentType);
+    console.log(
+      "[resolveImageToDataUrl] Resolved key:",
+      key,
+      "size:",
+      data.length,
+      "→",
+      clean.length,
+      "(exif stripped)",
+    );
+    return `data:${contentType};base64,${clean.toString("base64")}`;
   } catch (error) {
     console.error(
       "[resolveImageToDataUrl] Failed to fetch object for key:",

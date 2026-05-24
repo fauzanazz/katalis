@@ -752,9 +752,9 @@
       "subtitle": "Pantau perkembangan anak dan dapatkan tips bimbingan",
       "loading": "Memuat data anak...",
       "addChild": "Tambah Anak",
-      "linkWithCode": "Hubungkan dengan Kode",
+      "linkWithCode": "Sudah punya kode?",
       "noChildren": "Belum ada anak yang terhubung",
-      "noChildrenHint": "Masukkan kode akses anak Anda untuk melihat perkembangannya di sini.",
+      "noChildrenHint": "Buat profil anak baru, atau masukkan kode akses yang dibagikan orang tua lain untuk menautkan profil yang sudah ada.",
       "childTitle": "Anak {id}",
       "claimedAt": "Terhubung {date}",
       "questCount": "{count, plural, one {# misi} other {# misi}}",
@@ -805,14 +805,14 @@
       "errorDefault": "Tidak dapat menyimpan tanggal lahir. Silakan coba lagi."
     },
     "claim": {
-      "title": "Hubungkan Anak Anda",
-      "description": "Masukkan kode akses yang digunakan anak Anda untuk masuk. Ini akan menghubungkan profil mereka ke akun Anda.",
+      "title": "Tautkan Profil Anak yang Sudah Ada",
+      "description": "Jika orang tua lain sudah membuat profil anak ini, minta kode akses yang tertera di dasbor mereka. Masukkan kode tersebut di sini untuk menautkan profil yang sama ke akun Anda.",
       "codeLabel": "Kode Akses",
       "codePlaceholder": "contoh: KATAL-001",
-      "submit": "Hubungkan",
+      "submit": "Tautkan Profil",
       "cancel": "Batal",
-      "linking": "Menghubungkan...",
-      "errorDefault": "Tidak dapat menghubungkan anak. Periksa kode dan coba lagi."
+      "linking": "Menautkan...",
+      "errorDefault": "Tidak dapat menautkan anak. Periksa kode dan coba lagi."
     },
     "reports": {
       "title": "Laporan Perkembangan",

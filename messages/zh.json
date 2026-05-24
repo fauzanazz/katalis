@@ -741,9 +741,9 @@
       "subtitle": "跟踪孩子的进步并获取指导建议",
       "loading": "正在加载孩子数据...",
       "addChild": "添加孩子",
-      "linkWithCode": "使用访问码关联",
+      "linkWithCode": "已有访问码？",
       "noChildren": "尚未关联孩子",
-      "noChildrenHint": "输入孩子的访问码以在此处查看他们的进步。",
+      "noChildrenHint": "创建孩子档案，或输入另一位家长分享的访问码来关联已有档案。",
       "childTitle": "孩子 {id}",
       "claimedAt": "关联于 {date}",
       "questCount": "{count, plural, one {# 个任务} other {# 个任务}}",
@@ -794,11 +794,11 @@
       "errorDefault": "无法保存出生日期，请重试。"
     },
     "claim": {
-      "title": "关联您的孩子",
-      "description": "输入您的孩子用于登录的访问码。这将把他们的资料关联到您的账户。",
+      "title": "关联已有孩子档案",
+      "description": "如果另一位家长已创建此孩子的档案，请向他们索取仪表板上显示的访问码。在此输入访问码，即可将相同档案关联到您的账户。",
       "codeLabel": "访问码",
       "codePlaceholder": "例如：KATAL-001",
-      "submit": "关联",
+      "submit": "关联档案",
       "cancel": "取消",
       "linking": "正在关联...",
       "errorDefault": "无法关联孩子。请检查访问码后重试。"

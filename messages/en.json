@@ -752,9 +752,9 @@
       "subtitle": "Track your child's progress and get mentoring tips",
       "loading": "Loading your children...",
       "addChild": "Add Child",
-      "linkWithCode": "Link with Code",
+      "linkWithCode": "Already have a code?",
       "noChildren": "No children linked yet",
-      "noChildrenHint": "Enter your child's access code to see their progress here.",
+      "noChildrenHint": "Create a child profile, or enter an access code shared by another parent to link an existing profile.",
       "childTitle": "Child {id}",
       "claimedAt": "Linked {date}",
       "questCount": "{count, plural, one {# quest} other {# quests}}",
@@ -805,11 +805,11 @@
       "errorDefault": "Could not save date of birth. Please try again."
     },
     "claim": {
-      "title": "Link Your Child",
-      "description": "Enter the access code your child uses to sign in. This links their profile to your account.",
+      "title": "Link an Existing Child Profile",
+      "description": "If another parent already created this child's profile, ask them for the access code shown on their dashboard. Enter it here to link the same profile to your account.",
       "codeLabel": "Access Code",
       "codePlaceholder": "e.g. KATAL-001",
-      "submit": "Link Child",
+      "submit": "Link Profile",
       "cancel": "Cancel",
       "linking": "Linking...",
       "errorDefault": "Could not link child. Please check the code and try again."

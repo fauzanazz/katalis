@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getAdminSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { moderationEvents } from "@/lib/schema";
+import { eq } from "drizzle-orm";
 
 /**
  * PATCH /api/admin/moderation/[id]
@@ -51,7 +53,9 @@ export async function PATCH(
 
     const { action, notes } = parsed.data;
 
-    const event = await prisma.moderationEvent.findUnique({ where: { id } });
+    const event = await db.query.moderationEvents.findFirst({
+      where: eq(moderationEvents.id, id),
+    });
     if (!event) {
       return NextResponse.json(
         { error: "not_found", message: "Moderation event not found" },
@@ -61,20 +65,23 @@ export async function PATCH(
 
     const newStatus = action === "approve" ? "approved" : "blocked";
 
-    const updated = await prisma.moderationEvent.update({
-      where: { id },
-      data: {
-        status: newStatus,
-        reviewerId: admin.userId,
-        reviewedAt: new Date(),
-        metadata: notes
-          ? JSON.stringify({
-              ...safeParseJSON(event.metadata),
-              reviewNotes: notes,
-            })
-          : event.metadata,
-      },
-    });
+    const updated = (
+      await db
+        .update(moderationEvents)
+        .set({
+          status: newStatus,
+          reviewerId: admin.userId,
+          reviewedAt: new Date(),
+          metadata: notes
+            ? JSON.stringify({
+                ...safeParseJSON(event.metadata),
+                reviewNotes: notes,
+              })
+            : event.metadata,
+        })
+        .where(eq(moderationEvents.id, id))
+        .returning()
+    )[0];
 
     return NextResponse.json({ success: true, event: updated });
   } catch (error) {

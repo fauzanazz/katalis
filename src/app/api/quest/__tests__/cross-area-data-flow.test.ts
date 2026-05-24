@@ -10,38 +10,58 @@
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// --- Mock Prisma ---
-const mockPrismaDiscoveryCount = vi.fn();
-const mockPrismaDiscoveryFindMany = vi.fn();
-const mockPrismaQuestCreate = vi.fn();
-const mockPrismaQuestFindUnique = vi.fn();
-const mockPrismaGalleryEntryFindUnique = vi.fn();
-const mockPrismaGalleryEntryCreate = vi.fn();
-const mockPrismaQuestUpdate = vi.fn();
-const mockPrismaTransaction = vi.fn();
+// --- Mock Drizzle db ---
+const mockSelectCount = vi.fn();
+const mockDiscoveriesFindFirst = vi.fn();
+const mockQuestInsertValues = vi.fn();
+const mockMissionsInsertValues = vi.fn();
+const mockQuestsFindMany = vi.fn();
+const mockQuestsFindFirst = vi.fn();
+const mockGalleryEntriesFindFirst = vi.fn();
+const mockTransaction = vi.fn();
+const mockChildrenFindFirst = vi.fn();
+const mockChildInterestProfilesFindMany = vi.fn();
+const mockMissionsFindMany = vi.fn();
+
+// Track insert call order to distinguish quests (1st call) vs missions (2nd call)
+let insertCallIndex = 0;
 
 vi.mock("@/lib/db", () => ({
-  prisma: {
-    discovery: {
-      count: (...args: unknown[]) => mockPrismaDiscoveryCount(...args),
-      findMany: (...args: unknown[]) => mockPrismaDiscoveryFindMany(...args),
+  db: {
+    query: {
+      children: {
+        findFirst: (...args: unknown[]) => mockChildrenFindFirst(...args),
+      },
+      childInterestProfiles: {
+        findMany: (...args: unknown[]) => mockChildInterestProfilesFindMany(...args),
+      },
+      discoveries: {
+        findFirst: (...args: unknown[]) => mockDiscoveriesFindFirst(...args),
+      },
+      quests: {
+        findMany: (...args: unknown[]) => mockQuestsFindMany(...args),
+        findFirst: (...args: unknown[]) => mockQuestsFindFirst(...args),
+      },
+      galleryEntries: {
+        findFirst: (...args: unknown[]) => mockGalleryEntriesFindFirst(...args),
+      },
+      missions: {
+        findMany: (...args: unknown[]) => mockMissionsFindMany(...args),
+      },
     },
-    quest: {
-      create: (...args: unknown[]) => mockPrismaQuestCreate(...args),
-      findUnique: (...args: unknown[]) => mockPrismaQuestFindUnique(...args),
-      update: (...args: unknown[]) => mockPrismaQuestUpdate(...args),
-    },
-    galleryEntry: {
-      findUnique: (...args: unknown[]) => mockPrismaGalleryEntryFindUnique(...args),
-      create: (...args: unknown[]) => mockPrismaGalleryEntryCreate(...args),
-    },
-    child: {
-      findUnique: vi.fn().mockResolvedValue({ dateOfBirth: null }),
-    },
-    childInterestProfile: {
-      findMany: vi.fn().mockResolvedValue([]),
-    },
-    $transaction: (...args: unknown[]) => mockPrismaTransaction(...args),
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({
+        where: (...args: unknown[]) => mockSelectCount(...args),
+      })),
+    })),
+    insert: vi.fn(() => {
+      // First insert call → quests, second → missions
+      const idx = insertCallIndex++;
+      return {
+        values: idx === 0 ? mockQuestInsertValues : mockMissionsInsertValues,
+      };
+    }),
+    transaction: (...args: unknown[]) => mockTransaction(...args),
   },
 }));
 
@@ -122,9 +142,27 @@ function makeRequest(
   );
 }
 
+// Default insert chain for quests (returns quest row)
+function setupQuestInsert(questRow: Record<string, unknown>) {
+  const returning = vi.fn().mockResolvedValue([questRow]);
+  mockQuestInsertValues.mockReturnValue({ returning });
+}
+
+// Default insert chain for missions (returns rows)
+function setupMissionsInsert(missionRows: Array<Record<string, unknown>>) {
+  const returning = vi.fn().mockResolvedValue(missionRows);
+  mockMissionsInsertValues.mockReturnValue({ returning });
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
+  insertCallIndex = 0;
   mockGetSession.mockResolvedValue({ childId: "child-1" });
+  mockChildrenFindFirst.mockResolvedValue({ dateOfBirth: null });
+  mockChildInterestProfilesFindMany.mockResolvedValue([]);
+  mockDiscoveriesFindFirst.mockResolvedValue(null);
+  mockQuestsFindMany.mockResolvedValue([]);
+  mockMissionsFindMany.mockResolvedValue([]);
 });
 
 // =============================================================================
@@ -132,7 +170,7 @@ beforeEach(() => {
 // =============================================================================
 describe("VAL-CROSS-013: No quest without discovery", () => {
   it("rejects quest generation when child has no discoveries", async () => {
-    mockPrismaDiscoveryCount.mockResolvedValue(0);
+    mockSelectCount.mockResolvedValue([{ count: 0 }]);
 
     const req = makeRequest({
       dream: "I want to build robots that help people",
@@ -148,20 +186,31 @@ describe("VAL-CROSS-013: No quest without discovery", () => {
   });
 
   it("allows quest generation when child has at least one discovery", async () => {
-    mockPrismaDiscoveryCount.mockResolvedValue(1);
-    mockPrismaQuestCreate.mockResolvedValue({
+    mockSelectCount.mockResolvedValue([{ count: 1 }]);
+
+    const questRow = {
       id: "quest-1",
-      missions: Array.from({ length: 7 }, (_, i) => ({
-        id: `mission-${i + 1}`,
-        day: i + 1,
-        title: `Day ${i + 1} Mission`,
-        description: `Description for day ${i + 1}`,
-        instructions: JSON.stringify([`Step 1 for day ${i + 1}`]),
-        materials: JSON.stringify([`Material for day ${i + 1}`]),
-        tips: JSON.stringify([`Tip for day ${i + 1}`]),
-        status: i === 0 ? "available" : "locked",
-      })),
-    });
+      childId: "child-1",
+      dream: "I want to build robots",
+      localContext: "village",
+      status: "active",
+      discoveryId: "disc-1",
+    };
+    setupQuestInsert(questRow);
+
+    const missionRows = Array.from({ length: 7 }, (_, i) => ({
+      id: `mission-${i + 1}`,
+      questId: "quest-1",
+      day: i + 1,
+      title: `Day ${i + 1} Mission`,
+      description: `Description for day ${i + 1}`,
+      instructions: JSON.stringify([`Step 1 for day ${i + 1}`]),
+      materials: JSON.stringify([`Material for day ${i + 1}`]),
+      tips: JSON.stringify([`Tip for day ${i + 1}`]),
+      status: i === 0 ? "available" : "locked",
+    }));
+    setupMissionsInsert(missionRows);
+    mockMissionsFindMany.mockResolvedValue(missionRows);
 
     const req = makeRequest({
       dream: "I want to build robots that help people",
@@ -182,20 +231,31 @@ describe("VAL-CROSS-013: No quest without discovery", () => {
 // =============================================================================
 describe("VAL-CROSS-011: Talent feeds quest generation", () => {
   it("passes talent data from discovery to quest generation", async () => {
-    mockPrismaDiscoveryCount.mockResolvedValue(1);
-    mockPrismaQuestCreate.mockResolvedValue({
+    mockSelectCount.mockResolvedValue([{ count: 1 }]);
+
+    const questRow = {
       id: "quest-1",
-      missions: Array.from({ length: 7 }, (_, i) => ({
-        id: `mission-${i + 1}`,
-        day: i + 1,
-        title: `Day ${i + 1} Mission`,
-        description: `Description for day ${i + 1}`,
-        instructions: JSON.stringify([`Step 1 for day ${i + 1}`]),
-        materials: JSON.stringify([`Material for day ${i + 1}`]),
-        tips: JSON.stringify([`Tip for day ${i + 1}`]),
-        status: i === 0 ? "available" : "locked",
-      })),
-    });
+      childId: "child-1",
+      dream: "I want to build robots",
+      localContext: "Jakarta",
+      status: "active",
+      discoveryId: "disc-1",
+    };
+    setupQuestInsert(questRow);
+
+    const missionRows = Array.from({ length: 7 }, (_, i) => ({
+      id: `mission-${i + 1}`,
+      questId: "quest-1",
+      day: i + 1,
+      title: `Day ${i + 1} Mission`,
+      description: `Description for day ${i + 1}`,
+      instructions: JSON.stringify([`Step 1 for day ${i + 1}`]),
+      materials: JSON.stringify([`Material for day ${i + 1}`]),
+      tips: JSON.stringify([`Tip for day ${i + 1}`]),
+      status: i === 0 ? "available" : "locked",
+    }));
+    setupMissionsInsert(missionRows);
+    mockMissionsFindMany.mockResolvedValue(missionRows);
 
     const talents = [
       {
@@ -215,13 +275,11 @@ describe("VAL-CROSS-011: Talent feeds quest generation", () => {
     const res = await generateQuestPOST(req);
     expect(res.status).toBe(200);
 
-    // Verify the quest was created with discoveryId
-    expect(mockPrismaQuestCreate).toHaveBeenCalledWith(
+    // Verify the quest was inserted with discoveryId
+    expect(mockQuestInsertValues).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({
-          discoveryId: "disc-1",
-          childId: "child-1",
-        }),
+        discoveryId: "disc-1",
+        childId: "child-1",
       }),
     );
   });
@@ -258,26 +316,32 @@ describe("VAL-CROSS-017 / VAL-CROSS-045: Quest completion data in gallery entry"
   };
 
   it("creates gallery entry with correct talent category from discovery", async () => {
-    mockPrismaQuestFindUnique.mockResolvedValue(mockQuest);
-    mockPrismaGalleryEntryFindUnique.mockResolvedValue(null);
-    mockPrismaTransaction.mockImplementation(async (fn: (tx: unknown) => unknown) => {
+    mockQuestsFindFirst.mockResolvedValue(mockQuest);
+    mockGalleryEntriesFindFirst.mockResolvedValue(null);
+    mockTransaction.mockImplementation(async (fn: (tx: unknown) => unknown) => {
       const tx = {
-        galleryEntry: {
-          create: vi.fn().mockResolvedValue({
-            id: "gallery-1",
-            imageUrl: "http://localhost:3100/api/storage/photo1.jpg",
-            talentCategory: "Engineering/Mekanika",
-            country: "Indonesia",
-            coordinates: JSON.stringify({ lat: -2.5, lng: 118.0 }),
-            questContext: JSON.stringify({
-              questTitle: "I want to build robots",
-              dream: "I want to build robots",
-              localContext: "I live in a village near a river in Indonesia",
-              missionSummaries: mockQuest.missions.map((m) => m.title),
-            }),
-          }),
-        },
-        quest: { update: vi.fn() },
+        insert: vi.fn(() => ({
+          values: vi.fn(() => ({
+            returning: vi.fn().mockResolvedValue([{
+              id: "gallery-1",
+              imageUrl: "http://localhost:3100/api/storage/photo1.jpg",
+              talentCategory: "Engineering/Mekanika",
+              country: "Indonesia",
+              coordinates: JSON.stringify({ lat: -2.5, lng: 118.0 }),
+              questContext: JSON.stringify({
+                questTitle: "I want to build robots",
+                dream: "I want to build robots",
+                localContext: "I live in a village near a river in Indonesia",
+                missionSummaries: mockQuest.missions.map((m) => m.title),
+              }),
+            }]),
+          })),
+        })),
+        update: vi.fn(() => ({
+          set: vi.fn(() => ({
+            where: vi.fn().mockResolvedValue(undefined),
+          })),
+        })),
       };
       return fn(tx);
     });
@@ -302,7 +366,6 @@ describe("VAL-CROSS-017 / VAL-CROSS-045: Quest completion data in gallery entry"
     expect(data.success).toBe(true);
     expect(data.galleryEntry.talentCategory).toBe("Engineering/Mekanika");
 
-    // Verify questContext includes localContext (VAL-CROSS-045)
     const questContext = data.galleryEntry.questContext;
     expect(questContext).toBeDefined();
     expect(questContext.localContext).toBe(
@@ -325,17 +388,24 @@ describe("VAL-CROSS-017 / VAL-CROSS-045: Quest completion data in gallery entry"
       },
     };
 
-    mockPrismaQuestFindUnique.mockResolvedValue(questWithMultipleTalents);
-    mockPrismaGalleryEntryFindUnique.mockResolvedValue(null);
-    mockPrismaTransaction.mockImplementation(async (fn: (tx: unknown) => unknown) => {
+    mockQuestsFindFirst.mockResolvedValue(questWithMultipleTalents);
+    mockGalleryEntriesFindFirst.mockResolvedValue(null);
+    mockTransaction.mockImplementation(async (fn: (tx: unknown) => unknown) => {
       const tx = {
-        galleryEntry: {
-          create: vi.fn().mockImplementation(({ data }) => ({
-            id: "gallery-2",
-            ...data,
+        insert: vi.fn(() => ({
+          values: vi.fn().mockImplementation(({ talentCategory, ...rest }) => ({
+            returning: vi.fn().mockResolvedValue([{
+              id: "gallery-2",
+              talentCategory,
+              ...rest,
+            }]),
           })),
-        },
-        quest: { update: vi.fn() },
+        })),
+        update: vi.fn(() => ({
+          set: vi.fn(() => ({
+            where: vi.fn().mockResolvedValue(undefined),
+          })),
+        })),
       };
       return fn(tx);
     });
@@ -357,7 +427,6 @@ describe("VAL-CROSS-017 / VAL-CROSS-045: Quest completion data in gallery entry"
     const data = await res.json();
 
     expect(data.success).toBe(true);
-    // Should use highest confidence talent
     expect(data.galleryEntry.talentCategory).toBe("Engineering");
   });
 
@@ -367,17 +436,23 @@ describe("VAL-CROSS-017 / VAL-CROSS-045: Quest completion data in gallery entry"
       discovery: null,
     };
 
-    mockPrismaQuestFindUnique.mockResolvedValue(questNoDiscovery);
-    mockPrismaGalleryEntryFindUnique.mockResolvedValue(null);
-    mockPrismaTransaction.mockImplementation(async (fn: (tx: unknown) => unknown) => {
+    mockQuestsFindFirst.mockResolvedValue(questNoDiscovery);
+    mockGalleryEntriesFindFirst.mockResolvedValue(null);
+    mockTransaction.mockImplementation(async (fn: (tx: unknown) => unknown) => {
       const tx = {
-        galleryEntry: {
-          create: vi.fn().mockImplementation(({ data }) => ({
-            id: "gallery-3",
-            ...data,
+        insert: vi.fn(() => ({
+          values: vi.fn().mockImplementation((data) => ({
+            returning: vi.fn().mockResolvedValue([{
+              id: "gallery-3",
+              ...data,
+            }]),
           })),
-        },
-        quest: { update: vi.fn() },
+        })),
+        update: vi.fn(() => ({
+          set: vi.fn(() => ({
+            where: vi.fn().mockResolvedValue(undefined),
+          })),
+        })),
       };
       return fn(tx);
     });
@@ -426,7 +501,7 @@ describe("VAL-CROSS-016: Incomplete quest blocked from gallery", () => {
       ],
     };
 
-    mockPrismaQuestFindUnique.mockResolvedValue(incompleteQuest);
+    mockQuestsFindFirst.mockResolvedValue(incompleteQuest);
 
     const req = new NextRequest(
       new URL("http://localhost:3100/api/quest/quest-1/complete"),
@@ -475,17 +550,23 @@ describe("VAL-CROSS-041: Gallery entry geocoding", () => {
       })),
     };
 
-    mockPrismaQuestFindUnique.mockResolvedValue(questIndonesia);
-    mockPrismaGalleryEntryFindUnique.mockResolvedValue(null);
-    mockPrismaTransaction.mockImplementation(async (fn: (tx: unknown) => unknown) => {
+    mockQuestsFindFirst.mockResolvedValue(questIndonesia);
+    mockGalleryEntriesFindFirst.mockResolvedValue(null);
+    mockTransaction.mockImplementation(async (fn: (tx: unknown) => unknown) => {
       const tx = {
-        galleryEntry: {
-          create: vi.fn().mockImplementation(({ data }) => ({
-            id: "gallery-geo",
-            ...data,
+        insert: vi.fn(() => ({
+          values: vi.fn().mockImplementation((data) => ({
+            returning: vi.fn().mockResolvedValue([{
+              id: "gallery-geo",
+              ...data,
+            }]),
           })),
-        },
-        quest: { update: vi.fn() },
+        })),
+        update: vi.fn(() => ({
+          set: vi.fn(() => ({
+            where: vi.fn().mockResolvedValue(undefined),
+          })),
+        })),
       };
       return fn(tx);
     });
@@ -518,7 +599,6 @@ describe("VAL-CROSS-041: Gallery entry geocoding", () => {
 // VAL-CROSS-039: File Upload Validation Consistency Across Areas
 // =============================================================================
 describe("VAL-CROSS-039: File upload validation consistency", () => {
-  // Test that the same validation module is used across all upload paths
   it("uses the same validation constants for all areas", async () => {
     const {
       ACCEPTED_IMAGE_TYPES,
@@ -528,18 +608,15 @@ describe("VAL-CROSS-039: File upload validation consistency", () => {
       validateFile,
     } = await import("@/lib/storage/validation");
 
-    // Image validation: JPEG, PNG, WebP — up to 10 MB
     expect(ACCEPTED_IMAGE_TYPES).toContain("image/jpeg");
     expect(ACCEPTED_IMAGE_TYPES).toContain("image/png");
     expect(ACCEPTED_IMAGE_TYPES).toContain("image/webp");
     expect(MAX_IMAGE_SIZE_BYTES).toBe(10 * 1024 * 1024);
 
-    // Audio validation: MP3, WAV, M4A — up to 5 MB
     expect(ACCEPTED_AUDIO_TYPES).toContain("audio/mpeg");
     expect(ACCEPTED_AUDIO_TYPES).toContain("audio/wav");
     expect(MAX_AUDIO_SIZE_BYTES).toBe(5 * 1024 * 1024);
 
-    // Same function validates both areas
     expect(validateFile("image/jpeg", 1024, "image").valid).toBe(true);
     expect(validateFile("image/gif", 1024, "image").valid).toBe(false);
     expect(validateFile("audio/mpeg", 1024, "audio").valid).toBe(true);
@@ -565,22 +642,32 @@ describe("VAL-CROSS-039: File upload validation consistency", () => {
 // =============================================================================
 describe("VAL-CROSS-012: Story prompting result feeds quest generation", () => {
   it("accepts story-based talents for quest generation", async () => {
-    mockPrismaDiscoveryCount.mockResolvedValue(1);
-    mockPrismaQuestCreate.mockResolvedValue({
-      id: "quest-story",
-      missions: Array.from({ length: 7 }, (_, i) => ({
-        id: `m-${i + 1}`,
-        day: i + 1,
-        title: `Day ${i + 1} Story Mission`,
-        description: `Story mission day ${i + 1}`,
-        instructions: JSON.stringify([`Step ${i + 1}`]),
-        materials: JSON.stringify([`Item ${i + 1}`]),
-        tips: JSON.stringify([`Tip ${i + 1}`]),
-        status: i === 0 ? "available" : "locked",
-      })),
-    });
+    mockSelectCount.mockResolvedValue([{ count: 1 }]);
 
-    // Story-based talents (narrative analysis from Claude)
+    const questRow = {
+      id: "quest-story",
+      childId: "child-1",
+      dream: "I want to write amazing stories for children",
+      localContext: "I live in a city with a big library in Japan",
+      status: "active",
+      discoveryId: "disc-story-1",
+    };
+    setupQuestInsert(questRow);
+
+    const missionRows = Array.from({ length: 7 }, (_, i) => ({
+      id: `m-${i + 1}`,
+      questId: "quest-story",
+      day: i + 1,
+      title: `Day ${i + 1} Story Mission`,
+      description: `Story mission day ${i + 1}`,
+      instructions: JSON.stringify([`Step ${i + 1}`]),
+      materials: JSON.stringify([`Item ${i + 1}`]),
+      tips: JSON.stringify([`Tip ${i + 1}`]),
+      status: i === 0 ? "available" : "locked",
+    }));
+    setupMissionsInsert(missionRows);
+    mockMissionsFindMany.mockResolvedValue(missionRows);
+
     const storyTalents = [
       {
         name: "Narrative/Storytelling",
@@ -608,12 +695,9 @@ describe("VAL-CROSS-012: Story prompting result feeds quest generation", () => {
     expect(data.id).toBe("quest-story");
     expect(data.missions).toHaveLength(7);
 
-    // Verify discoveryId from story flow was passed
-    expect(mockPrismaQuestCreate).toHaveBeenCalledWith(
+    expect(mockQuestInsertValues).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({
-          discoveryId: "disc-story-1",
-        }),
+        discoveryId: "disc-story-1",
       }),
     );
   });
@@ -645,9 +729,8 @@ describe("VAL-CROSS-015: Quest→Gallery submission flow", () => {
       })),
     };
 
-    mockPrismaQuestFindUnique.mockResolvedValue(completedQuest);
-    // Gallery entry already exists
-    mockPrismaGalleryEntryFindUnique.mockResolvedValue({
+    mockQuestsFindFirst.mockResolvedValue(completedQuest);
+    mockGalleryEntriesFindFirst.mockResolvedValue({
       id: "existing-gallery",
       questId: "quest-dup",
     });

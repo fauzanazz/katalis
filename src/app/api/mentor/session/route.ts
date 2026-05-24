@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq, asc, desc } from "drizzle-orm";
 import { getChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { mentorSessions, missions, mentorMessages, adjustmentEvents } from "@/lib/schema";
 import { CreateSessionInputSchema } from "@/lib/ai/mentor-schemas";
 
 /**
@@ -28,19 +30,19 @@ export async function GET(request: NextRequest) {
     }
 
     // Find or create mentor session
-    let mentorSession = await prisma.mentorSession.findUnique({
-      where: { missionId },
-      include: {
-        messages: { orderBy: { createdAt: "asc" } },
-        adjustments: { orderBy: { createdAt: "desc" } },
+    let mentorSession = await db.query.mentorSessions.findFirst({
+      where: eq(mentorSessions.missionId, missionId),
+      with: {
+        messages: { orderBy: asc(mentorMessages.createdAt) },
+        adjustments: { orderBy: desc(adjustmentEvents.createdAt) },
       },
     });
 
     if (!mentorSession) {
       // Auto-create if mission is in_progress and belongs to this child
-      const mission = await prisma.mission.findUnique({
-        where: { id: missionId },
-        include: { quest: true },
+      const mission = await db.query.missions.findFirst({
+        where: eq(missions.id, missionId),
+        with: { quest: true },
       });
 
       if (!mission || mission.quest.childId !== session.childId) {
@@ -57,18 +59,27 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      mentorSession = await prisma.mentorSession.create({
-        data: {
-          missionId,
-          childId: session.childId,
-          questId: mission.questId,
-          status: "active",
-        },
-        include: {
-          messages: { orderBy: { createdAt: "asc" } },
-          adjustments: { orderBy: { createdAt: "desc" } },
+      await db.insert(mentorSessions).values({
+        missionId,
+        childId: session.childId,
+        questId: mission.questId,
+        status: "active",
+      });
+
+      mentorSession = await db.query.mentorSessions.findFirst({
+        where: eq(mentorSessions.missionId, missionId),
+        with: {
+          messages: { orderBy: asc(mentorMessages.createdAt) },
+          adjustments: { orderBy: desc(adjustmentEvents.createdAt) },
         },
       });
+    }
+
+    if (!mentorSession) {
+      return NextResponse.json(
+        { error: "server_error", message: "Failed to fetch mentor session" },
+        { status: 500 },
+      );
     }
 
     // Verify ownership
@@ -143,9 +154,9 @@ export async function POST(request: NextRequest) {
     const { questId, missionId } = parsed.data;
 
     // Verify mission exists and belongs to child
-    const mission = await prisma.mission.findUnique({
-      where: { id: missionId },
-      include: { quest: true },
+    const mission = await db.query.missions.findFirst({
+      where: eq(missions.id, missionId),
+      with: { quest: true },
     });
 
     if (!mission || mission.quest.id !== questId || mission.quest.childId !== session.childId) {
@@ -156,8 +167,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for existing session
-    const existing = await prisma.mentorSession.findUnique({
-      where: { missionId },
+    const existing = await db.query.mentorSessions.findFirst({
+      where: eq(mentorSessions.missionId, missionId),
     });
 
     if (existing) {
@@ -167,14 +178,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const mentorSession = await prisma.mentorSession.create({
-      data: {
-        missionId,
-        childId: session.childId,
-        questId,
-        status: "active",
-      },
-    });
+    const mentorSession = (
+      await db
+        .insert(mentorSessions)
+        .values({
+          missionId,
+          childId: session.childId,
+          questId,
+          status: "active",
+        })
+        .returning()
+    )[0];
 
     return NextResponse.json({
       id: mentorSession.id,

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { eq, desc, asc } from "drizzle-orm";
 import { getUserSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { parentQuestFollows, missions } from "@/lib/schema";
 
 /**
  * GET /api/parent/follow
@@ -17,25 +19,23 @@ export async function GET() {
   }
 
   try {
-    const follows = await prisma.parentQuestFollow.findMany({
-      where: { parentId: session.userId },
-      include: {
+    const follows = await db.query.parentQuestFollows.findMany({
+      where: eq(parentQuestFollows.parentId, session.userId),
+      with: {
         quest: {
-          select: {
-            id: true,
-            dream: true,
-            status: true,
+          columns: { id: true, dream: true, status: true },
+          with: {
             missions: {
-              select: { day: true, status: true },
-              orderBy: { day: "asc" },
+              columns: { day: true, status: true },
+              orderBy: asc(missions.day),
             },
           },
         },
         child: {
-          select: { id: true, name: true },
+          columns: { id: true, name: true },
         },
       },
-      orderBy: { updatedAt: "desc" },
+      orderBy: desc(parentQuestFollows.updatedAt),
     });
 
     const formattedFollows = follows.map((f) => ({

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { eq, desc, asc } from "drizzle-orm";
 import { getChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { quests, missions } from "@/lib/schema";
 
 /**
  * GET /api/quest/list
@@ -18,13 +20,13 @@ export async function GET() {
       );
     }
 
-    const quests = await prisma.quest.findMany({
-      where: { childId: session.childId },
-      orderBy: { createdAt: "desc" },
-      include: {
+    const questRows = await db.query.quests.findMany({
+      where: eq(quests.childId, session.childId),
+      orderBy: desc(quests.createdAt),
+      with: {
         missions: {
-          orderBy: { day: "asc" },
-          select: {
+          orderBy: asc(missions.day),
+          columns: {
             day: true,
             title: true,
             status: true,
@@ -33,7 +35,7 @@ export async function GET() {
       },
     });
 
-    const questList = quests.map((quest) => {
+    const questList = questRows.map((quest) => {
       const completedCount = quest.missions.filter(
         (m) => m.status === "completed",
       ).length;

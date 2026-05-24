@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq, and } from "drizzle-orm";
 import { getUserSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { quests, parentQuestFollows } from "@/lib/schema";
 import { verifyParentChildLink } from "@/lib/parent/link";
 
 /**
@@ -24,9 +26,9 @@ export async function POST(
   try {
     const { questId } = await params;
 
-    const quest = await prisma.quest.findUnique({
-      where: { id: questId },
-      select: { id: true, childId: true },
+    const quest = await db.query.quests.findFirst({
+      where: eq(quests.id, questId),
+      columns: { id: true, childId: true },
     });
 
     if (!quest) {
@@ -44,17 +46,20 @@ export async function POST(
       );
     }
 
-    const follow = await prisma.parentQuestFollow.upsert({
-      where: {
-        parentId_questId: { parentId: session.userId, questId },
-      },
-      update: { lastViewedAt: new Date() },
-      create: {
-        parentId: session.userId,
-        childId: quest.childId,
-        questId,
-      },
-    });
+    const follow = (
+      await db
+        .insert(parentQuestFollows)
+        .values({
+          parentId: session.userId,
+          childId: quest.childId,
+          questId,
+        })
+        .onConflictDoUpdate({
+          target: [parentQuestFollows.parentId, parentQuestFollows.questId],
+          set: { lastViewedAt: new Date() },
+        })
+        .returning()
+    )[0];
 
     return NextResponse.json({ success: true, follow });
   } catch (error) {
@@ -81,9 +86,14 @@ export async function DELETE(
   try {
     const { questId } = await params;
 
-    await prisma.parentQuestFollow.deleteMany({
-      where: { parentId: session.userId, questId },
-    });
+    await db
+      .delete(parentQuestFollows)
+      .where(
+        and(
+          eq(parentQuestFollows.parentId, session.userId),
+          eq(parentQuestFollows.questId, questId),
+        ),
+      );
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -111,15 +121,21 @@ export async function PATCH(
     const { questId } = await params;
     const body = await request.json().catch(() => ({}));
 
-    const follow = await prisma.parentQuestFollow.update({
-      where: {
-        parentId_questId: { parentId: session.userId, questId },
-      },
-      data: {
-        currentDay: body.currentDay ?? undefined,
-        lastViewedAt: new Date(),
-      },
-    });
+    const follow = (
+      await db
+        .update(parentQuestFollows)
+        .set({
+          currentDay: body.currentDay ?? undefined,
+          lastViewedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(parentQuestFollows.parentId, session.userId),
+            eq(parentQuestFollows.questId, questId),
+          ),
+        )
+        .returning()
+    )[0];
 
     return NextResponse.json({ success: true, follow });
   } catch (error) {

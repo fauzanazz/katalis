@@ -9,16 +9,20 @@ vi.mock("@/lib/zpd", () => ({
   getZpdScore: vi.fn().mockResolvedValue(0.3),
 }));
 
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    quest: { findUnique: vi.fn() },
-    mission: { findFirst: vi.fn() },
-    reflectionEntry: {
-      findFirst: vi.fn(),
-      create: vi.fn(),
-    },
+const mockDb = vi.hoisted(() => ({
+  query: {
+    quests: { findFirst: vi.fn() },
+    missions: { findFirst: vi.fn() },
+    reflectionEntries: { findFirst: vi.fn() },
   },
+  insert: vi.fn(() => ({
+    values: vi.fn(() => ({
+      returning: vi.fn().mockResolvedValue([{ id: "refl-1", createdAt: new Date() }]),
+    })),
+  })),
 }));
+
+vi.mock("@/lib/db", () => ({ db: mockDb }));
 
 vi.mock("@/lib/ai/mentor", () => ({
   summarizeReflection: vi.fn().mockResolvedValue({ summary: "Nice work", highlights: [] }),
@@ -30,10 +34,22 @@ vi.mock("@/lib/badges", () => ({
   awardBadges: vi.fn().mockResolvedValue([]),
 }));
 
+vi.mock("@/lib/sanitize", () => ({
+  sanitizeInput: vi.fn((v: string) => v),
+}));
+
+vi.mock("@/lib/url-allowlist", () => ({
+  isAllowedStorageUrl: vi.fn().mockReturnValue(true),
+}));
+
+vi.mock("@/lib/ai/mentor-schemas", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/ai/mentor-schemas")>();
+  return actual;
+});
+
 import { POST } from "../daily/route";
 import { getChildSession } from "@/lib/auth";
 import { recordZpdEvent } from "@/lib/zpd";
-import { prisma } from "@/lib/db";
 
 const mockedGetSession = vi.mocked(getChildSession);
 const mockedRecordZpdEvent = vi.mocked(recordZpdEvent);
@@ -55,20 +71,21 @@ describe("POST /api/reflection/daily → ZPD snapshot", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockedGetSession.mockResolvedValue(validSession);
-    vi.mocked(prisma.quest.findUnique).mockResolvedValue({
+    mockDb.query.quests.findFirst.mockResolvedValue({
       id: "ckxqr1234567890abcdefghij",
       childId: validSession.childId,
-    } as never);
-    vi.mocked(prisma.mission.findFirst).mockResolvedValue({
+    });
+    mockDb.query.missions.findFirst.mockResolvedValue({
       id: "mission-1",
       day: 1,
       title: "Sketch",
-    } as never);
-    vi.mocked(prisma.reflectionEntry.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.reflectionEntry.create).mockResolvedValue({
-      id: "refl-1",
-      createdAt: new Date(),
-    } as never);
+    });
+    mockDb.query.reflectionEntries.findFirst.mockResolvedValue(null);
+    mockDb.insert.mockReturnValue({
+      values: vi.fn(() => ({
+        returning: vi.fn().mockResolvedValue([{ id: "refl-1", createdAt: new Date() }]),
+      })),
+    });
   });
 
   it("records ZPD event with completion_strong_reflection outcome on submit", async () => {

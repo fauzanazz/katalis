@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/db";
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { accessCodes } from "@/lib/schema";
 
 const GenerateCodesSchema = z.object({
   count: z.number().int().min(1).max(100).optional().default(1),
@@ -58,19 +60,18 @@ export async function POST(request: NextRequest) {
             { status: 500 },
           );
         }
-        const existing = await prisma.accessCode.findUnique({
-          where: { code },
+        const existing = await db.query.accessCodes.findFirst({
+          where: eq(accessCodes.code, code),
         });
         if (!existing) break;
       } while (true);
 
-      const accessCode = await prisma.accessCode.create({
-        data: {
-          code,
-          active: true,
-          expiresAt,
-        },
-      });
+      const accessCode = (
+        await db
+          .insert(accessCodes)
+          .values({ code: code!, active: true, expiresAt })
+          .returning()
+      )[0];
 
       codes.push({
         id: accessCode.id,

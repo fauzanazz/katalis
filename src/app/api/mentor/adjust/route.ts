@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq, sql } from "drizzle-orm";
 import { getChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { mentorSessions, mentorMessages, adjustmentEvents, missions } from "@/lib/schema";
 import { AdjustmentInputSchema } from "@/lib/ai/mentor-schemas";
 import { simplifyMission } from "@/lib/ai/mentor";
 import { buildBadgeContext, evaluateBadges, awardBadges } from "@/lib/badges";
@@ -42,8 +44,8 @@ export async function POST(request: NextRequest) {
 
     const { sessionId, reason } = parsed.data;
 
-    const mentorSession = await prisma.mentorSession.findUnique({
-      where: { id: sessionId },
+    const mentorSession = await db.query.mentorSessions.findFirst({
+      where: eq(mentorSessions.id, sessionId),
     });
 
     if (!mentorSession) {
@@ -69,8 +71,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch mission
-    const mission = await prisma.mission.findUnique({
-      where: { id: mentorSession.missionId },
+    const mission = await db.query.missions.findFirst({
+      where: eq(missions.id, mentorSession.missionId),
     });
 
     if (!mission) {
@@ -100,36 +102,37 @@ export async function POST(request: NextRequest) {
     );
 
     // Save adjustment event + update session in transaction
-    const result = await prisma.$transaction(async (tx) => {
-      const adjustment = await tx.adjustmentEvent.create({
-        data: {
-          sessionId,
-          missionId: mentorSession.missionId,
-          originalInstructions: JSON.stringify(originalInstructions),
-          simplifiedInstructions: JSON.stringify(simplified.simplifiedInstructions),
-          reason,
-        },
-      });
+    const result = await db.transaction(async (tx) => {
+      const adjustment = (
+        await tx
+          .insert(adjustmentEvents)
+          .values({
+            sessionId,
+            missionId: mentorSession.missionId,
+            originalInstructions: JSON.stringify(originalInstructions),
+            simplifiedInstructions: JSON.stringify(simplified.simplifiedInstructions),
+            reason,
+          })
+          .returning()
+      )[0];
 
-      await tx.mentorSession.update({
-        where: { id: sessionId },
-        data: { adjustmentCount: { increment: 1 } },
-      });
+      await tx
+        .update(mentorSessions)
+        .set({ adjustmentCount: sql`${mentorSessions.adjustmentCount} + 1` })
+        .where(eq(mentorSessions.id, sessionId));
 
       return adjustment;
     });
 
     // Save encouragement message as a mentor message
-    await prisma.mentorMessage.create({
-      data: {
-        sessionId,
-        role: "mentor",
-        content: simplified.encouragementMessage,
-        meta: JSON.stringify({
-          type: "adjustment",
-          adjustmentId: result.id,
-        }),
-      },
+    await db.insert(mentorMessages).values({
+      sessionId,
+      role: "mentor",
+      content: simplified.encouragementMessage,
+      meta: JSON.stringify({
+        type: "adjustment",
+        adjustmentId: result.id,
+      }),
     });
 
     // Check for creativity badges (creative_adapter, persistent_explorer)

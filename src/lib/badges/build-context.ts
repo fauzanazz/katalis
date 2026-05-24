@@ -10,7 +10,15 @@
  * - Already-earned badge slugs
  */
 
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import {
+  quests,
+  reflectionEntries,
+  mentorSessions,
+  adjustmentEvents,
+  childBadges,
+} from "@/lib/schema";
+import { eq, and, count, inArray } from "drizzle-orm";
 import type { BadgeContext } from "./schemas";
 
 interface BuildContextOptions {
@@ -22,14 +30,11 @@ export async function buildBadgeContext({
   childId,
   questId,
 }: BuildContextOptions): Promise<BadgeContext> {
-  // Fetch all quests for this child to count completed missions
-  const quests = await prisma.quest.findMany({
-    where: { childId },
-    select: {
-      id: true,
-      missions: {
-        select: { status: true },
-      },
+  const childQuests = await db.query.quests.findMany({
+    where: eq(quests.childId, childId),
+    columns: { id: true },
+    with: {
+      missions: { columns: { status: true } },
     },
   });
 
@@ -38,7 +43,7 @@ export async function buildBadgeContext({
   let questMissionTotal = 0;
   let questMissionCompleted = 0;
 
-  for (const quest of quests) {
+  for (const quest of childQuests) {
     const completed = quest.missions.filter(
       (m) => m.status === "completed",
     ).length;
@@ -51,45 +56,70 @@ export async function buildBadgeContext({
     }
   }
 
-  // If no specific questId, use totals
   if (!questId) {
     questMissionTotal = totalMissionCount;
     questMissionCompleted = completedMissionCount;
   }
 
-  // Reflection counts
-  const reflectionCount = await prisma.reflectionEntry.count({
-    where: { childId },
-  });
+  const [reflectionCountRow] = await db
+    .select({ count: count() })
+    .from(reflectionEntries)
+    .where(eq(reflectionEntries.childId, childId));
+  const reflectionCount = reflectionCountRow.count;
 
   let questReflectionCount = 0;
   if (questId) {
-    questReflectionCount = await prisma.reflectionEntry.count({
-      where: { childId, questId },
-    });
+    const [questReflRow] = await db
+      .select({ count: count() })
+      .from(reflectionEntries)
+      .where(
+        and(
+          eq(reflectionEntries.childId, childId),
+          eq(reflectionEntries.questId, questId),
+        ),
+      );
+    questReflectionCount = questReflRow.count;
   } else {
     questReflectionCount = reflectionCount;
   }
 
-  // Voice reflection check
-  const voiceReflectionCount = await prisma.reflectionEntry.count({
-    where: { childId, type: "voice" },
-  });
+  const [voiceReflRow] = await db
+    .select({ count: count() })
+    .from(reflectionEntries)
+    .where(
+      and(
+        eq(reflectionEntries.childId, childId),
+        eq(reflectionEntries.type, "voice"),
+      ),
+    );
+  const voiceReflectionCount = voiceReflRow.count;
 
-  // Mentor chat usage
-  const mentorSessionCount = await prisma.mentorSession.count({
-    where: { childId },
-  });
+  const [mentorRow] = await db
+    .select({ count: count() })
+    .from(mentorSessions)
+    .where(eq(mentorSessions.childId, childId));
+  const mentorSessionCount = mentorRow.count;
 
-  // Adjustment count (lifetime)
-  const adjustmentCount = await prisma.adjustmentEvent.count({
-    where: { session: { childId } },
-  });
+  // Count adjustment events via sessions belonging to this child
+  const childSessionIds = (
+    await db.query.mentorSessions.findMany({
+      where: eq(mentorSessions.childId, childId),
+      columns: { id: true },
+    })
+  ).map((s) => s.id);
 
-  // Already-earned badges
-  const earnedBadges = await prisma.childBadge.findMany({
-    where: { childId },
-    select: { badgeSlug: true },
+  let adjustmentCount = 0;
+  if (childSessionIds.length > 0) {
+    const [adjRow] = await db
+      .select({ count: count() })
+      .from(adjustmentEvents)
+      .where(inArray(adjustmentEvents.sessionId, childSessionIds));
+    adjustmentCount = adjRow.count;
+  }
+
+  const earnedBadges = await db.query.childBadges.findMany({
+    where: eq(childBadges.childId, childId),
+    columns: { badgeSlug: true },
   });
   const existingBadgeSlugs = earnedBadges.map((b) => b.badgeSlug);
 

@@ -3,7 +3,19 @@
  * Queries child data, calls AI, persists the report.
  */
 
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import {
+  children,
+  childBadges,
+  reflectionEntries,
+  mentorMessages,
+  mentorSessions,
+  adjustmentEvents,
+  parentReports,
+  missions,
+  quests,
+} from "@/lib/schema";
+import { eq, and, gte, inArray, count, desc } from "drizzle-orm";
 import { generateAIReport } from "@/lib/ai/parent-report";
 
 interface GenerateReportOptions {
@@ -19,21 +31,21 @@ export async function generateParentReport(options: GenerateReportOptions) {
   const periodDays = type === "weekly" ? 7 : 14;
   const periodStart = new Date(periodEnd.getTime() - periodDays * 24 * 60 * 60 * 1000);
 
-  const child = await prisma.child.findUnique({
-    where: { id: childId },
-    include: {
+  const child = await db.query.children.findFirst({
+    where: eq(children.id, childId),
+    with: {
       discoveries: {
-        select: { detectedTalents: true },
-        orderBy: { createdAt: "desc" },
-        take: 3,
+        columns: { detectedTalents: true },
+        orderBy: (d, { desc }) => desc(d.createdAt),
+        limit: 3,
       },
       quests: {
-        where: {
-          status: { in: ["active", "completed"] },
-          createdAt: { gte: periodStart },
-        },
-        include: {
-          missions: { select: { status: true } },
+        where: and(
+          inArray(quests.status, ["active", "completed"]),
+          gte(quests.createdAt, periodStart),
+        ),
+        with: {
+          missions: { columns: { status: true } },
         },
       },
     },
@@ -57,43 +69,42 @@ export async function generateParentReport(options: GenerateReportOptions) {
   const uniqueTalents = [...new Set(talents)];
 
   const completedMissions = child.quests.reduce(
-    (count, quest) => count + quest.missions.filter((m) => m.status === "completed").length,
+    (cnt, quest) => cnt + quest.missions.filter((m) => m.status === "completed").length,
     0,
   );
 
-  const badgesEarned = await prisma.childBadge.findMany({
-    where: {
-      childId,
-      createdAt: { gte: periodStart },
-    },
-    select: { badgeSlug: true },
-  });
+  const badgesEarned = await db
+    .select({ badgeSlug: childBadges.badgeSlug })
+    .from(childBadges)
+    .where(and(eq(childBadges.childId, childId), gte(childBadges.createdAt, periodStart)));
 
-  const reflectionsCount = await prisma.reflectionEntry.count({
-    where: {
-      childId,
-      createdAt: { gte: periodStart },
-    },
-  });
+  const [reflectionsRow] = await db
+    .select({ value: count() })
+    .from(reflectionEntries)
+    .where(and(eq(reflectionEntries.childId, childId), gte(reflectionEntries.createdAt, periodStart)));
+  const reflectionsCount = reflectionsRow?.value ?? 0;
 
-  const mentorInteractions = await prisma.mentorMessage.count({
-    where: {
-      session: { childId },
-      createdAt: { gte: periodStart },
-    },
-  });
+  const [mentorInteractionsRow] = await db
+    .select({ value: count() })
+    .from(mentorMessages)
+    .innerJoin(mentorSessions, eq(mentorMessages.sessionId, mentorSessions.id))
+    .where(and(eq(mentorSessions.childId, childId), gte(mentorMessages.createdAt, periodStart)));
+  const mentorInteractions = mentorInteractionsRow?.value ?? 0;
 
   // Mission engagement detail for §7.1c: frustration events + adjustments.
   // We classify a mentor message as a "frustration event" when its meta JSON
   // carries frustrationLevel ∈ {medium, high} — soft check-in triggers.
-  const recentMentorMessages = await prisma.mentorMessage.findMany({
-    where: {
-      session: { childId },
-      role: "mentor",
-      createdAt: { gte: periodStart },
-    },
-    select: { meta: true },
-  });
+  const recentMentorMessages = await db
+    .select({ meta: mentorMessages.meta })
+    .from(mentorMessages)
+    .innerJoin(mentorSessions, eq(mentorMessages.sessionId, mentorSessions.id))
+    .where(
+      and(
+        eq(mentorSessions.childId, childId),
+        eq(mentorMessages.role, "mentor"),
+        gte(mentorMessages.createdAt, periodStart),
+      ),
+    );
   let frustrationEvents = 0;
   for (const m of recentMentorMessages) {
     if (!m.meta) continue;
@@ -106,18 +117,19 @@ export async function generateParentReport(options: GenerateReportOptions) {
       // Ignore malformed meta.
     }
   }
-  const adjustmentEvents = await prisma.adjustmentEvent.count({
-    where: {
-      session: { childId },
-      createdAt: { gte: periodStart },
-    },
-  });
+
+  const [adjustmentEventsRow] = await db
+    .select({ value: count() })
+    .from(adjustmentEvents)
+    .innerJoin(mentorSessions, eq(adjustmentEvents.sessionId, mentorSessions.id))
+    .where(and(eq(mentorSessions.childId, childId), gte(adjustmentEvents.createdAt, periodStart)));
+  const adjustmentEventsCount = adjustmentEventsRow?.value ?? 0;
 
   const engagementMetadata = {
     completedMissions,
     completedQuests: child.quests.length,
     frustrationEvents,
-    adjustmentEvents,
+    adjustmentEvents: adjustmentEventsCount,
     reflectionsCount,
     mentorInteractions,
   };
@@ -133,23 +145,26 @@ export async function generateParentReport(options: GenerateReportOptions) {
     periodEnd: periodEnd.toISOString(),
   });
 
-  const report = await prisma.parentReport.create({
-    data: {
-      parentId,
-      childId,
-      type,
-      period: JSON.stringify({
-        start: periodStart.toISOString(),
-        end: periodEnd.toISOString(),
-      }),
-      strengths: JSON.stringify(aiReport.strengths),
-      growthAreas: JSON.stringify(aiReport.growthAreas),
-      tips: JSON.stringify(aiReport.tips),
-      summary: aiReport.summary,
-      badgeHighlights: JSON.stringify(aiReport.badgeHighlights),
-      metadata: JSON.stringify({ engagement: engagementMetadata }),
-    },
-  });
+  const report = (
+    await db
+      .insert(parentReports)
+      .values({
+        parentId,
+        childId,
+        type,
+        period: JSON.stringify({
+          start: periodStart.toISOString(),
+          end: periodEnd.toISOString(),
+        }),
+        strengths: JSON.stringify(aiReport.strengths),
+        growthAreas: JSON.stringify(aiReport.growthAreas),
+        tips: JSON.stringify(aiReport.tips),
+        summary: aiReport.summary,
+        badgeHighlights: JSON.stringify(aiReport.badgeHighlights),
+        metadata: JSON.stringify({ engagement: engagementMetadata }),
+      })
+      .returning()
+  )[0];
 
   return toReportResponse(report);
 }
@@ -158,9 +173,9 @@ export async function generateParentReport(options: GenerateReportOptions) {
  * Get existing reports for a child (visible to linked parent).
  */
 export async function getReportsForChild(childId: string, parentId: string) {
-  const reports = await prisma.parentReport.findMany({
-    where: { childId, parentId },
-    orderBy: { createdAt: "desc" },
+  const reports = await db.query.parentReports.findMany({
+    where: and(eq(parentReports.childId, childId), eq(parentReports.parentId, parentId)),
+    orderBy: desc(parentReports.createdAt),
   });
 
   return reports.map(toReportResponse);
@@ -170,8 +185,8 @@ export async function getReportsForChild(childId: string, parentId: string) {
  * Get a single report by ID (verifying parent ownership).
  */
 export async function getReportById(reportId: string, parentId: string) {
-  const report = await prisma.parentReport.findUnique({
-    where: { id: reportId },
+  const report = await db.query.parentReports.findFirst({
+    where: eq(parentReports.id, reportId),
   });
 
   if (!report || report.parentId !== parentId) return null;

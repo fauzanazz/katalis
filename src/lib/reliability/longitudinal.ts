@@ -18,7 +18,8 @@
  * - r < 0.1 → no meaningful predictive validity yet
  */
 
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { interestSignals, missions } from "@/lib/schema";
 
 export const EARLY_WINDOW_DAYS = 14;
 export const SUSTAINED_WINDOW_DAYS = 60;
@@ -154,29 +155,22 @@ export function computePerChild(
 }
 
 export async function computeLongitudinalSnapshot(now = new Date()): Promise<LongitudinalSnapshot> {
-  const signals = (await prisma.interestSignal.findMany({
-    select: {
+  const signals = await db.query.interestSignals.findMany({
+    columns: {
       childId: true,
       interestKey: true,
       observedAt: true,
       strength: true,
       confidence: true,
     },
-  })) as SignalRow[];
+  }) as SignalRow[];
 
-  const missions = (await prisma.mission.findMany({
-    select: {
-      status: true,
-      createdAt: true,
-      quest: { select: { childId: true } },
-    },
-  })) as Array<{
-    status: string;
-    createdAt: Date;
-    quest: { childId: string };
-  }>;
+  const missionData = await db.query.missions.findMany({
+    columns: { status: true, createdAt: true },
+    with: { quest: { columns: { childId: true } } },
+  });
 
-  const missionRows: MissionRow[] = missions.map((m) => ({
+  const missionRows: MissionRow[] = missionData.map((m) => ({
     childId: m.quest.childId,
     status: m.status,
     createdAt: m.createdAt,

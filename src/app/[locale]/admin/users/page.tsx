@@ -1,12 +1,14 @@
 import { getTranslations } from "next-intl/server";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { users } from "@/lib/schema";
+import { desc } from "drizzle-orm";
 import { BackButton } from "@/components/layout/BackButton";
 
 export default async function AdminUsersPage() {
   const t = await getTranslations("admin.users");
-  const users = await prisma.user.findMany({
-    select: { id: true, email: true, name: true, role: true, createdAt: true },
-    orderBy: { createdAt: "desc" },
+  const userList = await db.query.users.findMany({
+    columns: { id: true, email: true, name: true, role: true, createdAt: true },
+    orderBy: desc(users.createdAt),
   });
 
   const roleLabel = (role: string) => {
@@ -24,7 +26,7 @@ export default async function AdminUsersPage() {
         <h1 className="text-2xl font-bold text-foreground">{t("title")}</h1>
       </div>
 
-      {users.length === 0 ? (
+      {userList.length === 0 ? (
         <p className="text-muted-foreground">{t("noUsers")}</p>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-border/60">
@@ -38,7 +40,7 @@ export default async function AdminUsersPage() {
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => (
+              {userList.map((user) => (
                 <tr key={user.id} className="border-b border-border/40 last:border-0">
                   <td className="px-4 py-3 text-foreground">{user.name}</td>
                   <td className="px-4 py-3 text-muted-foreground">{user.email}</td>

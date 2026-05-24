@@ -1,11 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Mock auth
 vi.mock("@/lib/auth", () => ({
   getChildSession: vi.fn(),
 }));
 
-// Mock AI client
 vi.mock("@/lib/ai/client", () => ({
   analyzeStory: vi.fn(),
 }));
@@ -21,18 +19,36 @@ vi.mock("@/lib/moderation", () => ({
   getUncertaintyFallback: vi.fn(() => "Keep exploring your amazing talents!"),
 }));
 
-// Mock prisma so the age-band lookup doesn't hit the real dev DB. Use a DoB
+// Mock db so the age-band lookup doesn't hit the real dev DB. Use a DoB
 // in the 10-12 band so the analyze-story modality gate allows `text` and
 // existing test expectations (timeout, success, etc.) keep working.
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    child: {
-      findUnique: vi.fn().mockResolvedValue({
+const mockDb = vi.hoisted(() => ({
+  query: {
+    children: {
+      findFirst: vi.fn().mockResolvedValue({
         dateOfBirth: new Date(Date.now() - 10 * 365.25 * 24 * 60 * 60 * 1000),
       }),
     },
+    rateLimits: {
+      findFirst: vi.fn().mockResolvedValue(null),
+    },
   },
+  delete: vi.fn().mockReturnValue({
+    where: vi.fn().mockResolvedValue(undefined),
+  }),
+  insert: vi.fn().mockReturnValue({
+    values: vi.fn().mockReturnValue({
+      onConflictDoUpdate: vi.fn().mockResolvedValue(undefined),
+    }),
+  }),
+  update: vi.fn().mockReturnValue({
+    set: vi.fn().mockReturnValue({
+      where: vi.fn().mockResolvedValue(undefined),
+    }),
+  }),
 }));
+
+vi.mock("@/lib/db", () => ({ db: mockDb }));
 
 import { POST } from "../analyze-story/route";
 import { getChildSession } from "@/lib/auth";
@@ -71,6 +87,9 @@ function createRequest(body: unknown) {
 describe("POST /api/discovery/analyze-story", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockDb.query.children.findFirst.mockResolvedValue({
+      dateOfBirth: new Date(Date.now() - 10 * 365.25 * 24 * 60 * 60 * 1000),
+    });
   });
 
   it("allows guest analysis without authentication", async () => {

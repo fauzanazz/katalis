@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { eq, asc } from "drizzle-orm";
 import { getChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { quests, missions, galleryEntries } from "@/lib/schema";
 import { sanitizeInput } from "@/lib/sanitize";
 import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 import { geocodeLocationText } from "@/lib/geocoding";
@@ -71,10 +73,10 @@ export async function POST(
     }
 
     // Fetch the quest with missions and discovery
-    const quest = await prisma.quest.findUnique({
-      where: { id: questId },
-      include: {
-        missions: { orderBy: { day: "asc" } },
+    const quest = await db.query.quests.findFirst({
+      where: eq(quests.id, questId),
+      with: {
+        missions: { orderBy: asc(missions.day) },
         discovery: true,
       },
     });
@@ -129,10 +131,7 @@ export async function POST(
 
     // Handle skip gallery — still marks quest completed and ingests signals
     if ("skipGallery" in data && data.skipGallery) {
-      await prisma.quest.update({
-        where: { id: questId },
-        data: { status: "completed" },
-      });
+      await db.update(quests).set({ status: "completed" }).where(eq(quests.id, questId));
 
       await runQuestCompletedSignals({
         childId: session.childId,
@@ -176,8 +175,8 @@ export async function POST(
     }
 
     // Check for duplicate gallery entry
-    const existingEntry = await prisma.galleryEntry.findUnique({
-      where: { questId },
+    const existingEntry = await db.query.galleryEntries.findFirst({
+      where: eq(galleryEntries.questId, questId),
     });
 
     if (existingEntry) {
@@ -221,24 +220,19 @@ export async function POST(
     });
 
     // Create gallery entry in a transaction
-    const galleryEntry = await prisma.$transaction(async (tx) => {
-      const entry = await tx.galleryEntry.create({
-        data: {
-          childId: session.childId,
-          questId,
-          imageUrl: selectedPhotoUrl!,
-          talentCategory,
-          country,
-          coordinates,
-          questContext,
-        },
-      });
+    const galleryEntry = await db.transaction(async (tx) => {
+      const [entry] = await tx.insert(galleryEntries).values({
+        childId: session.childId,
+        questId,
+        imageUrl: selectedPhotoUrl!,
+        talentCategory,
+        country,
+        coordinates,
+        questContext,
+      }).returning();
 
       // Ensure quest status is completed
-      await tx.quest.update({
-        where: { id: questId },
-        data: { status: "completed" },
-      });
+      await tx.update(quests).set({ status: "completed" }).where(eq(quests.id, questId));
 
       return entry;
     });

@@ -4,16 +4,19 @@ vi.mock("@/lib/auth", () => ({
   getChildSession: vi.fn(),
 }));
 
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    quest: { findUnique: vi.fn() },
-    mission: { findFirst: vi.fn() },
-    reflectionEntry: {
-      findFirst: vi.fn(),
-      create: vi.fn(),
-    },
+const mockValuesReturning = vi.hoisted(() => vi.fn().mockResolvedValue([{ id: "refl-1", createdAt: new Date() }]));
+const mockValues = vi.hoisted(() => vi.fn((_vals: unknown) => ({ returning: mockValuesReturning })));
+
+const mockDb = vi.hoisted(() => ({
+  query: {
+    quests: { findFirst: vi.fn() },
+    missions: { findFirst: vi.fn() },
+    reflectionEntries: { findFirst: vi.fn() },
   },
+  insert: vi.fn(() => ({ values: mockValues })),
 }));
+
+vi.mock("@/lib/db", () => ({ db: mockDb }));
 
 vi.mock("@/lib/ai/mentor", () => ({
   summarizeReflection: vi.fn().mockResolvedValue({ summary: "Great effort", highlights: [] }),
@@ -44,7 +47,6 @@ vi.mock("@/lib/ai/mentor-schemas", async (importOriginal) => {
 
 import { POST } from "../route";
 import { getChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 
 const mockedGetSession = vi.mocked(getChildSession);
 
@@ -63,20 +65,19 @@ describe("POST /api/reflection/daily — fileExpiresAt COPPA TTL", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockedGetSession.mockResolvedValue(VALID_SESSION);
-    vi.mocked(prisma.quest.findUnique).mockResolvedValue({
+    mockDb.query.quests.findFirst.mockResolvedValue({
       id: VALID_CUID,
       childId: VALID_SESSION.childId,
-    } as never);
-    vi.mocked(prisma.mission.findFirst).mockResolvedValue({
+    });
+    mockDb.query.missions.findFirst.mockResolvedValue({
       id: "mission-1",
       day: 1,
       title: "Build It",
-    } as never);
-    vi.mocked(prisma.reflectionEntry.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.reflectionEntry.create).mockResolvedValue({
-      id: "refl-1",
-      createdAt: new Date(),
-    } as never);
+    });
+    mockDb.query.reflectionEntries.findFirst.mockResolvedValue(null);
+    mockValuesReturning.mockResolvedValue([{ id: "refl-1", createdAt: new Date() }]);
+    mockValues.mockReturnValue({ returning: mockValuesReturning });
+    mockDb.insert.mockReturnValue({ values: mockValues });
   });
 
   it("sets fileExpiresAt ~365 days from now when fileUrl is present", async () => {
@@ -95,8 +96,8 @@ describe("POST /api/reflection/daily — fileExpiresAt COPPA TTL", () => {
     const after = Date.now();
     expect(res.status).toBe(201);
 
-    const createCall = vi.mocked(prisma.reflectionEntry.create).mock.calls[0][0];
-    const fileExpiresAt: Date = (createCall.data as Record<string, unknown>).fileExpiresAt as Date;
+    const valuesArg = mockValues.mock.calls[0][0] as Record<string, unknown>;
+    const fileExpiresAt = valuesArg.fileExpiresAt as Date;
 
     expect(fileExpiresAt).toBeInstanceOf(Date);
 
@@ -119,8 +120,8 @@ describe("POST /api/reflection/daily — fileExpiresAt COPPA TTL", () => {
 
     expect(res.status).toBe(201);
 
-    const createCall = vi.mocked(prisma.reflectionEntry.create).mock.calls[0][0];
-    const fileExpiresAt = (createCall.data as Record<string, unknown>).fileExpiresAt;
+    const valuesArg = mockValues.mock.calls[0][0] as Record<string, unknown>;
+    const fileExpiresAt = valuesArg.fileExpiresAt;
     expect(fileExpiresAt).toBeNull();
   });
 });

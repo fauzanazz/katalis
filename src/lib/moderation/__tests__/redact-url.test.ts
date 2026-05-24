@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { redactChildUrl } from "../index";
 
-vi.mock("@/lib/db", () => ({ prisma: {} }));
+vi.mock("@/lib/db", () => ({ db: {} }));
 
 describe("redactChildUrl", () => {
   it("redacts childId from child/ URL", () => {

@@ -1,5 +1,7 @@
 import { getTranslations } from "next-intl/server";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { users, children, accessCodes, discoveries, quests, galleryEntries, moderationEvents } from "@/lib/schema";
+import { eq, inArray, count } from "drizzle-orm";
 import { Users, Shield, Ticket, Sparkles, Swords, Image, ShieldAlert } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 
@@ -14,15 +16,16 @@ interface StatsData {
 }
 
 async function getStats(): Promise<StatsData> {
+  const toCount = (rows: { count: number }[]) => rows[0]!.count;
   const [totalUsers, totalChildren, activeCodes, totalDiscoveries, totalQuests, totalGalleryEntries, pendingModeration] =
     await Promise.all([
-      prisma.user.count(),
-      prisma.child.count(),
-      prisma.accessCode.count({ where: { active: true } }),
-      prisma.discovery.count(),
-      prisma.quest.count(),
-      prisma.galleryEntry.count(),
-      prisma.moderationEvent.count({ where: { status: { in: ["pending", "flagged"] } } }),
+      db.select({ count: count() }).from(users).then(toCount),
+      db.select({ count: count() }).from(children).then(toCount),
+      db.select({ count: count() }).from(accessCodes).where(eq(accessCodes.active, true)).then(toCount),
+      db.select({ count: count() }).from(discoveries).then(toCount),
+      db.select({ count: count() }).from(quests).then(toCount),
+      db.select({ count: count() }).from(galleryEntries).then(toCount),
+      db.select({ count: count() }).from(moderationEvents).where(inArray(moderationEvents.status, ["pending", "flagged"])).then(toCount),
     ]);
   return { totalUsers, totalChildren, activeCodes, totalDiscoveries, totalQuests, totalGalleryEntries, pendingModeration };
 }

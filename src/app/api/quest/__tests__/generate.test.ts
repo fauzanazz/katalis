@@ -10,23 +10,68 @@ vi.mock("@/lib/ai/client", () => ({
   generateQuest: vi.fn(),
 }));
 
-// Mock Prisma
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    quest: {
-      create: vi.fn(),
+const mockMissions = vi.hoisted(() => [
+  {
+    id: "mission-1",
+    questId: "quest-123",
+    day: 1,
+    title: "Day 1 Mission",
+    description: "Description for day 1",
+    instructions: JSON.stringify(["Step 1 for day 1", "Step 2 for day 1"]),
+    materials: JSON.stringify(["Material for day 1"]),
+    tips: JSON.stringify(["Tip for day 1"]),
+    status: "available",
+    proofPhotoUrl: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  ...Array.from({ length: 6 }, (_, i) => ({
+    id: `mission-${i + 2}`,
+    questId: "quest-123",
+    day: i + 2,
+    title: `Day ${i + 2} Mission`,
+    description: `Description for day ${i + 2}`,
+    instructions: JSON.stringify([`Step 1 for day ${i + 2}`, `Step 2 for day ${i + 2}`]),
+    materials: JSON.stringify([`Material for day ${i + 2}`]),
+    tips: JSON.stringify([`Tip for day ${i + 2}`]),
+    status: "locked",
+    proofPhotoUrl: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  })),
+]);
+
+const mockDb = vi.hoisted(() => ({
+  query: {
+    children: {
+      findFirst: vi.fn().mockResolvedValue({ dateOfBirth: null }),
     },
-    discovery: {
-      count: vi.fn(),
-    },
-    child: {
-      findUnique: vi.fn().mockResolvedValue({ dateOfBirth: null }),
-    },
-    childInterestProfile: {
+    childInterestProfiles: {
       findMany: vi.fn().mockResolvedValue([]),
     },
+    discoveries: {
+      findFirst: vi.fn().mockResolvedValue(null),
+    },
+    missions: {
+      findMany: vi.fn().mockResolvedValue(mockMissions),
+    },
   },
+  insert: vi.fn(() => ({
+    values: vi.fn(() => ({
+      returning: vi.fn().mockResolvedValue([{ id: "quest-123", childId: "child-1" }]),
+      onConflictDoUpdate: vi.fn(() => ({
+        returning: vi.fn().mockResolvedValue([]),
+      })),
+    })),
+  })),
+  select: vi.fn(() => ({
+    from: vi.fn(() => ({
+      where: vi.fn().mockResolvedValue([{ count: 1 }]),
+    })),
+  })),
 }));
+
+vi.mock("@/lib/db", () => ({ db: mockDb }));
 
 vi.mock("@/lib/interests/quest-mapper", () => ({
   mapQuestToInterestSignals: vi.fn().mockReturnValue([]),
@@ -64,11 +109,9 @@ vi.mock("@/lib/moderation", () => ({
 import { POST } from "../generate/route";
 import { getChildSession } from "@/lib/auth";
 import { generateQuest } from "@/lib/ai/client";
-import { prisma } from "@/lib/db";
 
 const mockedGetSession = vi.mocked(getChildSession);
 const mockedGenerateQuest = vi.mocked(generateQuest);
-const mockedQuestCreate = vi.mocked(prisma.quest.create);
 
 const validSession = {
   childId: "child-1",
@@ -86,32 +129,6 @@ const mockQuestResult = {
   })),
 };
 
-const mockCreatedQuest = {
-  id: "quest-123",
-  childId: "child-1",
-  discoveryId: null,
-  dream: "I want to build robots",
-  localContext: "I live in a village near a river",
-  status: "active",
-  generatedAt: new Date(),
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  missions: mockQuestResult.missions.map((m) => ({
-    id: `mission-${m.day}`,
-    questId: "quest-123",
-    day: m.day,
-    title: m.title,
-    description: m.description,
-    instructions: JSON.stringify(m.instructions),
-    materials: JSON.stringify(m.materials),
-    tips: JSON.stringify(m.tips),
-    status: m.day === 1 ? "available" : "locked",
-    proofPhotoUrl: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  })),
-};
-
 function createRequest(body: unknown) {
   return new Request("http://localhost:3100/api/quest/generate", {
     method: "POST",
@@ -120,13 +137,26 @@ function createRequest(body: unknown) {
   }) as unknown as Parameters<typeof POST>[0];
 }
 
-const mockedDiscoveryCount = vi.mocked(prisma.discovery.count);
-
 describe("POST /api/quest/generate", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Default: child has at least one discovery
-    mockedDiscoveryCount.mockResolvedValue(1);
+    mockDb.query.children.findFirst.mockResolvedValue({ dateOfBirth: null });
+    mockDb.query.childInterestProfiles.findMany.mockResolvedValue([]);
+    mockDb.query.missions.findMany.mockResolvedValue(mockMissions);
+    mockDb.select.mockReturnValue({
+      from: vi.fn(() => ({
+        where: vi.fn().mockResolvedValue([{ count: 1 }]),
+      })),
+    });
+    mockDb.insert.mockReturnValue({
+      values: vi.fn(() => ({
+        returning: vi.fn().mockResolvedValue([{ id: "quest-123", childId: "child-1" }]),
+        onConflictDoUpdate: vi.fn(() => ({
+          returning: vi.fn().mockResolvedValue([]),
+        })),
+      })),
+    });
   });
 
   it("returns 200 guest preview when not authenticated", async () => {
@@ -148,7 +178,6 @@ describe("POST /api/quest/generate", () => {
   it("returns 200 with quest data on success", async () => {
     mockedGetSession.mockResolvedValue(validSession);
     mockedGenerateQuest.mockResolvedValue(mockQuestResult);
-    mockedQuestCreate.mockResolvedValue(mockCreatedQuest as never);
 
     const res = await POST(
       createRequest({
@@ -242,7 +271,6 @@ describe("POST /api/quest/generate", () => {
   it("sanitizes XSS in dream text", async () => {
     mockedGetSession.mockResolvedValue(validSession);
     mockedGenerateQuest.mockResolvedValue(mockQuestResult);
-    mockedQuestCreate.mockResolvedValue(mockCreatedQuest as never);
 
     const res = await POST(
       createRequest({
@@ -265,7 +293,6 @@ describe("POST /api/quest/generate", () => {
   it("sanitizes XSS in localContext text", async () => {
     mockedGetSession.mockResolvedValue(validSession);
     mockedGenerateQuest.mockResolvedValue(mockQuestResult);
-    mockedQuestCreate.mockResolvedValue(mockCreatedQuest as never);
 
     const res = await POST(
       createRequest({
@@ -335,7 +362,20 @@ describe("POST /api/quest/generate", () => {
   it("creates quest with Day 1 available and rest locked", async () => {
     mockedGetSession.mockResolvedValue(validSession);
     mockedGenerateQuest.mockResolvedValue(mockQuestResult);
-    mockedQuestCreate.mockResolvedValue(mockCreatedQuest as never);
+
+    const missionsInsertValuesFn = vi.fn(() => ({
+      returning: vi.fn().mockResolvedValue([]),
+      onConflictDoUpdate: vi.fn(() => ({ returning: vi.fn().mockResolvedValue([]) })),
+    }));
+    const questInsertValuesFn = vi.fn(() => ({
+      returning: vi.fn().mockResolvedValue([{ id: "quest-123", childId: "child-1" }]),
+      onConflictDoUpdate: vi.fn(() => ({ returning: vi.fn().mockResolvedValue([]) })),
+    }));
+
+    // First insert call is quests, second is missions
+    mockDb.insert
+      .mockReturnValueOnce({ values: questInsertValuesFn })
+      .mockReturnValueOnce({ values: missionsInsertValuesFn });
 
     await POST(
       createRequest({
@@ -344,25 +384,31 @@ describe("POST /api/quest/generate", () => {
       }),
     );
 
-    // Verify prisma was called with correct mission statuses
-    expect(mockedQuestCreate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          missions: expect.objectContaining({
-            create: expect.arrayContaining([
-              expect.objectContaining({ day: 1, status: "available" }),
-              expect.objectContaining({ day: 2, status: "locked" }),
-            ]),
-          }),
-        }),
-      }),
+    // Verify missions insert was called with correct statuses
+    expect(missionsInsertValuesFn).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ day: 1, status: "available" }),
+        expect.objectContaining({ day: 2, status: "locked" }),
+      ]),
     );
   });
 
   it("passes discoveryId when provided", async () => {
     mockedGetSession.mockResolvedValue(validSession);
     mockedGenerateQuest.mockResolvedValue(mockQuestResult);
-    mockedQuestCreate.mockResolvedValue(mockCreatedQuest as never);
+
+    const questInsertValuesFn = vi.fn(() => ({
+      returning: vi.fn().mockResolvedValue([{ id: "quest-123", childId: "child-1" }]),
+      onConflictDoUpdate: vi.fn(() => ({ returning: vi.fn().mockResolvedValue([]) })),
+    }));
+    const missionsInsertValuesFn = vi.fn(() => ({
+      returning: vi.fn().mockResolvedValue([]),
+      onConflictDoUpdate: vi.fn(() => ({ returning: vi.fn().mockResolvedValue([]) })),
+    }));
+
+    mockDb.insert
+      .mockReturnValueOnce({ values: questInsertValuesFn })
+      .mockReturnValueOnce({ values: missionsInsertValuesFn });
 
     await POST(
       createRequest({
@@ -372,11 +418,9 @@ describe("POST /api/quest/generate", () => {
       }),
     );
 
-    expect(mockedQuestCreate).toHaveBeenCalledWith(
+    expect(questInsertValuesFn).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({
-          discoveryId: "disc-123",
-        }),
+        discoveryId: "disc-123",
       }),
     );
   });
@@ -384,7 +428,6 @@ describe("POST /api/quest/generate", () => {
   it("each mission has all required fields", async () => {
     mockedGetSession.mockResolvedValue(validSession);
     mockedGenerateQuest.mockResolvedValue(mockQuestResult);
-    mockedQuestCreate.mockResolvedValue(mockCreatedQuest as never);
 
     const res = await POST(
       createRequest({

@@ -1,4 +1,6 @@
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { childZpdStates } from "@/lib/schema";
+import { eq } from "drizzle-orm";
 import { scoreToBand } from "./band";
 import { computeNextScore, type ZpdOutcome } from "./update";
 import {
@@ -29,8 +31,8 @@ export async function recordZpdEvent(input: RecordZpdEventInput) {
     if (dedupe) return null;
   }
 
-  return prisma.$transaction(async (tx) => {
-    const state = await tx.childZpdState.findUnique({ where: { childId } });
+  return db.transaction(async (tx) => {
+    const state = await tx.query.childZpdStates.findFirst({ where: eq(childZpdStates.childId, childId) });
     const currentScore = state?.score ?? DEFAULT_BASELINE_SCORE;
     const lastUpdate = state?.updatedAt ?? null;
     const daysSinceLastUpdate = lastUpdate

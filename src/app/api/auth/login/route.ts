@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/db";
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { users, accessCodes, children } from "@/lib/schema";
 import { createChildSession, createUserSession } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { sanitizeInput, isValidAccessCodeFormat } from "@/lib/sanitize";
@@ -71,9 +73,9 @@ async function handleEmailLogin(body: Record<string, unknown>) {
 
   const { email, password } = parsed.data;
 
-  const user = await prisma.user.findUnique({
-    where: { email },
-    select: { id: true, name: true, passwordHash: true, role: true },
+  const user = await db.query.users.findFirst({
+    where: eq(users.email, email),
+    columns: { id: true, name: true, passwordHash: true, role: true },
   });
   if (!user) {
     return NextResponse.json(
@@ -117,8 +119,8 @@ async function handleAccessCodeLogin(body: Record<string, unknown>) {
     );
   }
 
-  const accessCode = await prisma.accessCode.findUnique({
-    where: { code },
+  const accessCode = await db.query.accessCodes.findFirst({
+    where: eq(accessCodes.code, code),
   });
 
   if (!accessCode) {
@@ -142,17 +144,17 @@ async function handleAccessCodeLogin(body: Record<string, unknown>) {
     );
   }
 
-  let child = await prisma.child.findFirst({
-    where: { accessCodeId: accessCode.id },
+  let child = await db.query.children.findFirst({
+    where: eq(children.accessCodeId, accessCode.id),
   });
 
   if (!child) {
-    child = await prisma.child.create({
-      data: {
-        accessCodeId: accessCode.id,
-        locale: routing.defaultLocale,
-      },
-    });
+    child = (
+      await db
+        .insert(children)
+        .values({ accessCodeId: accessCode.id, locale: routing.defaultLocale })
+        .returning()
+    )[0];
   }
 
   await createChildSession(child.id);

@@ -4,7 +4,8 @@
  * Provides a unified API for moderating text, images, and audio content.
  */
 
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { moderationEvents } from "@/lib/schema";
 import type {
   ModerationInput,
   ModerationResult,
@@ -28,23 +29,26 @@ export async function moderateContent(
 ): Promise<ModerationResult & { eventId: string }> {
   const result = await runModeration(input.content, input.contentType);
 
-  const event = await prisma.moderationEvent.create({
-    data: {
-      sourceType: input.sourceType,
-      sourceId: input.sourceId,
-      contentType: input.contentType,
-      status: result.status,
-      category: result.category,
-      severity: result.severity,
-      confidence: result.confidence,
-      aiReasoning: result.reasoning,
-      childId: input.childId,
-      metadata: JSON.stringify({
-        contentLength: input.content.length,
+  const event = (
+    await db
+      .insert(moderationEvents)
+      .values({
+        sourceType: input.sourceType,
+        sourceId: input.sourceId,
         contentType: input.contentType,
-      }),
-    },
-  });
+        status: result.status,
+        category: result.category,
+        severity: result.severity,
+        confidence: result.confidence,
+        aiReasoning: result.reasoning,
+        childId: input.childId,
+        metadata: JSON.stringify({
+          contentLength: input.content.length,
+          contentType: input.contentType,
+        }),
+      })
+      .returning()
+  )[0];
 
   return { ...result, eventId: event.id };
 }
@@ -59,22 +63,25 @@ export async function moderateImageContent(
   const result = await moderateImage(input.imageUrl);
   console.log("[Moderation] Result:", { allowed: result.allowed, status: result.status });
 
-  const event = await prisma.moderationEvent.create({
-    data: {
-      sourceType: input.sourceType,
-      sourceId: input.sourceId,
-      contentType: "image",
-      status: result.status,
-      category: result.category,
-      severity: result.severity,
-      confidence: result.confidence,
-      aiReasoning: result.reasoning,
-      childId: input.childId,
-      metadata: JSON.stringify({
-        imageUrlLength: input.imageUrl.length,
-      }),
-    },
-  });
+  const event = (
+    await db
+      .insert(moderationEvents)
+      .values({
+        sourceType: input.sourceType,
+        sourceId: input.sourceId,
+        contentType: "image",
+        status: result.status,
+        category: result.category,
+        severity: result.severity,
+        confidence: result.confidence,
+        aiReasoning: result.reasoning,
+        childId: input.childId,
+        metadata: JSON.stringify({
+          imageUrlLength: input.imageUrl.length,
+        }),
+      })
+      .returning()
+  )[0];
 
   return { ...result, eventId: event.id };
 }

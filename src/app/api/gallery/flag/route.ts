@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { sanitizeInput } from "@/lib/sanitize";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { moderationEvents } from "@/lib/schema";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 /**
@@ -61,19 +62,17 @@ export async function POST(request: NextRequest | Request) {
 
     const sanitizedDetails = details ? sanitizeInput(details) : undefined;
 
-    await prisma.moderationEvent.create({
-      data: {
-        sourceType: "flag",
-        sourceId: entryId,
-        contentType: "image",
-        status: "flagged",
-        category: REASON_TO_CATEGORY[reason] ?? "other",
-        severity: reason === "inappropriate" ? "high" : "medium",
-        metadata: JSON.stringify({
-          reason,
-          details: sanitizedDetails,
-        }),
-      },
+    await db.insert(moderationEvents).values({
+      sourceType: "flag",
+      sourceId: entryId,
+      contentType: "image",
+      status: "flagged",
+      category: REASON_TO_CATEGORY[reason] ?? "other",
+      severity: reason === "inappropriate" ? "high" : "medium",
+      metadata: JSON.stringify({
+        reason,
+        details: sanitizedDetails,
+      }),
     });
 
     return NextResponse.json({

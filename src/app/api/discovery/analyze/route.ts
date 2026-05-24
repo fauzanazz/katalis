@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 import { getChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { children } from "@/lib/schema";
 import { sanitizeInput } from "@/lib/sanitize";
 import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 import { AnalysisInputSchema } from "@/lib/ai/schemas";
@@ -90,9 +92,9 @@ export async function POST(request: NextRequest) {
     // Authed children resolve DoB from DB; guests must pass guestDob in body.
     let dob: Date | null | undefined;
     if (session?.childId) {
-      const child = await prisma.child.findUnique({
-        where: { id: session.childId },
-        select: { dateOfBirth: true },
+      const child = await db.query.children.findFirst({
+        where: eq(children.id, session.childId),
+        columns: { dateOfBirth: true },
       });
       dob = child?.dateOfBirth;
     } else if (parsed.data.guestDob) {

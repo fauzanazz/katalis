@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq, desc, count } from "drizzle-orm";
 import { getChildSession } from "@/lib/auth";
 import { sanitizeInput } from "@/lib/sanitize";
 import { QuestGenerationInputSchema } from "@/lib/ai/quest-schemas";
 import { generateQuest } from "@/lib/ai/client";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { children, childInterestProfiles, discoveries, quests, missions } from "@/lib/schema";
 import { moderateContent } from "@/lib/moderation";
 import { mapQuestToInterestSignals } from "@/lib/interests/quest-mapper";
 import { ingestInterestSignals } from "@/lib/interests/ingest-service";
@@ -98,9 +100,9 @@ export async function POST(request: NextRequest) {
     // resolve DoB from DB; guests pass guestDob in the body.
     let ageGroup: ReturnType<typeof getAgeGroup>["band"] = "unknown";
     if (session?.childId) {
-      const child = await prisma.child.findUnique({
-        where: { id: session.childId },
-        select: { dateOfBirth: true },
+      const child = await db.query.children.findFirst({
+        where: eq(children.id, session.childId),
+        columns: { dateOfBirth: true },
       });
       ageGroup = getAgeGroup(child?.dateOfBirth).band;
     } else if (guestDob) {
@@ -111,11 +113,11 @@ export async function POST(request: NextRequest) {
     // the child's top set so the generator includes an exploration mission.
     let explorationInterests: string[] | undefined;
     if (session?.childId) {
-      const profileRows = (await prisma.childInterestProfile.findMany({
-        where: { childId: session.childId },
-        orderBy: { score: "desc" },
-        take: 20,
-        select: { interestKey: true, score: true },
+      const profileRows = (await db.query.childInterestProfiles.findMany({
+        where: eq(childInterestProfiles.childId, session.childId),
+        orderBy: desc(childInterestProfiles.score),
+        limit: 20,
+        columns: { interestKey: true, score: true },
       })) as Array<{ interestKey: string; score: number }>;
       const validProfiles: ProfileSummary[] = profileRows.flatMap((p) =>
         isInterestKey(p.interestKey)
@@ -133,9 +135,9 @@ export async function POST(request: NextRequest) {
       | undefined;
     if (discoveryId && session?.childId) {
       try {
-        const discovery = await prisma.discovery.findUnique({
-          where: { id: discoveryId },
-          select: { aiAnalysis: true },
+        const discovery = await db.query.discoveries.findFirst({
+          where: eq(discoveries.id, discoveryId),
+          columns: { aiAnalysis: true },
         });
         if (discovery?.aiAnalysis) {
           const analysisJson = JSON.parse(discovery.aiAnalysis) as {
@@ -213,11 +215,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Authenticated path: verify discovery exists then persist
-    const discoveryCount = await prisma.discovery.count({
-      where: { childId: session.childId },
-    });
+    const [discoveryCountRow] = await db
+      .select({ count: count() })
+      .from(discoveries)
+      .where(eq(discoveries.childId, session.childId));
 
-    if (discoveryCount === 0) {
+    if (discoveryCountRow.count === 0) {
       return NextResponse.json(
         {
           error: "no_discovery",
@@ -228,40 +231,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create Quest and Mission records in database
-    const quest = await prisma.quest.create({
-      data: {
-        childId: session.childId,
-        discoveryId: discoveryId ?? null,
-        dream,
-        localContext,
-        status: "active",
-        generatedAt: new Date(),
-        missions: {
-          create: result.missions.map((mission) => ({
-            day: mission.day,
-            title: mission.title,
-            description: mission.description,
-            instructions: JSON.stringify(mission.instructions),
-            materials: JSON.stringify(mission.materials),
-            tips: JSON.stringify(mission.tips),
-            status: mission.day === 1 ? "available" : "locked",
-            phase: mission.phase ?? null,
-            intensityHint: mission.intensityHint ?? null,
-            intent: mission.intent ?? null,
-            estimatedMinutes: mission.estimatedMinutes,
-          })),
-        },
-      },
-      include: {
-        missions: {
-          orderBy: { day: "asc" },
-        },
-      },
+    // Create Quest record
+    const [quest] = await db.insert(quests).values({
+      childId: session.childId,
+      discoveryId: discoveryId ?? null,
+      dream,
+      localContext,
+      status: "active",
+      generatedAt: new Date(),
+    }).returning();
+
+    // Create Mission records
+    await db.insert(missions).values(
+      result.missions.map((mission) => ({
+        questId: quest.id,
+        day: mission.day,
+        title: mission.title,
+        description: mission.description,
+        instructions: JSON.stringify(mission.instructions),
+        materials: JSON.stringify(mission.materials),
+        tips: JSON.stringify(mission.tips),
+        status: mission.day === 1 ? "available" : "locked",
+        phase: mission.phase ?? null,
+        intensityHint: mission.intensityHint ?? null,
+        intent: mission.intent ?? null,
+        estimatedMinutes: mission.estimatedMinutes,
+      }))
+    );
+
+    const missionList = await db.query.missions.findMany({
+      where: eq(missions.questId, quest.id),
+      orderBy: missions.day,
     });
 
     // Transform missions to include parsed JSON fields
-    const missions = quest.missions.map((m) => ({
+    const missionResponse = missionList.map((m) => ({
       day: m.day,
       title: m.title,
       description: m.description,
@@ -288,7 +292,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { id: quest.id, missions },
+      { id: quest.id, missions: missionResponse },
       { status: 200 },
     );
   } catch (error) {

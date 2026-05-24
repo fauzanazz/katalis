@@ -1,8 +1,10 @@
 import { randomInt } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getUserSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { accessCodes, children, parentChildren } from "@/lib/schema";
 import { routing } from "@/i18n/routing";
 import { getAgeGroup } from "@/lib/age";
 
@@ -64,33 +66,48 @@ export async function POST(request: NextRequest | Request) {
       );
     }
 
-    const { child, accessCode } = await prisma.$transaction(async (tx) => {
+    const { child, accessCode } = await db.transaction(async (tx) => {
       // Generate unique access code
       let code: string;
       let attempts = 0;
       do {
         code = generateAccessCode();
         if (++attempts > 10) throw new Error("Failed to generate unique access code");
-        const existing = await tx.accessCode.findUnique({ where: { code } });
+        const existing = await tx.query.accessCodes.findFirst({
+          where: eq(accessCodes.code, code),
+        });
         if (!existing) break;
       } while (true);
 
-      const newAccessCode = await tx.accessCode.create({
-        data: { code, active: true, expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
-      });
+      const newAccessCode = (
+        await tx
+          .insert(accessCodes)
+          .values({
+            code: code!,
+            active: true,
+            expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+          })
+          .returning()
+      )[0];
 
-      const newChild = await tx.child.create({
-        data: { name, locale, dateOfBirth: dob, accessCodeId: newAccessCode.id },
-        select: { id: true, name: true, locale: true, dateOfBirth: true, createdAt: true },
-      });
+      const newChild = (
+        await tx
+          .insert(children)
+          .values({ name, locale, dateOfBirth: dob, accessCodeId: newAccessCode.id })
+          .returning({
+            id: children.id,
+            name: children.name,
+            locale: children.locale,
+            dateOfBirth: children.dateOfBirth,
+            createdAt: children.createdAt,
+          })
+      )[0];
 
-      await tx.parentChild.create({
-        data: {
-          userId: session.userId,
-          childId: newChild.id,
-          consentGivenAt: new Date(),
-          consentTextVersion: "v1",
-        },
+      await tx.insert(parentChildren).values({
+        userId: session.userId,
+        childId: newChild.id,
+        consentGivenAt: new Date(),
+        consentTextVersion: "v1",
       });
 
       return { child: newChild, accessCode: newAccessCode.code };

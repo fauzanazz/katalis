@@ -1,4 +1,6 @@
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { childInterestProfiles, interestSignals } from "@/lib/schema";
+import { eq, desc } from "drizzle-orm";
 import { isInterestKey } from "./taxonomy";
 import type { InterestKey } from "./taxonomy";
 
@@ -89,15 +91,15 @@ function buildSuggestedQuestions(topInterests: TopInterest[]): string[] {
 
 export async function getParentInterestInsights(childId: string): Promise<ParentInterestInsights> {
   const [profiles, recentRawSignals] = await Promise.all([
-    prisma.childInterestProfile.findMany({
-      where: { childId },
-      orderBy: { score: "desc" },
-      take: 10,
+    db.query.childInterestProfiles.findMany({
+      where: eq(childInterestProfiles.childId, childId),
+      orderBy: desc(childInterestProfiles.score),
+      limit: 10,
     }),
-    prisma.interestSignal.findMany({
-      where: { childId },
-      orderBy: { observedAt: "desc" },
-      take: 20,
+    db.query.interestSignals.findMany({
+      where: eq(interestSignals.childId, childId),
+      orderBy: desc(interestSignals.observedAt),
+      limit: 20,
     }),
   ]);
 

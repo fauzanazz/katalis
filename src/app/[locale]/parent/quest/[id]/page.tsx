@@ -1,7 +1,9 @@
 import { getTranslations } from "next-intl/server";
 import { getUserSession } from "@/lib/auth";
 import { redirect, notFound } from "next/navigation";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { quests, parentQuestFollows } from "@/lib/schema";
+import { eq, and } from "drizzle-orm";
 import { verifyParentChildLink } from "@/lib/parent/link";
 import { mapQuestToInterestSignals } from "@/lib/interests/quest-mapper";
 import { MissionInterestRating } from "@/components/parent/MissionInterestRating";
@@ -25,31 +27,27 @@ export default async function ParentQuestViewPage({
   const t = await getTranslations("parent.quest");
   const { id: questId } = await params;
 
-  const quest = await prisma.quest.findUnique({
-    where: { id: questId },
-    include: {
-      child: { select: { id: true, name: true } },
-      missions: { orderBy: { day: "asc" } },
-      discovery: { select: { detectedTalents: true } },
+  const quest = await db.query.quests.findFirst({
+    where: eq(quests.id, questId),
+    with: {
+      child: { columns: { id: true, name: true } },
+      missions: { orderBy: (m, { asc }) => asc(m.day) },
+      discovery: { columns: { detectedTalents: true } },
     },
   });
 
-  if (!quest) notFound();
+  if (quest == null) notFound();
 
   const isLinked = await verifyParentChildLink(session.userId, quest.childId);
   if (!isLinked) notFound();
 
-  await prisma.parentQuestFollow.upsert({
-    where: {
-      parentId_questId: { parentId: session.userId, questId },
-    },
-    update: { lastViewedAt: new Date() },
-    create: {
-      parentId: session.userId,
-      childId: quest.childId,
-      questId,
-    },
-  });
+  await db
+    .insert(parentQuestFollows)
+    .values({ parentId: session.userId, childId: quest.childId, questId })
+    .onConflictDoUpdate({
+      target: [parentQuestFollows.parentId, parentQuestFollows.questId],
+      set: { lastViewedAt: new Date() },
+    });
 
   const currentMission =
     quest.missions.find(

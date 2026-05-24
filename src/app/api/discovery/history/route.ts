@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq, desc, count } from "drizzle-orm";
 import { getChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { discoveries } from "@/lib/schema";
 import type { Talent } from "@/lib/ai/schemas";
 
 /**
@@ -25,21 +27,19 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10) || 20));
-    const skip = (page - 1) * limit;
+    const offset = (page - 1) * limit;
 
-    const [discoveries, total] = await Promise.all([
-      prisma.discovery.findMany({
-        where: { childId: session.childId },
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
+    const [discoveryRows, [{ count: total }]] = await Promise.all([
+      db.query.discoveries.findMany({
+        where: eq(discoveries.childId, session.childId),
+        orderBy: desc(discoveries.createdAt),
+        limit,
+        offset,
       }),
-      prisma.discovery.count({
-        where: { childId: session.childId },
-      }),
+      db.select({ count: count() }).from(discoveries).where(eq(discoveries.childId, session.childId)),
     ]);
 
-    const items = discoveries.map((d) => {
+    const items = discoveryRows.map((d) => {
       let talents: Talent[] = [];
       try {
         talents = JSON.parse(d.detectedTalents ?? "[]");

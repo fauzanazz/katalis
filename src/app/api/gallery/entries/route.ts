@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { eq, desc, count, asc } from "drizzle-orm";
 import { getChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { galleryEntries, quests, missions } from "@/lib/schema";
 import { sanitizeInput } from "@/lib/sanitize";
 import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 import { geocodeLocationText } from "@/lib/geocoding";
@@ -44,19 +46,17 @@ export async function GET(request: NextRequest | Request) {
     // Clamp values
     const page = Math.max(1, isNaN(pageParam) ? 1 : pageParam);
     const pageSize = Math.min(100, Math.max(1, isNaN(pageSizeParam) ? 20 : pageSizeParam));
-    const skip = (page - 1) * pageSize;
+    const offset = (page - 1) * pageSize;
 
-    // Build where clause
-    const where: Record<string, unknown> = {};
-    if (talentCategory) {
-      where.talentCategory = talentCategory;
-    }
+    const whereCondition = talentCategory
+      ? eq(galleryEntries.talentCategory, talentCategory)
+      : undefined;
 
     if (tag) {
       // Fetch all entries for in-memory tag filtering (SQLite doesn't support JSON queries)
-      const allTagEntries = await prisma.galleryEntry.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
+      const allTagEntries = await db.query.galleryEntries.findMany({
+        where: whereCondition,
+        orderBy: desc(galleryEntries.createdAt),
       });
 
       const matched = allTagEntries
@@ -67,9 +67,7 @@ export async function GET(request: NextRequest | Request) {
           talentCategory: entry.talentCategory,
           country: entry.country,
           questContext: safeParseJSON(entry.questContext, null),
-          talentTags: safeParseJSON<
-            Array<{ name: string }> | null
-          >(entry.talentTags, null),
+          talentTags: safeParseJSON<Array<{ name: string }> | null>(entry.talentTags, null),
           clusterGroup: entry.clusterGroup,
           createdAt: entry.createdAt,
         }))
@@ -80,7 +78,7 @@ export async function GET(request: NextRequest | Request) {
           );
         });
 
-      const paged = matched.slice(skip, skip + pageSize);
+      const paged = matched.slice(offset, offset + pageSize);
 
       return NextResponse.json({
         entries: paged,
@@ -91,14 +89,17 @@ export async function GET(request: NextRequest | Request) {
       });
     }
 
-    const [entries, total] = await Promise.all([
-      prisma.galleryEntry.findMany({
-        where,
-        skip,
-        take: pageSize,
-        orderBy: { createdAt: "desc" },
+    const [entries, [{ count: total }]] = await Promise.all([
+      db.query.galleryEntries.findMany({
+        where: whereCondition,
+        offset,
+        limit: pageSize,
+        orderBy: desc(galleryEntries.createdAt),
       }),
-      prisma.galleryEntry.count({ where }),
+      db
+        .select({ count: count() })
+        .from(galleryEntries)
+        .where(whereCondition),
     ]);
 
     // Map entries to remove childId and coordinates (privacy/COPPA)
@@ -175,10 +176,10 @@ export async function POST(request: NextRequest | Request) {
     const { questId, selectedPhotoUrl: rawPhotoUrl } = parsed.data;
 
     // Fetch the quest with missions and discovery
-    const quest = await prisma.quest.findUnique({
-      where: { id: questId },
-      include: {
-        missions: { orderBy: { day: "asc" } },
+    const quest = await db.query.quests.findFirst({
+      where: eq(quests.id, questId),
+      with: {
+        missions: { orderBy: asc(missions.day) },
         discovery: true,
       },
     });
@@ -254,8 +255,8 @@ export async function POST(request: NextRequest | Request) {
     }
 
     // Check for duplicate gallery entry
-    const existingEntry = await prisma.galleryEntry.findUnique({
-      where: { questId },
+    const existingEntry = await db.query.galleryEntries.findFirst({
+      where: eq(galleryEntries.questId, questId),
     });
     if (existingEntry) {
       return NextResponse.json(
@@ -314,9 +315,10 @@ export async function POST(request: NextRequest | Request) {
     });
 
     // Create gallery entry in a transaction
-    const galleryEntry = await prisma.$transaction(async (tx) => {
-      const entry = await tx.galleryEntry.create({
-        data: {
+    const galleryEntry = await db.transaction(async (tx) => {
+      const [entry] = await tx
+        .insert(galleryEntries)
+        .values({
           childId: session.childId,
           questId,
           imageUrl: photoUrl!,
@@ -324,14 +326,14 @@ export async function POST(request: NextRequest | Request) {
           country,
           coordinates,
           questContext,
-        },
-      });
+        })
+        .returning();
 
       // Ensure quest status is completed
-      await tx.quest.update({
-        where: { id: questId },
-        data: { status: "completed" },
-      });
+      await tx
+        .update(quests)
+        .set({ status: "completed" })
+        .where(eq(quests.id, questId));
 
       return entry;
     });
@@ -345,10 +347,10 @@ export async function POST(request: NextRequest | Request) {
       );
       if (tagResult.tags.length > 0) {
         classifiedTags = tagResult.tags;
-        await prisma.galleryEntry.update({
-          where: { id: galleryEntry.id },
-          data: { talentTags: JSON.stringify(tagResult.tags) },
-        });
+        await db
+          .update(galleryEntries)
+          .set({ talentTags: JSON.stringify(tagResult.tags) })
+          .where(eq(galleryEntries.id, galleryEntry.id));
       }
     } catch (tagError) {
       console.warn("Tag classification failed (non-blocking):", tagError);

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { isNotNull, desc } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { galleryEntries } from "@/lib/schema";
 import { clusterGalleryEntries } from "@/lib/ai/client";
 import type { ClusterEntry } from "@/lib/ai/clustering-schemas";
 
@@ -16,11 +18,9 @@ import type { ClusterEntry } from "@/lib/ai/clustering-schemas";
 export async function POST() {
   try {
     // Fetch all gallery entries with coordinates
-    const entries = await prisma.galleryEntry.findMany({
-      where: {
-        coordinates: { not: null },
-      },
-      orderBy: { createdAt: "desc" },
+    const entries = await db.query.galleryEntries.findMany({
+      where: isNotNull(galleryEntries.coordinates),
+      orderBy: desc(galleryEntries.createdAt),
     });
 
     if (entries.length === 0) {

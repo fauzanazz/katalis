@@ -1,4 +1,11 @@
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import {
+  interestSignals,
+  childInterestProfiles,
+  interestAuditEvents,
+  missionInterestAssessments,
+} from "@/lib/schema";
+import { eq, and, desc } from "drizzle-orm";
 import {
   INTEREST_TAXONOMY_VERSION,
   type InterestKey,
@@ -86,30 +93,33 @@ function validateRating(value: number | null | undefined, field: RatingField): v
 export async function createInterestSignal(input: CreateInterestSignalInput) {
   assertInterestKey(input.interestKey);
 
-  return prisma.interestSignal.create({
-    data: {
-      childId: input.childId,
-      taxonomyVersion: INTEREST_TAXONOMY_VERSION,
-      interestKey: input.interestKey,
-      source: input.source,
-      dimension: input.dimension,
-      strength: clamp(input.strength, -1, 1),
-      confidence: clamp(input.confidence ?? 1, 0, 1),
-      discoveryId: input.discoveryId,
-      questId: input.questId,
-      missionId: input.missionId,
-      reflectionEntryId: input.reflectionEntryId,
-      galleryEntryId: input.galleryEntryId,
-      metadataJson: serializeJson(input.metadataJson, "metadataJson"),
-      observedAt: input.observedAt,
-    },
-  });
+  return (
+    await db
+      .insert(interestSignals)
+      .values({
+        childId: input.childId,
+        taxonomyVersion: INTEREST_TAXONOMY_VERSION,
+        interestKey: input.interestKey,
+        source: input.source,
+        dimension: input.dimension,
+        strength: clamp(input.strength, -1, 1),
+        confidence: clamp(input.confidence ?? 1, 0, 1),
+        discoveryId: input.discoveryId,
+        questId: input.questId,
+        missionId: input.missionId,
+        reflectionEntryId: input.reflectionEntryId,
+        galleryEntryId: input.galleryEntryId,
+        metadataJson: serializeJson(input.metadataJson, "metadataJson"),
+        observedAt: input.observedAt,
+      })
+      .returning()
+  )[0];
 }
 
 export async function listInterestSignalsForChild(childId: string) {
-  return prisma.interestSignal.findMany({
-    where: { childId },
-    orderBy: { observedAt: "desc" },
+  return db.query.interestSignals.findMany({
+    where: eq(interestSignals.childId, childId),
+    orderBy: desc(interestSignals.observedAt),
   });
 }
 
@@ -128,37 +138,43 @@ export async function upsertChildInterestProfile(input: UpsertChildInterestProfi
     summary: input.summary,
   };
 
-  return prisma.childInterestProfile.upsert({
-    where: {
-      childId_taxonomyVersion_interestKey: {
+  return (
+    await db
+      .insert(childInterestProfiles)
+      .values({
         childId: input.childId,
         taxonomyVersion: INTEREST_TAXONOMY_VERSION,
         interestKey: input.interestKey,
-      },
-    },
-    create: {
-      childId: input.childId,
-      taxonomyVersion: INTEREST_TAXONOMY_VERSION,
-      interestKey: input.interestKey,
-      ...data,
-    },
-    update: data,
-  });
+        ...data,
+      })
+      .onConflictDoUpdate({
+        target: [
+          childInterestProfiles.childId,
+          childInterestProfiles.taxonomyVersion,
+          childInterestProfiles.interestKey,
+        ],
+        set: data,
+      })
+      .returning()
+  )[0];
 }
 
 export async function createInterestAuditEvent(input: CreateInterestAuditEventInput) {
-  return prisma.interestAuditEvent.create({
-    data: {
-      childId: input.childId,
-      actorUserId: input.actorUserId,
-      eventType: input.eventType,
-      entityType: input.entityType,
-      entityId: input.entityId,
-      beforeJson: serializeJson(input.beforeJson, "beforeJson"),
-      afterJson: serializeJson(input.afterJson, "afterJson"),
-      metadataJson: serializeJson(input.metadataJson, "metadataJson"),
-    },
-  });
+  return (
+    await db
+      .insert(interestAuditEvents)
+      .values({
+        childId: input.childId,
+        actorUserId: input.actorUserId,
+        eventType: input.eventType,
+        entityType: input.entityType,
+        entityId: input.entityId,
+        beforeJson: serializeJson(input.beforeJson, "beforeJson"),
+        afterJson: serializeJson(input.afterJson, "afterJson"),
+        metadataJson: serializeJson(input.metadataJson, "metadataJson"),
+      })
+      .returning()
+  )[0];
 }
 
 export async function upsertMissionInterestAssessment(input: UpsertMissionInterestAssessmentInput) {
@@ -177,21 +193,24 @@ export async function upsertMissionInterestAssessment(input: UpsertMissionIntere
     notes: input.notes,
   };
 
-  return prisma.missionInterestAssessment.upsert({
-    where: {
-      childId_missionId_interestKey: {
+  return (
+    await db
+      .insert(missionInterestAssessments)
+      .values({
         childId: input.childId,
         missionId: input.missionId,
+        taxonomyVersion: INTEREST_TAXONOMY_VERSION,
         interestKey: input.interestKey,
-      },
-    },
-    create: {
-      childId: input.childId,
-      missionId: input.missionId,
-      taxonomyVersion: INTEREST_TAXONOMY_VERSION,
-      interestKey: input.interestKey,
-      ...data,
-    },
-    update: data,
-  });
+        ...data,
+      })
+      .onConflictDoUpdate({
+        target: [
+          missionInterestAssessments.childId,
+          missionInterestAssessments.missionId,
+          missionInterestAssessments.interestKey,
+        ],
+        set: data,
+      })
+      .returning()
+  )[0];
 }

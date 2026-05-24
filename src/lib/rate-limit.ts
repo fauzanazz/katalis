@@ -1,4 +1,6 @@
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { rateLimits } from "@/lib/schema";
+import { eq, and, lt } from "drizzle-orm";
 
 const DEFAULT_MAX_ATTEMPTS = 10;
 const DEFAULT_WINDOW_MS = 60 * 1000; // 1 minute
@@ -15,7 +17,7 @@ interface RateLimitOptions {
 }
 
 /**
- * Distributed rate limiter using Prisma (SQLite).
+ * Distributed rate limiter using Drizzle (SQLite).
  * Works across all instances sharing the same database.
  */
 export async function checkRateLimit(
@@ -29,27 +31,23 @@ export async function checkRateLimit(
 
   // Periodically clean up expired entries (10% chance per check)
   if (Math.random() < 0.10) {
-    await prisma.rateLimit.deleteMany({
-      where: { resetAt: { lt: now } },
-    });
+    await db.delete(rateLimits).where(lt(rateLimits.resetAt, now));
   }
 
-  const existing = await prisma.rateLimit.findUnique({
-    where: {
-      identifier_endpoint: { identifier, endpoint },
-    },
+  const existing = await db.query.rateLimits.findFirst({
+    where: and(eq(rateLimits.identifier, identifier), eq(rateLimits.endpoint, endpoint)),
   });
 
   // No entry or expired window — start fresh
   if (!existing || existing.resetAt < now) {
     const resetAt = new Date(now.getTime() + WINDOW_MS);
-    await prisma.rateLimit.upsert({
-      where: {
-        identifier_endpoint: { identifier, endpoint },
-      },
-      create: { identifier, endpoint, count: 1, resetAt },
-      update: { count: 1, resetAt },
-    });
+    await db
+      .insert(rateLimits)
+      .values({ identifier, endpoint, count: 1, resetAt })
+      .onConflictDoUpdate({
+        target: [rateLimits.identifier, rateLimits.endpoint],
+        set: { count: 1, resetAt },
+      });
 
     return { limited: false, remaining: MAX_ATTEMPTS - 1, resetAt };
   }
@@ -59,12 +57,10 @@ export async function checkRateLimit(
   const limited = newCount > MAX_ATTEMPTS;
 
   if (!limited) {
-    await prisma.rateLimit.update({
-      where: {
-        identifier_endpoint: { identifier, endpoint },
-      },
-      data: { count: newCount },
-    });
+    await db
+      .update(rateLimits)
+      .set({ count: newCount })
+      .where(and(eq(rateLimits.identifier, identifier), eq(rateLimits.endpoint, endpoint)));
   }
 
   return {

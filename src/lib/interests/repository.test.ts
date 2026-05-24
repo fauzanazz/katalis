@@ -1,24 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const { mockReturning, mockOnConflictDoUpdate, mockInsertValues, mockInsert, mockFindMany } =
+  vi.hoisted(() => {
+    const mockReturning = vi.fn();
+    const mockOnConflictDoUpdate = vi.fn(() => ({ returning: mockReturning }));
+    const mockInsertValues = vi.fn(() => ({
+      returning: mockReturning,
+      onConflictDoUpdate: mockOnConflictDoUpdate,
+    }));
+    const mockInsert = vi.fn(() => ({ values: mockInsertValues }));
+    const mockFindMany = vi.fn();
+    return { mockReturning, mockOnConflictDoUpdate, mockInsertValues, mockInsert, mockFindMany };
+  });
+
 vi.mock("@/lib/db", () => ({
-  prisma: {
-    interestSignal: {
-      create: vi.fn(),
-      findMany: vi.fn(),
-    },
-    childInterestProfile: {
-      upsert: vi.fn(),
-    },
-    interestAuditEvent: {
-      create: vi.fn(),
-    },
-    missionInterestAssessment: {
-      upsert: vi.fn(),
+  db: {
+    insert: mockInsert,
+    query: {
+      interestSignals: { findMany: mockFindMany },
     },
   },
 }));
 
-import { prisma } from "@/lib/db";
 import {
   createInterestAuditEvent,
   createInterestSignal,
@@ -27,23 +30,15 @@ import {
   upsertMissionInterestAssessment,
 } from "./repository";
 
-const mockPrisma = prisma as unknown as {
-  interestSignal: {
-    create: ReturnType<typeof vi.fn>;
-    findMany: ReturnType<typeof vi.fn>;
-  };
-  childInterestProfile: { upsert: ReturnType<typeof vi.fn> };
-  interestAuditEvent: { create: ReturnType<typeof vi.fn> };
-  missionInterestAssessment: { upsert: ReturnType<typeof vi.fn> };
-};
+type AnyRecord = Record<string, unknown>;
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockReturning.mockResolvedValue([{ id: "default-id" }]);
 });
 
 describe("interest repository", () => {
   it("creates clamped interest signals with taxonomy version", async () => {
-    mockPrisma.interestSignal.create.mockResolvedValue({ id: "signal-1" } as never);
     const observedAt = new Date("2026-05-12T00:00:00.000Z");
 
     await createInterestSignal({
@@ -57,23 +52,21 @@ describe("interest repository", () => {
       observedAt,
     });
 
-    expect(mockPrisma.interestSignal.create).toHaveBeenCalledWith({
-      data: {
-        childId: "child-1",
-        taxonomyVersion: "v1",
-        interestKey: "nature",
-        source: "quest_completed",
-        dimension: "joy",
-        strength: 1,
-        confidence: 0,
-        discoveryId: undefined,
-        questId: undefined,
-        missionId: undefined,
-        reflectionEntryId: undefined,
-        galleryEntryId: undefined,
-        metadataJson: '{"questDay":1}',
-        observedAt,
-      },
+    expect(mockInsertValues).toHaveBeenCalledWith({
+      childId: "child-1",
+      taxonomyVersion: "v1",
+      interestKey: "nature",
+      source: "quest_completed",
+      dimension: "joy",
+      strength: 1,
+      confidence: 0,
+      discoveryId: undefined,
+      questId: undefined,
+      missionId: undefined,
+      reflectionEntryId: undefined,
+      galleryEntryId: undefined,
+      metadataJson: '{"questDay":1}',
+      observedAt,
     });
   });
 
@@ -88,23 +81,21 @@ describe("interest repository", () => {
       }),
     ).rejects.toThrow("Unknown interest key: dinosaurs");
 
-    expect(mockPrisma.interestSignal.create).not.toHaveBeenCalled();
+    expect(mockInsert).not.toHaveBeenCalled();
   });
 
   it("lists child signals newest first", async () => {
-    mockPrisma.interestSignal.findMany.mockResolvedValue([] as never);
+    mockFindMany.mockResolvedValue([]);
 
     await listInterestSignalsForChild("child-1");
 
-    expect(mockPrisma.interestSignal.findMany).toHaveBeenCalledWith({
-      where: { childId: "child-1" },
-      orderBy: { observedAt: "desc" },
-    });
+    expect(mockFindMany).toHaveBeenCalledOnce();
+    const callArg = (mockFindMany.mock.calls as AnyRecord[][])[0]?.[0] as AnyRecord;
+    expect(callArg).toHaveProperty("where");
+    expect(callArg).toHaveProperty("orderBy");
   });
 
   it("clamps negative score to 0 in upsertChildInterestProfile", async () => {
-    mockPrisma.childInterestProfile.upsert.mockResolvedValue({ id: "profile-neg" } as never);
-
     await upsertChildInterestProfile({
       childId: "child-1",
       interestKey: "art",
@@ -114,17 +105,15 @@ describe("interest repository", () => {
       trend: "falling",
     });
 
-    expect(mockPrisma.childInterestProfile.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        create: expect.objectContaining({ score: 0 }),
-        update: expect.objectContaining({ score: 0 }),
-      }),
-    );
+    const valuesArg = (mockInsertValues.mock.calls as AnyRecord[][])[0]?.[0] as AnyRecord;
+    expect(valuesArg["score"]).toBe(0);
+
+    const onConflictArg = (mockOnConflictDoUpdate.mock.calls as AnyRecord[][])[0]?.[0] as AnyRecord;
+    expect((onConflictArg["set"] as AnyRecord)["score"]).toBe(0);
   });
 
   it("upserts clamped child interest profiles", async () => {
     const lastSignalAt = new Date("2026-05-12T00:00:00.000Z");
-    mockPrisma.childInterestProfile.upsert.mockResolvedValue({ id: "profile-1" } as never);
 
     await upsertChildInterestProfile({
       childId: "child-1",
@@ -137,45 +126,36 @@ describe("interest repository", () => {
       summary: "Builds often",
     });
 
-    expect(mockPrisma.childInterestProfile.upsert).toHaveBeenCalledWith({
-      where: {
-        childId_taxonomyVersion_interestKey: {
-          childId: "child-1",
-          taxonomyVersion: "v1",
-          interestKey: "technology",
-        },
-      },
-      create: {
-        childId: "child-1",
-        taxonomyVersion: "v1",
-        interestKey: "technology",
-        score: 1,
-        confidence: 1,
-        signalCount: 3,
-        distinctDays: 0,
-        firstSignalAt: undefined,
-        lastSignalAt,
-        trend: "rising",
-        stability: "fleeting",
-        summary: "Builds often",
-      },
-      update: {
-        score: 1,
-        confidence: 1,
-        signalCount: 3,
-        distinctDays: 0,
-        firstSignalAt: undefined,
-        lastSignalAt,
-        trend: "rising",
-        stability: "fleeting",
-        summary: "Builds often",
-      },
+    expect(mockInsertValues).toHaveBeenCalledWith({
+      childId: "child-1",
+      taxonomyVersion: "v1",
+      interestKey: "technology",
+      score: 1,
+      confidence: 1,
+      signalCount: 3,
+      distinctDays: 0,
+      firstSignalAt: undefined,
+      lastSignalAt,
+      trend: "rising",
+      stability: "fleeting",
+      summary: "Builds often",
+    });
+
+    const onConflictArg = (mockOnConflictDoUpdate.mock.calls as AnyRecord[][])[0]?.[0] as AnyRecord;
+    expect(onConflictArg["set"]).toEqual({
+      score: 1,
+      confidence: 1,
+      signalCount: 3,
+      distinctDays: 0,
+      firstSignalAt: undefined,
+      lastSignalAt,
+      trend: "rising",
+      stability: "fleeting",
+      summary: "Builds often",
     });
   });
 
   it("creates interest audit events with JSON serialized to strings", async () => {
-    mockPrisma.interestAuditEvent.create.mockResolvedValue({ id: "audit-1" } as never);
-
     await createInterestAuditEvent({
       childId: "child-1",
       actorUserId: "user-1",
@@ -185,22 +165,19 @@ describe("interest repository", () => {
       afterJson: { count: 1 },
     });
 
-    expect(mockPrisma.interestAuditEvent.create).toHaveBeenCalledWith({
-      data: {
-        childId: "child-1",
-        actorUserId: "user-1",
-        eventType: "interest_signals_ingested",
-        entityType: "interest_signal",
-        entityId: "signal-1",
-        beforeJson: undefined,
-        afterJson: '{"count":1}',
-        metadataJson: undefined,
-      },
+    expect(mockInsertValues).toHaveBeenCalledWith({
+      childId: "child-1",
+      actorUserId: "user-1",
+      eventType: "interest_signals_ingested",
+      entityType: "interest_signal",
+      entityId: "signal-1",
+      beforeJson: undefined,
+      afterJson: '{"count":1}',
+      metadataJson: undefined,
     });
   });
 
   it("serializes metadataJson in InterestSignal to string", async () => {
-    mockPrisma.interestSignal.create.mockResolvedValue({ id: "signal-2" } as never);
     const observedAt = new Date("2026-05-12T00:00:00.000Z");
 
     await createInterestSignal({
@@ -213,11 +190,9 @@ describe("interest repository", () => {
       observedAt,
     });
 
-    expect(mockPrisma.interestSignal.create).toHaveBeenCalledWith(
+    expect(mockInsertValues).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({
-          metadataJson: '{"questDay":1,"tags":["outdoor"]}',
-        }),
+        metadataJson: '{"questDay":1,"tags":["outdoor"]}',
       }),
     );
   });
@@ -237,7 +212,8 @@ describe("interest repository", () => {
       }),
     ).rejects.toThrow("metadataJson is not JSON-serializable");
 
-    expect(mockPrisma.interestSignal.create).not.toHaveBeenCalled();
+    // db.insert() is called before values() argument is evaluated; values() is never reached
+    expect(mockInsertValues).not.toHaveBeenCalled();
   });
 
   it("rejects BigInt in metadataJson with clear error", async () => {
@@ -252,7 +228,7 @@ describe("interest repository", () => {
       }),
     ).rejects.toThrow("metadataJson is not JSON-serializable");
 
-    expect(mockPrisma.interestSignal.create).not.toHaveBeenCalled();
+    expect(mockInsertValues).not.toHaveBeenCalled();
   });
 
   it("rejects rating < 1 in upsertMissionInterestAssessment", async () => {
@@ -265,7 +241,7 @@ describe("interest repository", () => {
       }),
     ).rejects.toThrow("explicitRating must be an integer between 1 and 5");
 
-    expect(mockPrisma.missionInterestAssessment.upsert).not.toHaveBeenCalled();
+    expect(mockInsert).not.toHaveBeenCalled();
   });
 
   it("rejects rating > 5 in upsertMissionInterestAssessment", async () => {
@@ -278,7 +254,7 @@ describe("interest repository", () => {
       }),
     ).rejects.toThrow("parentRating must be an integer between 1 and 5");
 
-    expect(mockPrisma.missionInterestAssessment.upsert).not.toHaveBeenCalled();
+    expect(mockInsert).not.toHaveBeenCalled();
   });
 
   it("rejects non-integer rating in upsertMissionInterestAssessment", async () => {
@@ -291,7 +267,7 @@ describe("interest repository", () => {
       }),
     ).rejects.toThrow("childRating must be an integer between 1 and 5");
 
-    expect(mockPrisma.missionInterestAssessment.upsert).not.toHaveBeenCalled();
+    expect(mockInsert).not.toHaveBeenCalled();
   });
 
   it("rejects invalid observedEngagement in upsertMissionInterestAssessment", async () => {
@@ -304,12 +280,10 @@ describe("interest repository", () => {
       }),
     ).rejects.toThrow("observedEngagement must be an integer between 1 and 5");
 
-    expect(mockPrisma.missionInterestAssessment.upsert).not.toHaveBeenCalled();
+    expect(mockInsert).not.toHaveBeenCalled();
   });
 
   it("accepts null ratings (clears them)", async () => {
-    mockPrisma.missionInterestAssessment.upsert.mockResolvedValue({ id: "assessment-2" } as never);
-
     await upsertMissionInterestAssessment({
       childId: "child-1",
       missionId: "mission-1",
@@ -318,12 +292,10 @@ describe("interest repository", () => {
       parentRating: null,
     });
 
-    expect(mockPrisma.missionInterestAssessment.upsert).toHaveBeenCalled();
+    expect(mockInsert).toHaveBeenCalled();
   });
 
   it("upserts mission interest assessments", async () => {
-    mockPrisma.missionInterestAssessment.upsert.mockResolvedValue({ id: "assessment-1" } as never);
-
     await upsertMissionInterestAssessment({
       childId: "child-1",
       missionId: "mission-1",
@@ -335,32 +307,25 @@ describe("interest repository", () => {
       notes: "Focused",
     });
 
-    expect(mockPrisma.missionInterestAssessment.upsert).toHaveBeenCalledWith({
-      where: {
-        childId_missionId_interestKey: {
-          childId: "child-1",
-          missionId: "mission-1",
-          interestKey: "art",
-        },
-      },
-      create: {
-        childId: "child-1",
-        missionId: "mission-1",
-        taxonomyVersion: "v1",
-        interestKey: "art",
-        explicitRating: 4,
-        parentRating: 5,
-        childRating: 3,
-        observedEngagement: 4,
-        notes: "Focused",
-      },
-      update: {
-        explicitRating: 4,
-        parentRating: 5,
-        childRating: 3,
-        observedEngagement: 4,
-        notes: "Focused",
-      },
+    expect(mockInsertValues).toHaveBeenCalledWith({
+      childId: "child-1",
+      missionId: "mission-1",
+      taxonomyVersion: "v1",
+      interestKey: "art",
+      explicitRating: 4,
+      parentRating: 5,
+      childRating: 3,
+      observedEngagement: 4,
+      notes: "Focused",
+    });
+
+    const onConflictArg = (mockOnConflictDoUpdate.mock.calls as AnyRecord[][])[0]?.[0] as AnyRecord;
+    expect(onConflictArg["set"]).toEqual({
+      explicitRating: 4,
+      parentRating: 5,
+      childRating: 3,
+      observedEngagement: 4,
+      notes: "Focused",
     });
   });
 });

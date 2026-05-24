@@ -4,7 +4,9 @@ import { ArrowRight, Compass, Images, Sparkles } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { KidPageShell } from "@/components/layout/KidPageShell";
 import { getChildSession, getUserSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { children } from "@/lib/schema";
+import { eq } from "drizzle-orm";
 
 const CARD_COLORS = {
   discover: "bg-[#A8C8F0]",
@@ -32,9 +34,9 @@ export default async function ChildHomePage({
     redirect(`/${locale}${user ? "/parent" : "/login"}`);
   }
 
-  const child = await prisma.child.findUnique({
-    where: { id: childSession.childId },
-    select: { name: true },
+  const child = await db.query.children.findFirst({
+    where: eq(children.id, childSession.childId),
+    columns: { name: true },
   });
 
   const t = await getTranslations("childHome");

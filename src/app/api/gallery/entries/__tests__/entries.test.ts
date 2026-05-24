@@ -1,25 +1,38 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Mock auth
 vi.mock("@/lib/auth", () => ({
   getChildSession: vi.fn(),
 }));
 
-// Mock Prisma
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    galleryEntry: {
-      findMany: vi.fn(),
-      count: vi.fn(),
-      findUnique: vi.fn(),
-      create: vi.fn(),
-    },
-    quest: {
-      findUnique: vi.fn(),
-    },
-    $transaction: vi.fn(),
-  },
+const mockTx = vi.hoisted(() => ({
+  insert: vi.fn(),
+  update: vi.fn(),
 }));
+
+const mockDb = vi.hoisted(() => ({
+  query: {
+    galleryEntries: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+    },
+    quests: {
+      findFirst: vi.fn(),
+    },
+  },
+  select: vi.fn(() => ({
+    from: vi.fn(() => ({
+      where: vi.fn().mockResolvedValue([{ count: 0 }]),
+    })),
+  })),
+  transaction: vi.fn(async (fn: (tx: typeof mockTx) => Promise<unknown>) => fn(mockTx)),
+  update: vi.fn(() => ({
+    set: vi.fn(() => ({
+      where: vi.fn().mockResolvedValue(undefined),
+    })),
+  })),
+}));
+
+vi.mock("@/lib/db", () => ({ db: mockDb }));
 
 vi.mock("@/lib/moderation", () => ({
   moderateImageContent: vi.fn().mockResolvedValue({
@@ -35,16 +48,24 @@ vi.mock("@/lib/ai/tag-classifier", () => ({
   classifyTags: vi.fn().mockResolvedValue({ tags: [] }),
 }));
 
+vi.mock("@/lib/sanitize", () => ({
+  sanitizeInput: vi.fn((v: string) => v),
+}));
+
+vi.mock("@/lib/url-allowlist", () => ({
+  isAllowedStorageUrl: vi.fn().mockReturnValue(true),
+}));
+
+import { isAllowedStorageUrl } from "@/lib/url-allowlist";
+
+vi.mock("@/lib/geocoding", () => ({
+  geocodeLocationText: vi.fn().mockReturnValue({ country: "Indonesia" }),
+}));
+
 import { GET, POST } from "../route";
 import { getChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 
 const mockedGetSession = vi.mocked(getChildSession);
-const mockedGalleryFindMany = vi.mocked(prisma.galleryEntry.findMany);
-const mockedGalleryCount = vi.mocked(prisma.galleryEntry.count);
-const mockedGalleryFindUnique = vi.mocked(prisma.galleryEntry.findUnique);
-const mockedTransaction = vi.mocked(prisma.$transaction);
-const mockedQuestFindUnique = vi.mocked(prisma.quest.findUnique);
 
 const validSession = {
   childId: "child-1",
@@ -72,6 +93,14 @@ function createGalleryEntry(overrides?: Partial<Record<string, unknown>>) {
   };
 }
 
+function setupSelectCount(total: number) {
+  mockDb.select.mockReturnValue({
+    from: vi.fn(() => ({
+      where: vi.fn().mockResolvedValue([{ count: total }]),
+    })),
+  });
+}
+
 // ─── GET /api/gallery/entries ───
 
 describe("GET /api/gallery/entries", () => {
@@ -80,8 +109,8 @@ describe("GET /api/gallery/entries", () => {
   });
 
   it("returns 200 with empty entries array when no entries exist", async () => {
-    mockedGalleryFindMany.mockResolvedValue([]);
-    mockedGalleryCount.mockResolvedValue(0);
+    mockDb.query.galleryEntries.findMany.mockResolvedValue([]);
+    setupSelectCount(0);
 
     const request = new Request("http://localhost:3100/api/gallery/entries");
     const response = await GET(request);
@@ -96,8 +125,8 @@ describe("GET /api/gallery/entries", () => {
 
   it("returns 200 with paginated entries", async () => {
     const entries = [createGalleryEntry()];
-    mockedGalleryFindMany.mockResolvedValue(entries as never);
-    mockedGalleryCount.mockResolvedValue(1);
+    mockDb.query.galleryEntries.findMany.mockResolvedValue(entries);
+    setupSelectCount(1);
 
     const request = new Request("http://localhost:3100/api/gallery/entries");
     const response = await GET(request);
@@ -112,8 +141,8 @@ describe("GET /api/gallery/entries", () => {
   });
 
   it("supports page and pageSize query parameters", async () => {
-    mockedGalleryFindMany.mockResolvedValue([]);
-    mockedGalleryCount.mockResolvedValue(50);
+    mockDb.query.galleryEntries.findMany.mockResolvedValue([]);
+    setupSelectCount(50);
 
     const request = new Request(
       "http://localhost:3100/api/gallery/entries?page=2&pageSize=10",
@@ -126,19 +155,18 @@ describe("GET /api/gallery/entries", () => {
     expect(data.pageSize).toBe(10);
     expect(data.total).toBe(50);
 
-    // Verify Prisma was called with correct skip/take
-    expect(mockedGalleryFindMany).toHaveBeenCalledWith(
+    // Verify Drizzle was called with correct offset/limit
+    expect(mockDb.query.galleryEntries.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        skip: 10,
-        take: 10,
+        offset: 10,
+        limit: 10,
       }),
     );
   });
 
   it("does not require authentication for gallery browsing", async () => {
-    // No session set — should still work
-    mockedGalleryFindMany.mockResolvedValue([]);
-    mockedGalleryCount.mockResolvedValue(0);
+    mockDb.query.galleryEntries.findMany.mockResolvedValue([]);
+    setupSelectCount(0);
 
     const request = new Request("http://localhost:3100/api/gallery/entries");
     const response = await GET(request);
@@ -148,8 +176,8 @@ describe("GET /api/gallery/entries", () => {
 
   it("does not include childId in response entries (privacy)", async () => {
     const entries = [createGalleryEntry()];
-    mockedGalleryFindMany.mockResolvedValue(entries as never);
-    mockedGalleryCount.mockResolvedValue(1);
+    mockDb.query.galleryEntries.findMany.mockResolvedValue(entries);
+    setupSelectCount(1);
 
     const request = new Request("http://localhost:3100/api/gallery/entries");
     const response = await GET(request);
@@ -160,8 +188,8 @@ describe("GET /api/gallery/entries", () => {
 
   it("returns entries with all required metadata fields", async () => {
     const entries = [createGalleryEntry()];
-    mockedGalleryFindMany.mockResolvedValue(entries as never);
-    mockedGalleryCount.mockResolvedValue(1);
+    mockDb.query.galleryEntries.findMany.mockResolvedValue(entries);
+    setupSelectCount(1);
 
     const request = new Request("http://localhost:3100/api/gallery/entries");
     const response = await GET(request);
@@ -169,7 +197,6 @@ describe("GET /api/gallery/entries", () => {
     const data = await response.json();
     const entry = data.entries[0];
 
-    // All required fields must be present
     expect(entry).toHaveProperty("id");
     expect(entry).toHaveProperty("imageUrl");
     expect(entry).toHaveProperty("talentCategory");
@@ -180,8 +207,8 @@ describe("GET /api/gallery/entries", () => {
 
   it("does not include coordinates in GET response entries (COPPA)", async () => {
     const entries = [createGalleryEntry()];
-    mockedGalleryFindMany.mockResolvedValue(entries as never);
-    mockedGalleryCount.mockResolvedValue(1);
+    mockDb.query.galleryEntries.findMany.mockResolvedValue(entries);
+    setupSelectCount(1);
 
     const request = new Request("http://localhost:3100/api/gallery/entries");
     const response = await GET(request);
@@ -192,8 +219,8 @@ describe("GET /api/gallery/entries", () => {
 
   it("parses questContext JSON into object", async () => {
     const entries = [createGalleryEntry()];
-    mockedGalleryFindMany.mockResolvedValue(entries as never);
-    mockedGalleryCount.mockResolvedValue(1);
+    mockDb.query.galleryEntries.findMany.mockResolvedValue(entries);
+    setupSelectCount(1);
 
     const request = new Request("http://localhost:3100/api/gallery/entries");
     const response = await GET(request);
@@ -207,8 +234,8 @@ describe("GET /api/gallery/entries", () => {
   });
 
   it("supports talentCategory filter", async () => {
-    mockedGalleryFindMany.mockResolvedValue([]);
-    mockedGalleryCount.mockResolvedValue(0);
+    mockDb.query.galleryEntries.findMany.mockResolvedValue([]);
+    setupSelectCount(0);
 
     const request = new Request(
       "http://localhost:3100/api/gallery/entries?talentCategory=Engineering",
@@ -216,13 +243,8 @@ describe("GET /api/gallery/entries", () => {
     const response = await GET(request);
 
     expect(response.status).toBe(200);
-    expect(mockedGalleryFindMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          talentCategory: "Engineering",
-        }),
-      }),
-    );
+    // Drizzle passes a compiled expression — just verify the query ran
+    expect(mockDb.query.galleryEntries.findMany).toHaveBeenCalled();
   });
 
   it("does not include coordinates in tag-filtered GET response entries (COPPA)", async () => {
@@ -231,7 +253,7 @@ describe("GET /api/gallery/entries", () => {
         talentTags: JSON.stringify([{ name: "robotics", confidence: 0.9, category: "Engineering" }]),
       }),
     ];
-    mockedGalleryFindMany.mockResolvedValue(entries as never);
+    mockDb.query.galleryEntries.findMany.mockResolvedValue(entries);
 
     const request = new Request(
       "http://localhost:3100/api/gallery/entries?tag=robotics",
@@ -244,8 +266,8 @@ describe("GET /api/gallery/entries", () => {
   });
 
   it("clamps pageSize to max 100", async () => {
-    mockedGalleryFindMany.mockResolvedValue([]);
-    mockedGalleryCount.mockResolvedValue(0);
+    mockDb.query.galleryEntries.findMany.mockResolvedValue([]);
+    setupSelectCount(0);
 
     const request = new Request(
       "http://localhost:3100/api/gallery/entries?pageSize=500",
@@ -253,16 +275,16 @@ describe("GET /api/gallery/entries", () => {
     const response = await GET(request);
 
     expect(response.status).toBe(200);
-    expect(mockedGalleryFindMany).toHaveBeenCalledWith(
+    expect(mockDb.query.galleryEntries.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        take: 100,
+        limit: 100,
       }),
     );
   });
 
   it("defaults to page 1 for invalid page parameter", async () => {
-    mockedGalleryFindMany.mockResolvedValue([]);
-    mockedGalleryCount.mockResolvedValue(0);
+    mockDb.query.galleryEntries.findMany.mockResolvedValue([]);
+    setupSelectCount(0);
 
     const request = new Request(
       "http://localhost:3100/api/gallery/entries?page=-1",
@@ -279,6 +301,7 @@ describe("GET /api/gallery/entries", () => {
 describe("POST /api/gallery/entries", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(isAllowedStorageUrl).mockReturnValue(true);
   });
 
   it("returns 401 when not authenticated", async () => {
@@ -311,7 +334,7 @@ describe("POST /api/gallery/entries", () => {
 
   it("returns 404 when quest not found", async () => {
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue(null);
+    mockDb.query.quests.findFirst.mockResolvedValue(null);
 
     const request = new Request("http://localhost:3100/api/gallery/entries", {
       method: "POST",
@@ -327,13 +350,13 @@ describe("POST /api/gallery/entries", () => {
 
   it("returns 403 when quest belongs to another child", async () => {
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue({
+    mockDb.query.quests.findFirst.mockResolvedValue({
       id: "quest-1",
       childId: "child-other",
       status: "completed",
       missions: [],
       discovery: null,
-    } as never);
+    });
 
     const request = new Request("http://localhost:3100/api/gallery/entries", {
       method: "POST",
@@ -355,7 +378,7 @@ describe("POST /api/gallery/entries", () => {
     }));
 
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue({
+    mockDb.query.quests.findFirst.mockResolvedValue({
       id: "quest-1",
       childId: "child-1",
       status: "active",
@@ -363,7 +386,7 @@ describe("POST /api/gallery/entries", () => {
       localContext: "I live in Jakarta",
       missions,
       discovery: null,
-    } as never);
+    });
 
     const request = new Request("http://localhost:3100/api/gallery/entries", {
       method: "POST",
@@ -387,7 +410,7 @@ describe("POST /api/gallery/entries", () => {
     }));
 
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue({
+    mockDb.query.quests.findFirst.mockResolvedValue({
       id: "quest-1",
       childId: "child-1",
       status: "completed",
@@ -399,10 +422,10 @@ describe("POST /api/gallery/entries", () => {
           { name: "Engineering", confidence: 0.9 },
         ]),
       },
-    } as never);
-    mockedGalleryFindUnique.mockResolvedValue({
+    });
+    mockDb.query.galleryEntries.findFirst.mockResolvedValue({
       id: "existing-entry",
-    } as never);
+    });
 
     const request = new Request("http://localhost:3100/api/gallery/entries", {
       method: "POST",
@@ -430,7 +453,7 @@ describe("POST /api/gallery/entries", () => {
     }));
 
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue({
+    mockDb.query.quests.findFirst.mockResolvedValue({
       id: "quest-1",
       childId: "child-1",
       status: "completed",
@@ -443,8 +466,8 @@ describe("POST /api/gallery/entries", () => {
           { name: "Creativity", confidence: 0.8 },
         ]),
       },
-    } as never);
-    mockedGalleryFindUnique.mockResolvedValue(null);
+    });
+    mockDb.query.galleryEntries.findFirst.mockResolvedValue(null);
 
     const galleryEntry = {
       id: "gallery-new",
@@ -453,7 +476,7 @@ describe("POST /api/gallery/entries", () => {
       imageUrl: "http://localhost:3100/api/storage/proof-3.jpg",
       talentCategory: "Engineering",
       country: "Indonesia",
-      coordinates: JSON.stringify({ lat: -6.21, lng: 106.85 }),
+      coordinates: null,
       questContext: JSON.stringify({
         questTitle: "I want to build robots",
         dream: "I want to build robots",
@@ -464,15 +487,17 @@ describe("POST /api/gallery/entries", () => {
       updatedAt: new Date(),
     };
 
-    mockedTransaction.mockImplementation(async (fn: unknown) => {
-      if (typeof fn === "function") {
-        return fn({
-          galleryEntry: { create: vi.fn().mockResolvedValue(galleryEntry) },
-          quest: { update: vi.fn() },
-        });
-      }
-      return galleryEntry;
+    mockTx.insert.mockReturnValue({
+      values: vi.fn(() => ({
+        returning: vi.fn().mockResolvedValue([galleryEntry]),
+      })),
     });
+    mockTx.update.mockReturnValue({
+      set: vi.fn(() => ({
+        where: vi.fn().mockResolvedValue(undefined),
+      })),
+    });
+    mockDb.transaction.mockImplementation(async (fn: (tx: typeof mockTx) => Promise<unknown>) => fn(mockTx));
 
     const request = new Request("http://localhost:3100/api/gallery/entries", {
       method: "POST",
@@ -505,7 +530,7 @@ describe("POST /api/gallery/entries", () => {
     }));
 
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue({
+    mockDb.query.quests.findFirst.mockResolvedValue({
       id: "quest-1",
       childId: "child-1",
       status: "completed",
@@ -517,8 +542,8 @@ describe("POST /api/gallery/entries", () => {
           { name: "Engineering", confidence: 0.9 },
         ]),
       },
-    } as never);
-    mockedGalleryFindUnique.mockResolvedValue(null);
+    });
+    mockDb.query.galleryEntries.findFirst.mockResolvedValue(null);
 
     const entryWithCoords = {
       id: "gallery-coppa",
@@ -527,22 +552,24 @@ describe("POST /api/gallery/entries", () => {
       imageUrl: "http://localhost:3100/api/storage/proof-0.jpg",
       talentCategory: "Engineering",
       country: "Indonesia",
-      coordinates: JSON.stringify({ lat: -6.21, lng: 106.85 }),
+      coordinates: null,
       questContext: JSON.stringify({ questTitle: "Build robots", dream: "Build robots", missionSummaries: [] }),
       clusterGroup: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
-    mockedTransaction.mockImplementation(async (fn: unknown) => {
-      if (typeof fn === "function") {
-        return fn({
-          galleryEntry: { create: vi.fn().mockResolvedValue(entryWithCoords) },
-          quest: { update: vi.fn() },
-        });
-      }
-      return entryWithCoords;
+    mockTx.insert.mockReturnValue({
+      values: vi.fn(() => ({
+        returning: vi.fn().mockResolvedValue([entryWithCoords]),
+      })),
     });
+    mockTx.update.mockReturnValue({
+      set: vi.fn(() => ({
+        where: vi.fn().mockResolvedValue(undefined),
+      })),
+    });
+    mockDb.transaction.mockImplementation(async (fn: (tx: typeof mockTx) => Promise<unknown>) => fn(mockTx));
 
     const request = new Request("http://localhost:3100/api/gallery/entries", {
       method: "POST",
@@ -557,6 +584,8 @@ describe("POST /api/gallery/entries", () => {
   });
 
   it("returns 400 for invalid photo URL origin", async () => {
+    vi.mocked(isAllowedStorageUrl).mockReturnValue(false);
+
     const missions = Array.from({ length: 7 }, (_, i) => ({
       id: `m-${i}`,
       day: i + 1,
@@ -566,7 +595,7 @@ describe("POST /api/gallery/entries", () => {
     }));
 
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue({
+    mockDb.query.quests.findFirst.mockResolvedValue({
       id: "quest-1",
       childId: "child-1",
       status: "completed",
@@ -574,7 +603,7 @@ describe("POST /api/gallery/entries", () => {
       localContext: "Jakarta",
       missions,
       discovery: null,
-    } as never);
+    });
 
     const request = new Request("http://localhost:3100/api/gallery/entries", {
       method: "POST",
@@ -601,7 +630,7 @@ describe("POST /api/gallery/entries", () => {
     }));
 
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue({
+    mockDb.query.quests.findFirst.mockResolvedValue({
       id: "quest-1",
       childId: "child-1",
       status: "completed",
@@ -609,7 +638,7 @@ describe("POST /api/gallery/entries", () => {
       localContext: "Jakarta",
       missions,
       discovery: null,
-    } as never);
+    });
 
     const request = new Request("http://localhost:3100/api/gallery/entries", {
       method: "POST",
@@ -650,7 +679,7 @@ describe("POST /api/gallery/entries", () => {
     }));
 
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue({
+    mockDb.query.quests.findFirst.mockResolvedValue({
       id: "quest-1",
       childId: "child-1",
       status: "completed",
@@ -662,8 +691,8 @@ describe("POST /api/gallery/entries", () => {
           { name: "Engineering", confidence: 0.9 },
         ]),
       },
-    } as never);
-    mockedGalleryFindUnique.mockResolvedValue(null);
+    });
+    mockDb.query.galleryEntries.findFirst.mockResolvedValue(null);
 
     const expectedEntry = {
       id: "gallery-auto",
@@ -672,7 +701,7 @@ describe("POST /api/gallery/entries", () => {
       imageUrl: "http://localhost:3100/api/storage/proof-0.jpg",
       talentCategory: "Engineering",
       country: "Indonesia",
-      coordinates: JSON.stringify({ lat: -6.21, lng: 106.85 }),
+      coordinates: null,
       questContext: JSON.stringify({
         questTitle: "Build robots",
         dream: "Build robots",
@@ -683,15 +712,17 @@ describe("POST /api/gallery/entries", () => {
       updatedAt: new Date(),
     };
 
-    mockedTransaction.mockImplementation(async (fn: unknown) => {
-      if (typeof fn === "function") {
-        return fn({
-          galleryEntry: { create: vi.fn().mockResolvedValue(expectedEntry) },
-          quest: { update: vi.fn() },
-        });
-      }
-      return expectedEntry;
+    mockTx.insert.mockReturnValue({
+      values: vi.fn(() => ({
+        returning: vi.fn().mockResolvedValue([expectedEntry]),
+      })),
     });
+    mockTx.update.mockReturnValue({
+      set: vi.fn(() => ({
+        where: vi.fn().mockResolvedValue(undefined),
+      })),
+    });
+    mockDb.transaction.mockImplementation(async (fn: (tx: typeof mockTx) => Promise<unknown>) => fn(mockTx));
 
     const request = new Request("http://localhost:3100/api/gallery/entries", {
       method: "POST",

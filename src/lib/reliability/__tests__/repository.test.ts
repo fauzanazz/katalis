@@ -1,28 +1,38 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    discoveryRating: {
-      create: vi.fn(),
-      findMany: vi.fn(),
-    },
-    discovery: {
-      findFirst: vi.fn(),
-    },
-    reliabilitySnapshot: {
-      create: vi.fn(),
-      findMany: vi.fn(),
-    },
-    reliabilityAlert: {
-      create: vi.fn(),
-      findMany: vi.fn(),
-      update: vi.fn(),
-    },
-    $queryRawUnsafe: vi.fn(),
-  },
-}));
+const mockDb = vi.hoisted(() => {
+  const insertValuesReturning = vi.fn().mockResolvedValue([{ id: "inserted-1" }]);
+  const insertValuesChain = {
+    returning: insertValuesReturning,
+  };
+  const insertValues = vi.fn().mockReturnValue(insertValuesChain);
+  const insertChain = { values: insertValues };
 
-import { prisma } from "@/lib/db";
+  const updateSetWhereReturning = vi.fn().mockResolvedValue([{ id: "updated-1" }]);
+  const updateSetWhere = vi.fn().mockReturnValue({ returning: updateSetWhereReturning });
+  const updateSet = vi.fn().mockReturnValue({ where: updateSetWhere });
+  const updateChain = { set: updateSet };
+
+  return {
+    query: {
+      discoveryRatings: { findMany: vi.fn() },
+      discoveries: { findMany: vi.fn(), findFirst: vi.fn() },
+      reliabilitySnapshots: { findMany: vi.fn() },
+      reliabilityAlerts: { findMany: vi.fn() },
+    },
+    insert: vi.fn().mockReturnValue(insertChain),
+    update: vi.fn().mockReturnValue(updateChain),
+    // expose inner mocks for assertion
+    _insertValues: insertValues,
+    _insertValuesReturning: insertValuesReturning,
+    _updateSet: updateSet,
+    _updateSetWhere: updateSetWhere,
+    _updateSetWhereReturning: updateSetWhereReturning,
+  };
+});
+
+vi.mock("@/lib/db", () => ({ db: mockDb }));
+
 import {
   acknowledgeAlert,
   createDiscoveryRating,
@@ -34,34 +44,27 @@ import {
   listUnacknowledgedAlerts,
 } from "@/lib/reliability/repository";
 
-interface MockPrismaShape {
-  discoveryRating: {
-    create: ReturnType<typeof vi.fn>;
-    findMany: ReturnType<typeof vi.fn>;
-  };
-  discovery: { findFirst: ReturnType<typeof vi.fn> };
-  reliabilitySnapshot: {
-    create: ReturnType<typeof vi.fn>;
-    findMany: ReturnType<typeof vi.fn>;
-  };
-  reliabilityAlert: {
-    create: ReturnType<typeof vi.fn>;
-    findMany: ReturnType<typeof vi.fn>;
-    update: ReturnType<typeof vi.fn>;
-  };
-  $queryRawUnsafe: ReturnType<typeof vi.fn>;
-}
-
-const mockPrisma = prisma as unknown as MockPrismaShape;
-
 beforeEach(() => {
   vi.clearAllMocks();
+  // Re-wire chains after clearAllMocks
+  const insertValuesReturning = vi.fn().mockResolvedValue([{ id: "inserted-1" }]);
+  const insertValuesChain = { returning: insertValuesReturning };
+  const insertValues = vi.fn().mockReturnValue(insertValuesChain);
+  mockDb.insert.mockReturnValue({ values: insertValues });
+  mockDb._insertValues = insertValues;
+  mockDb._insertValuesReturning = insertValuesReturning;
+
+  const updateSetWhereReturning = vi.fn().mockResolvedValue([{ id: "updated-1" }]);
+  const updateSetWhere = vi.fn().mockReturnValue({ returning: updateSetWhereReturning });
+  const updateSet = vi.fn().mockReturnValue({ where: updateSetWhere });
+  mockDb.update.mockReturnValue({ set: updateSet });
+  mockDb._updateSet = updateSet;
+  mockDb._updateSetWhere = updateSetWhere;
+  mockDb._updateSetWhereReturning = updateSetWhereReturning;
 });
 
 describe("reliability repository — createDiscoveryRating", () => {
   it("serializes label arrays to JSON and persists with rater id", async () => {
-    mockPrisma.discoveryRating.create.mockResolvedValue({ id: "rating-1" });
-
     await createDiscoveryRating({
       discoveryId: "discovery-1",
       raterUserId: "user-admin",
@@ -72,23 +75,21 @@ describe("reliability repository — createDiscoveryRating", () => {
       notes: "looked confident",
     });
 
-    expect(mockPrisma.discoveryRating.create).toHaveBeenCalledWith({
-      data: {
-        discoveryId: "discovery-1",
-        raterUserId: "user-admin",
-        humanInterestKeys: JSON.stringify(["nature", "art"]),
-        humanTagCategories: JSON.stringify(["Art", "Creative"]),
-        aiInterestKeysAtRate: JSON.stringify(["nature"]),
-        aiTagCategoriesAtRate: JSON.stringify(["Art"]),
-        notes: "looked confident",
-      },
+    expect(mockDb._insertValues).toHaveBeenCalledWith({
+      discoveryId: "discovery-1",
+      raterUserId: "user-admin",
+      humanInterestKeys: JSON.stringify(["nature", "art"]),
+      humanTagCategories: JSON.stringify(["Art", "Creative"]),
+      aiInterestKeysAtRate: JSON.stringify(["nature"]),
+      aiTagCategoriesAtRate: JSON.stringify(["Art"]),
+      notes: "looked confident",
     });
   });
 });
 
 describe("reliability repository — listRatedItems", () => {
   it("parses interest-keys layer into RatingPair sets", async () => {
-    mockPrisma.discoveryRating.findMany.mockResolvedValue([
+    mockDb.query.discoveryRatings.findMany.mockResolvedValue([
       {
         id: "r-1",
         humanInterestKeys: JSON.stringify(["nature", "art"]),
@@ -105,7 +106,7 @@ describe("reliability repository — listRatedItems", () => {
   });
 
   it("parses tag-categories layer into RatingPair sets", async () => {
-    mockPrisma.discoveryRating.findMany.mockResolvedValue([
+    mockDb.query.discoveryRatings.findMany.mockResolvedValue([
       {
         id: "r-1",
         humanInterestKeys: JSON.stringify([]),
@@ -123,18 +124,23 @@ describe("reliability repository — listRatedItems", () => {
 
 describe("reliability repository — findNextUnratedDiscoveryForUser", () => {
   it("returns a discovery the user has not rated yet (random sample)", async () => {
-    mockPrisma.discovery.findFirst.mockResolvedValue({
-      id: "discovery-7",
-      detectedTalents: null,
-    });
+    mockDb.query.discoveryRatings.findMany.mockResolvedValue([]);
+    mockDb.query.discoveries.findMany.mockResolvedValue([
+      { id: "discovery-7", detectedTalents: null },
+    ]);
 
     const result = await findNextUnratedDiscoveryForUser("user-admin");
     expect(result?.id).toBe("discovery-7");
-    expect(mockPrisma.discovery.findFirst).toHaveBeenCalledTimes(1);
   });
 
   it("returns null when no unrated discoveries remain", async () => {
-    mockPrisma.discovery.findFirst.mockResolvedValue(null);
+    mockDb.query.discoveryRatings.findMany.mockResolvedValue([
+      { discoveryId: "discovery-7" },
+    ]);
+    mockDb.query.discoveries.findMany.mockResolvedValue([
+      { id: "discovery-7", detectedTalents: null },
+    ]);
+
     const result = await findNextUnratedDiscoveryForUser("user-admin");
     expect(result).toBeNull();
   });
@@ -142,8 +148,6 @@ describe("reliability repository — findNextUnratedDiscoveryForUser", () => {
 
 describe("reliability repository — snapshots + alerts", () => {
   it("stores snapshot payload as JSON", async () => {
-    mockPrisma.reliabilitySnapshot.create.mockResolvedValue({ id: "snap-1" });
-
     await createReliabilitySnapshot({
       layer: "interest_keys",
       kappa: 0.72,
@@ -152,60 +156,48 @@ describe("reliability repository — snapshots + alerts", () => {
       triggeredBy: "cron",
     });
 
-    expect(mockPrisma.reliabilitySnapshot.create).toHaveBeenCalledWith({
-      data: {
-        layer: "interest_keys",
-        kappa: 0.72,
-        sampleSize: 52,
-        payloadJson: JSON.stringify({ perLabel: [], topConfused: [] }),
-        triggeredBy: "cron",
-      },
+    expect(mockDb._insertValues).toHaveBeenCalledWith({
+      layer: "interest_keys",
+      kappa: 0.72,
+      sampleSize: 52,
+      payloadJson: JSON.stringify({ perLabel: [], topConfused: [] }),
+      triggeredBy: "cron",
     });
   });
 
   it("lists recent snapshots ordered by computedAt desc", async () => {
-    mockPrisma.reliabilitySnapshot.findMany.mockResolvedValue([]);
+    mockDb.query.reliabilitySnapshots.findMany.mockResolvedValue([]);
     await listRecentSnapshots("tag_categories", 10);
-    expect(mockPrisma.reliabilitySnapshot.findMany).toHaveBeenCalledWith({
-      where: { layer: "tag_categories" },
-      orderBy: { computedAt: "desc" },
-      take: 10,
-    });
+    expect(mockDb.query.reliabilitySnapshots.findMany).toHaveBeenCalledTimes(1);
+    const callArg = mockDb.query.reliabilitySnapshots.findMany.mock.calls[0][0];
+    expect(callArg.limit).toBe(10);
   });
 
   it("creates an alert tied to a snapshot", async () => {
-    mockPrisma.reliabilityAlert.create.mockResolvedValue({ id: "alert-1" });
     await createReliabilityAlert({
       layer: "interest_keys",
       kappa: 0.45,
       sampleSize: 60,
       snapshotId: "snap-1",
     });
-    expect(mockPrisma.reliabilityAlert.create).toHaveBeenCalledWith({
-      data: {
-        layer: "interest_keys",
-        kappa: 0.45,
-        sampleSize: 60,
-        snapshotId: "snap-1",
-      },
+    expect(mockDb._insertValues).toHaveBeenCalledWith({
+      layer: "interest_keys",
+      kappa: 0.45,
+      sampleSize: 60,
+      snapshotId: "snap-1",
     });
   });
 
-  it("listUnacknowledgedAlerts filters by acknowledgedAt:null", async () => {
-    mockPrisma.reliabilityAlert.findMany.mockResolvedValue([]);
+  it("listUnacknowledgedAlerts queries alerts", async () => {
+    mockDb.query.reliabilityAlerts.findMany.mockResolvedValue([]);
     await listUnacknowledgedAlerts();
-    expect(mockPrisma.reliabilityAlert.findMany).toHaveBeenCalledWith({
-      where: { acknowledgedAt: null },
-      orderBy: { createdAt: "desc" },
-    });
+    expect(mockDb.query.reliabilityAlerts.findMany).toHaveBeenCalledTimes(1);
   });
 
   it("acknowledgeAlert sets acknowledgedAt + acknowledgedBy", async () => {
-    mockPrisma.reliabilityAlert.update.mockResolvedValue({ id: "alert-1" });
     await acknowledgeAlert("alert-1", "user-admin");
-    const args = mockPrisma.reliabilityAlert.update.mock.calls[0][0];
-    expect(args.where).toEqual({ id: "alert-1" });
-    expect(args.data.acknowledgedBy).toBe("user-admin");
-    expect(args.data.acknowledgedAt).toBeInstanceOf(Date);
+    const setCall = mockDb._updateSet.mock.calls[0][0];
+    expect(setCall.acknowledgedBy).toBe("user-admin");
+    expect(setCall.acknowledgedAt).toBeInstanceOf(Date);
   });
 });

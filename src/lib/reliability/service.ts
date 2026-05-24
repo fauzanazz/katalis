@@ -4,7 +4,9 @@
  * See docs/plans/2026-05-22-reliability-kappa-design.md §6-9.
  */
 
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { discoveries, interestSignals } from "@/lib/schema";
+import { eq } from "drizzle-orm";
 import { INTEREST_TAXONOMY_V1 } from "@/lib/interests/taxonomy";
 import { TAG_CATEGORIES } from "@/lib/ai/tag-schemas";
 import { macroKappaMultiLabel } from "./kappa";
@@ -46,9 +48,9 @@ interface SubmitRatingInput {
  * a DiscoveryRating row with human + AI labels frozen for Kappa stability.
  */
 export async function submitRating(input: SubmitRatingInput) {
-  const discovery = await prisma.discovery.findUnique({
-    where: { id: input.discoveryId },
-    select: { id: true, detectedTalents: true },
+  const discovery = await db.query.discoveries.findFirst({
+    where: eq(discoveries.id, input.discoveryId),
+    columns: { id: true, detectedTalents: true },
   });
   if (!discovery) {
     throw new Error(`Discovery ${input.discoveryId} not found`);
@@ -86,10 +88,10 @@ function extractAiTagCategories(detectedTalents: string | null): string[] {
 }
 
 async function extractAiInterestKeys(discoveryId: string): Promise<string[]> {
-  const signals = (await prisma.interestSignal.findMany({
-    where: { discoveryId },
-    select: { interestKey: true },
-  })) as Array<{ interestKey: string }>;
+  const signals = await db.query.interestSignals.findMany({
+    where: eq(interestSignals.discoveryId, discoveryId),
+    columns: { interestKey: true },
+  });
   const seen = new Set<string>();
   for (const signal of signals) {
     if (typeof signal.interestKey === "string") {

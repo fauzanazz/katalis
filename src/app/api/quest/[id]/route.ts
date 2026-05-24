@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq, asc } from "drizzle-orm";
 import { getChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { quests, missions } from "@/lib/schema";
 
 /**
  * GET /api/quest/[id]
@@ -23,11 +25,11 @@ export async function GET(
 
     const { id } = await params;
 
-    const quest = await prisma.quest.findUnique({
-      where: { id },
-      include: {
+    const quest = await db.query.quests.findFirst({
+      where: eq(quests.id, id),
+      with: {
         missions: {
-          orderBy: { day: "asc" },
+          orderBy: asc(missions.day),
         },
         discovery: true,
       },
@@ -49,7 +51,7 @@ export async function GET(
     }
 
     // Transform missions to include parsed JSON fields
-    const missions = quest.missions.map((m) => ({
+    const missionList = quest.missions.map((m) => ({
       id: m.id,
       day: m.day,
       title: m.title,
@@ -62,7 +64,7 @@ export async function GET(
     }));
 
     // Count completed missions for progress
-    const completedCount = missions.filter(
+    const completedCount = missionList.filter(
       (m) => m.status === "completed",
     ).length;
 
@@ -78,9 +80,9 @@ export async function GET(
       status: quest.status,
       generatedAt: quest.generatedAt?.toISOString() ?? null,
       createdAt: quest.createdAt.toISOString(),
-      missions,
+      missions: missionList,
       completedCount,
-      totalMissions: missions.length,
+      totalMissions: missionList.length,
       detectedTalents,
     });
   } catch (error) {

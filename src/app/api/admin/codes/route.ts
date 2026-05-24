@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { accessCodes, children } from "@/lib/schema";
+import { eq, desc, count } from "drizzle-orm";
 import { getAdminSession } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
@@ -12,26 +14,42 @@ export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const page = Math.max(1, Number(searchParams.get("page")) || 1);
   const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit")) || 20));
-  const skip = (page - 1) * limit;
+  const offset = (page - 1) * limit;
 
-  const [codes, total] = await Promise.all([
-    prisma.accessCode.findMany({
-      select: {
-        id: true,
-        code: true,
-        active: true,
-        expiresAt: true,
-        createdAt: true,
-        _count: { select: { children: true } },
-      },
-      orderBy: { createdAt: "desc" },
-      skip,
-      take: limit,
-    }),
-    prisma.accessCode.count(),
+  const [codes, totalRows] = await Promise.all([
+    db
+      .select({
+        id: accessCodes.id,
+        code: accessCodes.code,
+        active: accessCodes.active,
+        expiresAt: accessCodes.expiresAt,
+        createdAt: accessCodes.createdAt,
+        childCount: count(children.id),
+      })
+      .from(accessCodes)
+      .leftJoin(children, eq(children.accessCodeId, accessCodes.id))
+      .groupBy(accessCodes.id)
+      .orderBy(desc(accessCodes.createdAt))
+      .limit(limit)
+      .offset(offset),
+    db.select({ count: count() }).from(accessCodes),
   ]);
 
-  return NextResponse.json({ codes, total, page, limit });
+  const total = totalRows[0].count;
+
+  return NextResponse.json({
+    codes: codes.map((c) => ({
+      id: c.id,
+      code: c.code,
+      active: c.active,
+      expiresAt: c.expiresAt,
+      createdAt: c.createdAt,
+      _count: { children: c.childCount },
+    })),
+    total,
+    page,
+    limit,
+  });
 }
 
 const CreateCodeSchema = z.object({
@@ -58,20 +76,30 @@ export async function POST(request: NextRequest) {
   const code = parsed.data.code ?? generateCode();
 
   if (parsed.data.code) {
-    const existing = await prisma.accessCode.findUnique({ where: { code } });
+    const existing = await db.query.accessCodes.findFirst({
+      where: eq(accessCodes.code, code),
+    });
     if (existing) {
       return NextResponse.json({ error: "code_exists" }, { status: 409 });
     }
   }
 
-  const accessCode = await prisma.accessCode.create({
-    data: {
-      code,
-      active: true,
-      expiresAt: parsed.data.expiresAt ? new Date(parsed.data.expiresAt) : null,
-    },
-    select: { id: true, code: true, active: true, expiresAt: true, createdAt: true },
-  });
+  const accessCode = (
+    await db
+      .insert(accessCodes)
+      .values({
+        code,
+        active: true,
+        expiresAt: parsed.data.expiresAt ? new Date(parsed.data.expiresAt) : null,
+      })
+      .returning({
+        id: accessCodes.id,
+        code: accessCodes.code,
+        active: accessCodes.active,
+        expiresAt: accessCodes.expiresAt,
+        createdAt: accessCodes.createdAt,
+      })
+  )[0];
 
   return NextResponse.json(accessCode, { status: 201 });
 }

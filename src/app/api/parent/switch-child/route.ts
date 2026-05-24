@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 import { getUserSession, createChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { parentChildren } from "@/lib/schema";
 
 const SwitchChildSchema = z.object({
   childId: z.string().min(1),
@@ -38,8 +40,11 @@ export async function POST(request: NextRequest) {
 
     const { childId } = parsed.data;
 
-    const link = await prisma.parentChild.findFirst({
-      where: { userId: session.userId, childId },
+    const link = await db.query.parentChildren.findFirst({
+      where: and(
+        eq(parentChildren.userId, session.userId),
+        eq(parentChildren.childId, childId),
+      ),
     });
 
     if (!link) {

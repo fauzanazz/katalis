@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { moderationEvents } from "@/lib/schema";
+import { eq, desc, count, and, SQL } from "drizzle-orm";
 
 /**
  * GET /api/admin/moderation
@@ -20,41 +22,38 @@ export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
     const pageParam = parseInt(url.searchParams.get("page") || "1", 10);
-    const pageSizeParam = parseInt(
-      url.searchParams.get("pageSize") || "20",
-      10,
-    );
+    const pageSizeParam = parseInt(url.searchParams.get("pageSize") || "20", 10);
     const statusFilter = url.searchParams.get("status");
     const sourceTypeFilter = url.searchParams.get("sourceType");
 
     const page = Math.max(1, isNaN(pageParam) ? 1 : pageParam);
-    const pageSize = Math.min(
-      100,
-      Math.max(1, isNaN(pageSizeParam) ? 20 : pageSizeParam),
-    );
-    const skip = (page - 1) * pageSize;
+    const pageSize = Math.min(100, Math.max(1, isNaN(pageSizeParam) ? 20 : pageSizeParam));
+    const offset = (page - 1) * pageSize;
 
-    const where: Record<string, unknown> = {};
-    if (statusFilter) where.status = statusFilter;
-    if (sourceTypeFilter) where.sourceType = sourceTypeFilter;
+    const conditions: SQL[] = [];
+    if (statusFilter) conditions.push(eq(moderationEvents.status, statusFilter));
+    if (sourceTypeFilter) conditions.push(eq(moderationEvents.sourceType, sourceTypeFilter));
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
 
-    const [events, total] = await Promise.all([
-      prisma.moderationEvent.findMany({
+    const [events, totalRows] = await Promise.all([
+      db.query.moderationEvents.findMany({
         where,
-        skip,
-        take: pageSize,
-        orderBy: { createdAt: "desc" },
+        offset,
+        limit: pageSize,
+        orderBy: desc(moderationEvents.createdAt),
       }),
-      prisma.moderationEvent.count({ where }),
+      db.select({ count: count() }).from(moderationEvents).where(where),
     ]);
+
+    const total = totalRows[0].count;
 
     const [pendingCount, flaggedCount, blockedCount, approvedCount, totalEvents] =
       await Promise.all([
-        prisma.moderationEvent.count({ where: { status: "pending" } }),
-        prisma.moderationEvent.count({ where: { status: "flagged" } }),
-        prisma.moderationEvent.count({ where: { status: "blocked" } }),
-        prisma.moderationEvent.count({ where: { status: "approved" } }),
-        prisma.moderationEvent.count(),
+        db.select({ count: count() }).from(moderationEvents).where(eq(moderationEvents.status, "pending")),
+        db.select({ count: count() }).from(moderationEvents).where(eq(moderationEvents.status, "flagged")),
+        db.select({ count: count() }).from(moderationEvents).where(eq(moderationEvents.status, "blocked")),
+        db.select({ count: count() }).from(moderationEvents).where(eq(moderationEvents.status, "approved")),
+        db.select({ count: count() }).from(moderationEvents),
       ]);
 
     return NextResponse.json({
@@ -64,11 +63,11 @@ export async function GET(request: NextRequest) {
       pageSize,
       totalPages: Math.ceil(total / pageSize),
       stats: {
-        pending: pendingCount,
-        flagged: flaggedCount,
-        blocked: blockedCount,
-        approved: approvedCount,
-        total: totalEvents,
+        pending: pendingCount[0].count,
+        flagged: flaggedCount[0].count,
+        blocked: blockedCount[0].count,
+        approved: approvedCount[0].count,
+        total: totalEvents[0].count,
       },
     });
   } catch (error) {

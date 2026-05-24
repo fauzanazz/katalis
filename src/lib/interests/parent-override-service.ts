@@ -13,7 +13,9 @@
  *    event is recorded with the actor's userId.
  */
 
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { interestSignals, childInterestProfiles, missionInterestAssessments } from "@/lib/schema";
+import { eq, and, count } from "drizzle-orm";
 import {
   createInterestAuditEvent,
   upsertChildInterestProfile,
@@ -35,14 +37,12 @@ export async function overrideInterestProfile(input: OverrideInterestInput) {
     throw new Error(`Unknown interest key: ${input.interestKey}`);
   }
 
-  const existing = await prisma.childInterestProfile.findUnique({
-    where: {
-      childId_taxonomyVersion_interestKey: {
-        childId: input.childId,
-        taxonomyVersion: INTEREST_TAXONOMY_VERSION,
-        interestKey: input.interestKey,
-      },
-    },
+  const existing = await db.query.childInterestProfiles.findFirst({
+    where: and(
+      eq(childInterestProfiles.childId, input.childId),
+      eq(childInterestProfiles.taxonomyVersion, INTEREST_TAXONOMY_VERSION),
+      eq(childInterestProfiles.interestKey, input.interestKey),
+    ),
   });
 
   const newProfile = await upsertChildInterestProfile({
@@ -80,15 +80,15 @@ export interface ResetInterestsInput {
 }
 
 export async function resetChildInterests(input: ResetInterestsInput) {
-  const summary = await prisma.$transaction(async (tx) => {
-    const signalCount = await tx.interestSignal.count({ where: { childId: input.childId } });
-    const profileCount = await tx.childInterestProfile.count({ where: { childId: input.childId } });
+  const summary = await db.transaction(async (tx) => {
+    const [signalRow] = await tx.select({ count: count() }).from(interestSignals).where(eq(interestSignals.childId, input.childId));
+    const [profileRow] = await tx.select({ count: count() }).from(childInterestProfiles).where(eq(childInterestProfiles.childId, input.childId));
 
-    await tx.interestSignal.deleteMany({ where: { childId: input.childId } });
-    await tx.childInterestProfile.deleteMany({ where: { childId: input.childId } });
-    await tx.missionInterestAssessment.deleteMany({ where: { childId: input.childId } });
+    await tx.delete(interestSignals).where(eq(interestSignals.childId, input.childId));
+    await tx.delete(childInterestProfiles).where(eq(childInterestProfiles.childId, input.childId));
+    await tx.delete(missionInterestAssessments).where(eq(missionInterestAssessments.childId, input.childId));
 
-    return { signalCount, profileCount };
+    return { signalCount: signalRow!.count, profileCount: profileRow!.count };
   });
 
   await createInterestAuditEvent({

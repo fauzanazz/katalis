@@ -1,21 +1,18 @@
 import { getTranslations } from "next-intl/server";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { accessCodes } from "@/lib/schema";
+import { desc } from "drizzle-orm";
 import { BackButton } from "@/components/layout/BackButton";
 import { CreateCodeButton } from "./CreateCodeButton";
 
 export default async function AdminCodesPage() {
   const t = await getTranslations("admin.codes");
-  const codes = await prisma.accessCode.findMany({
-    select: {
-      id: true,
-      code: true,
-      active: true,
-      expiresAt: true,
-      createdAt: true,
-      _count: { select: { children: true } },
-    },
-    orderBy: { createdAt: "desc" },
+  const rawCodes = await db.query.accessCodes.findMany({
+    columns: { id: true, code: true, active: true, expiresAt: true, createdAt: true },
+    with: { children: { columns: { id: true } } },
+    orderBy: desc(accessCodes.createdAt),
   });
+  const codes = rawCodes.map((ac) => ({ ...ac, childCount: ac.children.length }));
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
@@ -53,7 +50,7 @@ export default async function AdminCodesPage() {
                       {ac.active ? t("active") : t("inactive")}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">{ac._count.children}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{ac.childCount}</td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {ac.expiresAt ? ac.expiresAt.toLocaleDateString() : t("noExpiry")}
                   </td>

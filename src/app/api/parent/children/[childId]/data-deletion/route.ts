@@ -1,7 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq, count, inArray } from "drizzle-orm";
 
 import { getUserSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import {
+  interestSignals,
+  childInterestProfiles,
+  missionInterestAssessments,
+  reflectionEntries,
+  galleryEntries,
+  childBadges,
+  parentQuestFollows,
+  discoveryRatings,
+  discoveries,
+  quests,
+  children,
+} from "@/lib/schema";
 import { verifyParentChildLink } from "@/lib/parent/link";
 import { createInterestAuditEvent } from "@/lib/interests/repository";
 
@@ -50,40 +64,60 @@ export async function DELETE(
       // Optional body.
     }
 
-    const summary = await prisma.$transaction(async (tx) => {
+    const summary = await db.transaction(async (tx) => {
+      // Collect discoveryIds for this child to delete ratings
+      const childDiscoveries = await tx
+        .select({ id: discoveries.id })
+        .from(discoveries)
+        .where(eq(discoveries.childId, childId));
+      const discoveryIds = childDiscoveries.map((d) => d.id);
+
       const counts = {
-        interestSignals: await tx.interestSignal.count({ where: { childId } }),
-        interestProfiles: await tx.childInterestProfile.count({ where: { childId } }),
-        missionAssessments: await tx.missionInterestAssessment.count({ where: { childId } }),
-        reflections: await tx.reflectionEntry.count({ where: { childId } }),
-        galleryEntries: await tx.galleryEntry.count({ where: { childId } }),
-        childBadges: await tx.childBadge.count({ where: { childId } }),
-        parentQuestFollows: await tx.parentQuestFollow.count({ where: { childId } }),
-        discoveryRatings: await tx.discoveryRating.count({
-          where: { discovery: { childId } },
-        }),
-        quests: await tx.quest.count({ where: { childId } }),
-        discoveries: await tx.discovery.count({ where: { childId } }),
+        interestSignals: (
+          await tx.select({ count: count() }).from(interestSignals).where(eq(interestSignals.childId, childId))
+        )[0].count,
+        interestProfiles: (
+          await tx.select({ count: count() }).from(childInterestProfiles).where(eq(childInterestProfiles.childId, childId))
+        )[0].count,
+        missionAssessments: (
+          await tx.select({ count: count() }).from(missionInterestAssessments).where(eq(missionInterestAssessments.childId, childId))
+        )[0].count,
+        reflections: (
+          await tx.select({ count: count() }).from(reflectionEntries).where(eq(reflectionEntries.childId, childId))
+        )[0].count,
+        galleryEntries: (
+          await tx.select({ count: count() }).from(galleryEntries).where(eq(galleryEntries.childId, childId))
+        )[0].count,
+        childBadges: (
+          await tx.select({ count: count() }).from(childBadges).where(eq(childBadges.childId, childId))
+        )[0].count,
+        parentQuestFollows: (
+          await tx.select({ count: count() }).from(parentQuestFollows).where(eq(parentQuestFollows.childId, childId))
+        )[0].count,
+        discoveryRatings: discoveryIds.length > 0
+          ? (await tx.select({ count: count() }).from(discoveryRatings).where(inArray(discoveryRatings.discoveryId, discoveryIds)))[0].count
+          : 0,
+        quests: (
+          await tx.select({ count: count() }).from(quests).where(eq(quests.childId, childId))
+        )[0].count,
+        discoveries: discoveryIds.length,
       };
 
-      await tx.interestSignal.deleteMany({ where: { childId } });
-      await tx.childInterestProfile.deleteMany({ where: { childId } });
-      await tx.missionInterestAssessment.deleteMany({ where: { childId } });
-      await tx.reflectionEntry.deleteMany({ where: { childId } });
-      await tx.galleryEntry.deleteMany({ where: { childId } });
-      await tx.childBadge.deleteMany({ where: { childId } });
-      await tx.parentQuestFollow.deleteMany({ where: { childId } });
-      await tx.discoveryRating.deleteMany({
-        where: { discovery: { childId } },
-      });
+      await tx.delete(interestSignals).where(eq(interestSignals.childId, childId));
+      await tx.delete(childInterestProfiles).where(eq(childInterestProfiles.childId, childId));
+      await tx.delete(missionInterestAssessments).where(eq(missionInterestAssessments.childId, childId));
+      await tx.delete(reflectionEntries).where(eq(reflectionEntries.childId, childId));
+      await tx.delete(galleryEntries).where(eq(galleryEntries.childId, childId));
+      await tx.delete(childBadges).where(eq(childBadges.childId, childId));
+      await tx.delete(parentQuestFollows).where(eq(parentQuestFollows.childId, childId));
+      if (discoveryIds.length > 0) {
+        await tx.delete(discoveryRatings).where(inArray(discoveryRatings.discoveryId, discoveryIds));
+      }
       // Cascade-deleted: missions, mentor sessions/messages, adjustments via Quest FK.
-      await tx.quest.deleteMany({ where: { childId } });
-      await tx.discovery.deleteMany({ where: { childId } });
+      await tx.delete(quests).where(eq(quests.childId, childId));
+      await tx.delete(discoveries).where(eq(discoveries.childId, childId));
 
-      await tx.child.update({
-        where: { id: childId },
-        data: { name: null },
-      });
+      await tx.update(children).set({ name: null }).where(eq(children.id, childId));
 
       return counts;
     });

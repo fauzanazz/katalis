@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { interestSignals, discoveries, discoveryRatings } from "@/lib/schema";
+import { eq, isNotNull, notInArray, and, count } from "drizzle-orm";
 import { authorizeReliabilityRequest } from "@/lib/reliability/auth";
 import { findNextUnratedDiscoveryForUser } from "@/lib/reliability/repository";
 
@@ -14,9 +16,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ discovery: null, remaining: 0 });
   }
 
-  const signals = await prisma.interestSignal.findMany({
-    where: { discoveryId: discovery.id },
-    select: { interestKey: true },
+  const signals = await db.query.interestSignals.findMany({
+    where: eq(interestSignals.discoveryId, discovery.id),
+    columns: { interestKey: true },
   });
   const aiInterestKeys = [
     ...new Set(signals.map((s) => s.interestKey).filter(Boolean)),
@@ -40,12 +42,23 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const remaining = await prisma.discovery.count({
-    where: {
-      detectedTalents: { not: null },
-      ratings: { none: { raterUserId: auth.userId } },
-    },
+  const ratedByUser = await db.query.discoveryRatings.findMany({
+    where: eq(discoveryRatings.raterUserId, auth.userId),
+    columns: { discoveryId: true },
   });
+  const ratedIds = ratedByUser.map((r) => r.discoveryId);
+
+  const remainingWhere =
+    ratedIds.length > 0
+      ? and(isNotNull(discoveries.detectedTalents), notInArray(discoveries.id, ratedIds))
+      : isNotNull(discoveries.detectedTalents);
+
+  const remainingRows = await db
+    .select({ count: count() })
+    .from(discoveries)
+    .where(remainingWhere);
+
+  const remaining = remainingRows[0].count;
 
   return NextResponse.json({
     discovery: {

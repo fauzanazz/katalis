@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { discoveries } from "@/lib/schema";
 import { mapDiscoveryAnalysisToInterestSignals } from "@/lib/interests/discovery-mapper";
 import { ingestInterestSignals } from "@/lib/interests/ingest-service";
 
@@ -69,17 +70,20 @@ export async function POST(request: NextRequest) {
     // Save discovery to database. KidsArtBench scores (when present) are
     // co-located in aiAnalysis JSON alongside talents — Discovery.aiAnalysis
     // is the long-term store for the structured analysis payload.
-    const discovery = await prisma.discovery.create({
-      data: {
-        childId: session.childId,
-        type,
-        fileUrl: fileUrl ?? null,
-        aiAnalysis: JSON.stringify(
-          kidsArtBench ? { talents, kidsArtBench } : { talents },
-        ),
-        detectedTalents: JSON.stringify(talents),
-      },
-    });
+    const discovery = (
+      await db
+        .insert(discoveries)
+        .values({
+          childId: session.childId,
+          type,
+          fileUrl: fileUrl ?? null,
+          aiAnalysis: JSON.stringify(
+            kidsArtBench ? { talents, kidsArtBench } : { talents },
+          ),
+          detectedTalents: JSON.stringify(talents),
+        })
+        .returning()
+    )[0];
 
     // Ingest interest signals from discovery (fire-and-forget; failure must not break discovery save)
     try {

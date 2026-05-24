@@ -17,7 +17,8 @@
  * - perInterestPerAgeBand: distribution by age band for sanity checks
  */
 
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { interestSignals, children } from "@/lib/schema";
 import { getAgeGroup } from "@/lib/age";
 import { isInterestKey } from "@/lib/interests/taxonomy";
 
@@ -111,16 +112,16 @@ export function flagBiasedInterests(rows: ReadonlyArray<InterestBiasRow>): strin
 }
 
 export async function computeBiasSnapshot(): Promise<BiasSnapshot> {
-  const signals = (await prisma.interestSignal.findMany({
-    select: { interestKey: true, childId: true },
-  })) as SignalRow[];
+  const signals = await db.query.interestSignals.findMany({
+    columns: { interestKey: true, childId: true },
+  }) as SignalRow[];
 
-  const children = (await prisma.child.findMany({
-    select: { id: true, locale: true, dateOfBirth: true },
-  })) as ChildRow[];
+  const childRows = await db.query.children.findMany({
+    columns: { id: true, locale: true, dateOfBirth: true },
+  }) as ChildRow[];
 
   const childIndex = new Map<string, { locale: string; ageBand: string }>();
-  for (const c of children) {
+  for (const c of childRows) {
     childIndex.set(c.id, {
       locale: c.locale,
       ageBand: getAgeGroup(c.dateOfBirth).band,

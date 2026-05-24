@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq, and } from "drizzle-orm";
 import { getChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { quests, reflectionEntries, missions } from "@/lib/schema";
 import { sanitizeInput } from "@/lib/sanitize";
 import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 import { ReflectionInputSchema } from "@/lib/ai/mentor-schemas";
@@ -45,8 +47,8 @@ export async function POST(request: NextRequest) {
     const { questId, missionDay, type, content, fileUrl } = parsed.data;
 
     // Verify quest ownership
-    const quest = await prisma.quest.findUnique({
-      where: { id: questId },
+    const quest = await db.query.quests.findFirst({
+      where: eq(quests.id, questId),
     });
 
     if (!quest || quest.childId !== session.childId) {
@@ -71,8 +73,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for duplicate reflection (one per mission day per quest)
-    const existing = await prisma.reflectionEntry.findFirst({
-      where: { childId: session.childId, questId, missionDay },
+    const existing = await db.query.reflectionEntries.findFirst({
+      where: and(
+        eq(reflectionEntries.childId, session.childId),
+        eq(reflectionEntries.questId, questId),
+        eq(reflectionEntries.missionDay, missionDay),
+      ),
     });
 
     if (existing) {
@@ -83,8 +89,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Get mission title for context
-    const mission = await prisma.mission.findFirst({
-      where: { questId, day: missionDay },
+    const mission = await db.query.missions.findFirst({
+      where: and(eq(missions.questId, questId), eq(missions.day, missionDay)),
     });
 
     const missionTitle = mission?.title ?? `Day ${missionDay}`;
@@ -97,19 +103,22 @@ export async function POST(request: NextRequest) {
     );
 
     // Save reflection
-    const reflection = await prisma.reflectionEntry.create({
-      data: {
-        childId: session.childId,
-        questId,
-        missionDay,
-        type,
-        content: sanitizedContent,
-        fileUrl: sanitizedFileUrl,
-        // COPPA: voice recordings are biometric data — enforce 365-day TTL
-        fileExpiresAt: sanitizedFileUrl ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) : null,
-        aiSummary: JSON.stringify(aiSummary),
-      },
-    });
+    const reflection = (
+      await db
+        .insert(reflectionEntries)
+        .values({
+          childId: session.childId,
+          questId,
+          missionDay,
+          type,
+          content: sanitizedContent,
+          fileUrl: sanitizedFileUrl,
+          // COPPA: voice recordings are biometric data — enforce 365-day TTL
+          fileExpiresAt: sanitizedFileUrl ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) : null,
+          aiSummary: JSON.stringify(aiSummary),
+        })
+        .returning()
+    )[0];
 
     // Check for newly earned badges
     const badgeCtx = await buildBadgeContext({

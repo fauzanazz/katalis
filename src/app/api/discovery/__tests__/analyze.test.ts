@@ -1,11 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Mock auth
 vi.mock("@/lib/auth", () => ({
   getChildSession: vi.fn(),
 }));
 
-// Mock AI client
 vi.mock("@/lib/ai/client", () => ({
   analyzeArtifact: vi.fn(),
 }));
@@ -21,14 +19,32 @@ vi.mock("@/lib/moderation", () => ({
   getUncertaintyFallback: vi.fn(() => "Keep exploring your amazing talents!"),
 }));
 
-// Mock prisma so the age-band lookup doesn't hit the real dev DB.
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    child: {
-      findUnique: vi.fn().mockResolvedValue({ dateOfBirth: null }),
+// Mock db so the age-band lookup doesn't hit the real dev DB.
+const mockDb = vi.hoisted(() => ({
+  query: {
+    children: {
+      findFirst: vi.fn().mockResolvedValue({ dateOfBirth: null }),
+    },
+    rateLimits: {
+      findFirst: vi.fn().mockResolvedValue(null),
     },
   },
+  delete: vi.fn().mockReturnValue({
+    where: vi.fn().mockResolvedValue(undefined),
+  }),
+  insert: vi.fn().mockReturnValue({
+    values: vi.fn().mockReturnValue({
+      onConflictDoUpdate: vi.fn().mockResolvedValue(undefined),
+    }),
+  }),
+  update: vi.fn().mockReturnValue({
+    set: vi.fn().mockReturnValue({
+      where: vi.fn().mockResolvedValue(undefined),
+    }),
+  }),
 }));
+
+vi.mock("@/lib/db", () => ({ db: mockDb }));
 
 import { POST } from "../analyze/route";
 import { getChildSession } from "@/lib/auth";
@@ -65,6 +81,7 @@ function createRequest(body: unknown) {
 describe("POST /api/discovery/analyze", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockDb.query.children.findFirst.mockResolvedValue({ dateOfBirth: null });
   });
 
   it("allows guests to analyze an image with no DoB (unknown age band allows photo)", async () => {

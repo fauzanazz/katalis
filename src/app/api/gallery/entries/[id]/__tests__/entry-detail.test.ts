@@ -1,17 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    galleryEntry: {
-      findUnique: vi.fn(),
+const mockDb = vi.hoisted(() => ({
+  query: {
+    galleryEntries: {
+      findFirst: vi.fn(),
     },
   },
 }));
 
-import { GET } from "../route";
-import { prisma } from "@/lib/db";
+vi.mock("@/lib/db", () => ({ db: mockDb }));
 
-const mockedFindUnique = vi.mocked(prisma.galleryEntry.findUnique);
+import { GET } from "../route";
+
+const mockedFindFirst = mockDb.query.galleryEntries.findFirst;
 
 function createEntry(overrides?: Partial<Record<string, unknown>>) {
   return {
@@ -40,7 +41,7 @@ describe("GET /api/gallery/entries/[id]", () => {
   });
 
   it("returns 200 with entry data for valid ID", async () => {
-    mockedFindUnique.mockResolvedValue(createEntry() as never);
+    mockedFindFirst.mockResolvedValue(createEntry());
 
     const request = new Request(
       "http://localhost:3100/api/gallery/entries/gallery-1",
@@ -62,7 +63,7 @@ describe("GET /api/gallery/entries/[id]", () => {
   });
 
   it("returns 404 for non-existent entry", async () => {
-    mockedFindUnique.mockResolvedValue(null);
+    mockedFindFirst.mockResolvedValue(null);
 
     const request = new Request(
       "http://localhost:3100/api/gallery/entries/nonexistent",
@@ -76,7 +77,7 @@ describe("GET /api/gallery/entries/[id]", () => {
   });
 
   it("does not include childId in response (privacy)", async () => {
-    mockedFindUnique.mockResolvedValue(createEntry() as never);
+    mockedFindFirst.mockResolvedValue(createEntry());
 
     const request = new Request(
       "http://localhost:3100/api/gallery/entries/gallery-1",
@@ -89,7 +90,7 @@ describe("GET /api/gallery/entries/[id]", () => {
   });
 
   it("does not require authentication (publicly accessible)", async () => {
-    mockedFindUnique.mockResolvedValue(createEntry() as never);
+    mockedFindFirst.mockResolvedValue(createEntry());
 
     const request = new Request(
       "http://localhost:3100/api/gallery/entries/gallery-1",
@@ -101,7 +102,7 @@ describe("GET /api/gallery/entries/[id]", () => {
   });
 
   it("returns all required metadata fields", async () => {
-    mockedFindUnique.mockResolvedValue(createEntry() as never);
+    mockedFindFirst.mockResolvedValue(createEntry());
 
     const request = new Request(
       "http://localhost:3100/api/gallery/entries/gallery-1",
@@ -121,7 +122,7 @@ describe("GET /api/gallery/entries/[id]", () => {
   });
 
   it("handles server errors gracefully", async () => {
-    mockedFindUnique.mockRejectedValue(new Error("DB error"));
+    mockedFindFirst.mockRejectedValue(new Error("DB error"));
 
     const request = new Request(
       "http://localhost:3100/api/gallery/entries/gallery-1",
@@ -135,8 +136,8 @@ describe("GET /api/gallery/entries/[id]", () => {
   });
 
   it("handles entries with null coordinates", async () => {
-    mockedFindUnique.mockResolvedValue(
-      createEntry({ coordinates: null }) as never,
+    mockedFindFirst.mockResolvedValue(
+      createEntry({ coordinates: null }),
     );
 
     const request = new Request(

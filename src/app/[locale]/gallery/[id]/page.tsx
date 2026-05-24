@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { galleryEntries } from "@/lib/schema";
+import { eq } from "drizzle-orm";
 import { GalleryDetailClient } from "./GalleryDetailClient";
 
 interface GalleryDetailPageProps {
@@ -23,11 +25,11 @@ export default async function GalleryDetailPage({
 }: GalleryDetailPageProps) {
   const { id } = await params;
 
-  const entry = await prisma.galleryEntry.findUnique({
-    where: { id },
+  const entry = await db.query.galleryEntries.findFirst({
+    where: eq(galleryEntries.id, id),
   });
 
-  if (!entry) {
+  if (entry == null) {
     notFound();
   }
 

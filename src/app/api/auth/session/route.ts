@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { children } from "@/lib/schema";
 
 export async function GET() {
   const session = await getSession();
@@ -12,9 +14,9 @@ export async function GET() {
   let childName: string | null = null;
   if (session.type === "child" && session.childId) {
     try {
-      const child = await prisma.child.findUnique({
-        where: { id: session.childId },
-        select: { name: true },
+      const child = await db.query.children.findFirst({
+        where: eq(children.id, session.childId),
+        columns: { name: true },
       });
       childName = child?.name ?? null;
     } catch (error) {

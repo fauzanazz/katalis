@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 import { getChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { quests, missions } from "@/lib/schema";
 
 /**
  * POST /api/quest/[id]/abandon
@@ -25,8 +27,8 @@ export async function POST(
     const { id: questId } = await params;
 
     // Fetch the quest
-    const quest = await prisma.quest.findUnique({
-      where: { id: questId },
+    const quest = await db.query.quests.findFirst({
+      where: eq(quests.id, questId),
     });
 
     if (!quest) {
@@ -56,18 +58,12 @@ export async function POST(
     }
 
     // Abandon the quest in a transaction
-    await prisma.$transaction(async (tx) => {
+    await db.transaction(async (tx) => {
       // Update quest status
-      await tx.quest.update({
-        where: { id: questId },
-        data: { status: "abandoned" },
-      });
+      await tx.update(quests).set({ status: "abandoned" }).where(eq(quests.id, questId));
 
       // Reset all missions to locked
-      await tx.mission.updateMany({
-        where: { questId },
-        data: { status: "locked" },
-      });
+      await tx.update(missions).set({ status: "locked" }).where(eq(missions.questId, questId));
     });
 
     return NextResponse.json({

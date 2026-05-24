@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { getUserSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { parentReports } from "@/lib/schema";
 import { ParentReportPDF } from "@/lib/parent/pdf-template";
 
 /**
@@ -25,10 +27,10 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const report = await prisma.parentReport.findUnique({
-      where: { id },
-      include: {
-        child: { select: { name: true } },
+    const report = await db.query.parentReports.findFirst({
+      where: eq(parentReports.id, id),
+      with: {
+        child: { columns: { name: true } },
       },
     });
 

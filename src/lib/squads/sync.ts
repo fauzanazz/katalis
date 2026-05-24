@@ -3,7 +3,9 @@
  * Creates/updates squads from clustering output, links children as members.
  */
 
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { galleryEntries, squads, squadMembers } from "@/lib/schema";
+import { eq, isNotNull, count } from "drizzle-orm";
 import { clusterGalleryEntries } from "@/lib/ai/client";
 import type { ClusterEntry } from "@/lib/ai/clustering-schemas";
 
@@ -13,9 +15,9 @@ interface SyncResult {
 }
 
 export async function syncSquadsFromClusters(): Promise<SyncResult> {
-  const entries = await prisma.galleryEntry.findMany({
-    where: { coordinates: { not: null } },
-    orderBy: { createdAt: "desc" },
+  const entries = await db.query.galleryEntries.findMany({
+    where: isNotNull(galleryEntries.coordinates),
+    orderBy: (t, { desc }) => desc(t.createdAt),
   });
 
   if (entries.length === 0) {
@@ -39,17 +41,15 @@ export async function syncSquadsFromClusters(): Promise<SyncResult> {
     };
   });
 
-  // Get AI clusters
   const result = await clusterGalleryEntries(clusterEntries);
 
   let created = 0;
 
-  await prisma.$transaction(async (tx) => {
-    // Archive existing squads within transaction
-    await tx.squad.updateMany({
-      where: { status: "active" },
-      data: { status: "archived" },
-    });
+  await db.transaction(async (tx) => {
+    await tx
+      .update(squads)
+      .set({ status: "archived" })
+      .where(eq(squads.status, "active"));
 
     for (const cluster of result.clusters) {
       const clusterEntriesInCluster = entries.filter((e) =>
@@ -58,34 +58,37 @@ export async function syncSquadsFromClusters(): Promise<SyncResult> {
 
       const childIds = [...new Set(clusterEntriesInCluster.map((e) => e.childId))];
 
-      const squad = await tx.squad.create({
-        data: {
-          name: cluster.label,
-          theme: cluster.talentTheme,
-          description: cluster.description,
-          icon: getSquadIcon(cluster.talentTheme),
-          countries: JSON.stringify(cluster.countries),
-          featuredEntryIds: JSON.stringify(cluster.entryIds.slice(0, 6)),
-          status: "active",
-        },
-      });
+      const squad = (
+        await tx
+          .insert(squads)
+          .values({
+            name: cluster.label,
+            theme: cluster.talentTheme,
+            description: cluster.description,
+            icon: getSquadIcon(cluster.talentTheme),
+            countries: JSON.stringify(cluster.countries),
+            featuredEntryIds: JSON.stringify(cluster.entryIds.slice(0, 6)),
+            status: "active",
+          })
+          .returning()
+      )[0];
 
-      // Batch create squad members
       if (childIds.length > 0) {
-        await tx.squadMember.createMany({
-          data: childIds.map((childId) => ({ squadId: squad.id, childId })),
-        });
+        await tx
+          .insert(squadMembers)
+          .values(childIds.map((childId) => ({ squadId: squad.id, childId })));
       }
 
       created++;
     }
   });
 
-  const totalSquads = await prisma.squad.count({
-    where: { status: "active" },
-  });
+  const [totalRow] = await db
+    .select({ count: count() })
+    .from(squads)
+    .where(eq(squads.status, "active"));
 
-  return { created, totalSquads };
+  return { created, totalSquads: totalRow.count };
 }
 
 function getSquadIcon(theme: string): string {

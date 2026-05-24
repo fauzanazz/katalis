@@ -1,8 +1,10 @@
 import { randomInt } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { eq } from "drizzle-orm";
 import { getUserSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { accessCodes, children, parentChildren, discoveries, quests, missions } from "@/lib/schema";
 
 function generateAccessCode(): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -93,86 +95,98 @@ export async function POST(request: NextRequest) {
 
     const dob = new Date(childDob);
 
-    await prisma.$transaction(async (tx) => {
+    await db.transaction(async (tx) => {
       // Generate unique access code
       let code: string;
       let attempts = 0;
       do {
         code = generateAccessCode();
         if (++attempts > 10) throw new Error("Failed to generate unique access code");
-        const existing = await tx.accessCode.findUnique({ where: { code } });
+        const existing = await tx.query.accessCodes.findFirst({ where: eq(accessCodes.code, code) });
         if (!existing) break;
       } while (true);
 
-      const newAccessCode = await tx.accessCode.create({
-        data: {
-          code: code!,
-          active: true,
-          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-        },
-      });
+      const newAccessCode = (
+        await tx
+          .insert(accessCodes)
+          .values({
+            code: code!,
+            active: true,
+            expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+          })
+          .returning()
+      )[0];
 
-      const child = await tx.child.create({
-        data: {
-          name: childName ?? null,
-          dateOfBirth: dob,
-          accessCodeId: newAccessCode.id,
-        },
-      });
+      const child = (
+        await tx
+          .insert(children)
+          .values({
+            name: childName ?? null,
+            dateOfBirth: dob,
+            accessCodeId: newAccessCode.id,
+          })
+          .returning()
+      )[0];
 
-      await tx.parentChild.create({
-        data: {
-          userId: session.userId,
-          childId: child.id,
-          consentGivenAt: new Date(),
-          consentTextVersion: "v1",
-        },
+      await tx.insert(parentChildren).values({
+        userId: session.userId,
+        childId: child.id,
+        consentGivenAt: new Date(),
+        consentTextVersion: "v1",
       });
 
       // Persist discovery history
       let firstDiscoveryId: string | null = null;
       if (hasHistory) {
         for (const item of history) {
-          const discovery = await tx.discovery.create({
-            data: {
-              childId: child.id,
-              type: item.type,
-              fileUrl: item.fileUrl,
-              detectedTalents: JSON.stringify(item.talents),
-              createdAt: new Date(item.createdAt),
-            },
-          });
+          const discovery = (
+            await tx
+              .insert(discoveries)
+              .values({
+                childId: child.id,
+                type: item.type,
+                fileUrl: item.fileUrl,
+                detectedTalents: JSON.stringify(item.talents),
+                createdAt: new Date(item.createdAt),
+              })
+              .returning()
+          )[0];
           if (firstDiscoveryId === null) firstDiscoveryId = discovery.id;
         }
       }
 
       // Persist quest
       if (hasQuest) {
-        await tx.quest.create({
-          data: {
-            childId: child.id,
-            discoveryId: firstDiscoveryId,
-            dream: quest.dream,
-            localContext: quest.localContext,
-            status: "active",
-            generatedAt: new Date(),
-            missions: {
-              create: quest.missions.map((m) => ({
-                day: m.day,
-                title: m.title,
-                description: m.description,
-                instructions: JSON.stringify(m.instructions),
-                materials: JSON.stringify(m.materials),
-                tips: JSON.stringify(m.tips),
-                status: m.day === 1 ? "available" : "locked",
-                phase: m.phase ?? null,
-                intensityHint: m.intensityHint ?? null,
-                intent: m.intent ?? null,
-                estimatedMinutes: m.estimatedMinutes ?? null,
-              })),
-            },
-          },
-        });
+        const newQuest = (
+          await tx
+            .insert(quests)
+            .values({
+              childId: child.id,
+              discoveryId: firstDiscoveryId,
+              dream: quest.dream,
+              localContext: quest.localContext,
+              status: "active",
+              generatedAt: new Date(),
+            })
+            .returning()
+        )[0];
+
+        await tx.insert(missions).values(
+          quest.missions.map((m) => ({
+            questId: newQuest.id,
+            day: m.day,
+            title: m.title,
+            description: m.description,
+            instructions: JSON.stringify(m.instructions),
+            materials: JSON.stringify(m.materials),
+            tips: JSON.stringify(m.tips),
+            status: m.day === 1 ? "available" : "locked",
+            phase: m.phase ?? null,
+            intensityHint: m.intensityHint ?? null,
+            intent: m.intent ?? null,
+            estimatedMinutes: m.estimatedMinutes ?? null,
+          })),
+        );
       }
     });
 

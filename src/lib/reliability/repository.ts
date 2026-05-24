@@ -1,9 +1,16 @@
 /**
- * Prisma-backed persistence for the inter-rater reliability subsystem.
+ * Drizzle-backed persistence for the inter-rater reliability subsystem.
  * See docs/plans/2026-05-22-reliability-kappa-design.md §4-7.
  */
 
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import {
+  discoveryRatings,
+  discoveries,
+  reliabilitySnapshots,
+  reliabilityAlerts,
+} from "@/lib/schema";
+import { eq, isNull, isNotNull, desc } from "drizzle-orm";
 import type { Layer, RatingPair, ReliabilityLayer } from "./types";
 
 interface CreateDiscoveryRatingInput {
@@ -17,17 +24,20 @@ interface CreateDiscoveryRatingInput {
 }
 
 export async function createDiscoveryRating(input: CreateDiscoveryRatingInput) {
-  return prisma.discoveryRating.create({
-    data: {
-      discoveryId: input.discoveryId,
-      raterUserId: input.raterUserId,
-      humanInterestKeys: JSON.stringify(input.humanInterestKeys),
-      humanTagCategories: JSON.stringify(input.humanTagCategories),
-      aiInterestKeysAtRate: JSON.stringify(input.aiInterestKeysAtRate),
-      aiTagCategoriesAtRate: JSON.stringify(input.aiTagCategoriesAtRate),
-      notes: input.notes,
-    },
-  });
+  return (
+    await db
+      .insert(discoveryRatings)
+      .values({
+        discoveryId: input.discoveryId,
+        raterUserId: input.raterUserId,
+        humanInterestKeys: JSON.stringify(input.humanInterestKeys),
+        humanTagCategories: JSON.stringify(input.humanTagCategories),
+        aiInterestKeysAtRate: JSON.stringify(input.aiInterestKeysAtRate),
+        aiTagCategoriesAtRate: JSON.stringify(input.aiTagCategoriesAtRate),
+        notes: input.notes,
+      })
+      .returning()
+  )[0];
 }
 
 interface RawRatingRow {
@@ -54,8 +64,8 @@ function parseJsonArray(raw: string): string[] {
  * Used by the live-Kappa endpoint and the cron snapshot job.
  */
 export async function listRatedItems(layer: Layer): Promise<RatingPair[]> {
-  const rows = (await prisma.discoveryRating.findMany({
-    select: {
+  const rows = (await db.query.discoveryRatings.findMany({
+    columns: {
       id: true,
       humanInterestKeys: true,
       humanTagCategories: true,
@@ -79,22 +89,25 @@ export async function listRatedItems(layer: Layer): Promise<RatingPair[]> {
 }
 
 /**
- * Random unrated discovery for the given admin user. Uses Prisma's `findFirst`
- * with a randomized cursor — see design §7. Returns null when nothing remains.
+ * Random unrated discovery for the given admin user. Uses a desc createdAt
+ * cursor — see design §7. Returns null when nothing remains.
  */
 export async function findNextUnratedDiscoveryForUser(raterUserId: string) {
-  // Use raw count then random offset to avoid ORDER BY RANDOM() across the full
-  // table in Prisma. For the early-rollout sample sizes this is plenty.
-  const eligibleWhere = {
-    detectedTalents: { not: null },
-    ratings: { none: { raterUserId } },
-  } as const;
-
-  const result = await prisma.discovery.findFirst({
-    where: eligibleWhere,
-    orderBy: { createdAt: "desc" },
+  // Find a discovery with detectedTalents that has no rating from this user.
+  // We fetch the first by createdAt desc; for early-rollout sample sizes this is adequate.
+  const rated = await db.query.discoveryRatings.findMany({
+    columns: { discoveryId: true },
+    where: eq(discoveryRatings.raterUserId, raterUserId),
   });
-  return result ?? null;
+  const ratedIds = rated.map((r) => r.discoveryId);
+
+  const allEligible = await db.query.discoveries.findMany({
+    where: isNotNull(discoveries.detectedTalents),
+    orderBy: desc(discoveries.createdAt),
+  });
+
+  const result = allEligible.find((d) => !ratedIds.includes(d.id)) ?? null;
+  return result;
 }
 
 interface CreateSnapshotInput {
@@ -106,22 +119,25 @@ interface CreateSnapshotInput {
 }
 
 export async function createReliabilitySnapshot(input: CreateSnapshotInput) {
-  return prisma.reliabilitySnapshot.create({
-    data: {
-      layer: input.layer,
-      kappa: input.kappa,
-      sampleSize: input.sampleSize,
-      payloadJson: JSON.stringify(input.payload),
-      triggeredBy: input.triggeredBy,
-    },
-  });
+  return (
+    await db
+      .insert(reliabilitySnapshots)
+      .values({
+        layer: input.layer,
+        kappa: input.kappa,
+        sampleSize: input.sampleSize,
+        payloadJson: JSON.stringify(input.payload),
+        triggeredBy: input.triggeredBy,
+      })
+      .returning()
+  )[0];
 }
 
 export async function listRecentSnapshots(layer: Layer, take: number) {
-  return prisma.reliabilitySnapshot.findMany({
-    where: { layer },
-    orderBy: { computedAt: "desc" },
-    take,
+  return db.query.reliabilitySnapshots.findMany({
+    where: eq(reliabilitySnapshots.layer, layer),
+    orderBy: desc(reliabilitySnapshots.computedAt),
+    limit: take,
   });
 }
 
@@ -133,29 +149,35 @@ interface CreateAlertInput {
 }
 
 export async function createReliabilityAlert(input: CreateAlertInput) {
-  return prisma.reliabilityAlert.create({
-    data: {
-      layer: input.layer,
-      kappa: input.kappa,
-      sampleSize: input.sampleSize,
-      snapshotId: input.snapshotId,
-    },
-  });
+  return (
+    await db
+      .insert(reliabilityAlerts)
+      .values({
+        layer: input.layer,
+        kappa: input.kappa,
+        sampleSize: input.sampleSize,
+        snapshotId: input.snapshotId,
+      })
+      .returning()
+  )[0];
 }
 
 export async function listUnacknowledgedAlerts() {
-  return prisma.reliabilityAlert.findMany({
-    where: { acknowledgedAt: null },
-    orderBy: { createdAt: "desc" },
+  return db.query.reliabilityAlerts.findMany({
+    where: isNull(reliabilityAlerts.acknowledgedAt),
+    orderBy: desc(reliabilityAlerts.createdAt),
   });
 }
 
 export async function acknowledgeAlert(id: string, acknowledgedBy: string) {
-  return prisma.reliabilityAlert.update({
-    where: { id },
-    data: {
-      acknowledgedAt: new Date(),
-      acknowledgedBy,
-    },
-  });
+  return (
+    await db
+      .update(reliabilityAlerts)
+      .set({
+        acknowledgedAt: new Date(),
+        acknowledgedBy,
+      })
+      .where(eq(reliabilityAlerts.id, id))
+      .returning()
+  )[0];
 }

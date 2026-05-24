@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/db";
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { users } from "@/lib/schema";
 import { hashPassword } from "@/lib/password";
 import { createUserSession } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -54,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     const { name, email, password } = parsed.data;
 
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await db.query.users.findFirst({ where: eq(users.email, email) });
     if (existingUser) {
       return NextResponse.json(
         { error: "email_exists", message: "An account with this email already exists" },
@@ -64,10 +66,12 @@ export async function POST(request: NextRequest) {
 
     const passwordHash = await hashPassword(password);
 
-    const user = await prisma.user.create({
-      data: { email, name, passwordHash, role: "user" },
-      select: { id: true, name: true, role: true },
-    });
+    const user = (
+      await db
+        .insert(users)
+        .values({ email, name, passwordHash, role: "user" })
+        .returning({ id: users.id, name: users.name, role: users.role })
+    )[0];
 
     await createUserSession(user.id, user.role);
 

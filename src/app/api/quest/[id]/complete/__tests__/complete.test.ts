@@ -5,20 +5,25 @@ vi.mock("@/lib/auth", () => ({
   getChildSession: vi.fn(),
 }));
 
-// Mock Prisma
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    quest: {
-      findUnique: vi.fn(),
-      update: vi.fn(),
+const mockQuestUpdateWhere = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+const mockQuestUpdateSet = vi.hoisted(() => vi.fn(() => ({ where: mockQuestUpdateWhere })));
+
+const mockDb = vi.hoisted(() => ({
+  query: {
+    quests: {
+      findFirst: vi.fn(),
     },
-    galleryEntry: {
-      findUnique: vi.fn(),
-      create: vi.fn(),
+    galleryEntries: {
+      findFirst: vi.fn(),
     },
-    $transaction: vi.fn(),
   },
+  update: vi.fn(() => ({
+    set: mockQuestUpdateSet,
+  })),
+  transaction: vi.fn(),
 }));
+
+vi.mock("@/lib/db", () => ({ db: mockDb }));
 
 vi.mock("@/lib/interests/quest-mapper", () => ({
   mapQuestToInterestSignals: vi.fn().mockReturnValue([
@@ -32,16 +37,9 @@ vi.mock("@/lib/interests/ingest-service", () => ({
 
 import { POST } from "../../complete/route";
 import { getChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import { ingestInterestSignals } from "@/lib/interests/ingest-service";
 
 const mockedGetSession = vi.mocked(getChildSession);
-const mockedQuestFindUnique = vi.mocked(prisma.quest.findUnique);
-const mockedQuestUpdate = vi.mocked(prisma.quest.update);
-const mockedTransaction = vi.mocked(prisma.$transaction);
-const mockedGalleryEntryFindUnique = vi.mocked(
-  prisma.galleryEntry.findUnique,
-);
 const mockedIngestSignals = vi.mocked(ingestInterestSignals);
 
 const validSession = {
@@ -130,7 +128,7 @@ describe("POST /api/quest/[id]/complete", () => {
 
   it("returns 404 when quest not found", async () => {
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue(null);
+    mockDb.query.quests.findFirst.mockResolvedValue(null);
 
     const request = makeRequest({ selectedPhotoUrl: "http://example.com/photo.jpg" });
     const response = await POST(request, {
@@ -144,8 +142,8 @@ describe("POST /api/quest/[id]/complete", () => {
 
   it("returns 403 when quest belongs to another child", async () => {
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue(
-      createQuest({ childId: "child-other" }) as never,
+    mockDb.query.quests.findFirst.mockResolvedValue(
+      createQuest({ childId: "child-other" }),
     );
 
     const request = makeRequest({ selectedPhotoUrl: "http://example.com/photo.jpg" });
@@ -164,11 +162,11 @@ describe("POST /api/quest/[id]/complete", () => {
     incompleteMissions[6].proofPhotoUrl = null;
 
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue(
+    mockDb.query.quests.findFirst.mockResolvedValue(
       createQuest({
         status: "active",
         missions: incompleteMissions,
-      }) as never,
+      }),
     );
 
     const request = makeRequest({ selectedPhotoUrl: "http://example.com/photo.jpg" });
@@ -184,8 +182,8 @@ describe("POST /api/quest/[id]/complete", () => {
   it("returns 200 with gallery entry when submitting best work (selectedPhotoUrl provided)", async () => {
     const quest = createQuest();
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue(quest as never);
-    mockedGalleryEntryFindUnique.mockResolvedValue(null);
+    mockDb.query.quests.findFirst.mockResolvedValue(quest);
+    mockDb.query.galleryEntries.findFirst.mockResolvedValue(null);
 
     const galleryEntry = {
       id: "gallery-1",
@@ -195,18 +193,25 @@ describe("POST /api/quest/[id]/complete", () => {
       talentCategory: "Engineering",
       country: "village near a river",
       coordinates: null,
+      questContext: null,
       clusterGroup: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    mockedTransaction.mockImplementation(async (fn: unknown) => {
-      if (typeof fn === "function") {
-        return fn({
-          galleryEntry: { create: vi.fn().mockResolvedValue(galleryEntry) },
-          quest: { update: vi.fn() },
-        });
-      }
-      return galleryEntry;
+    mockDb.transaction.mockImplementation(async (fn: (tx: unknown) => unknown) => {
+      const tx = {
+        insert: vi.fn(() => ({
+          values: vi.fn(() => ({
+            returning: vi.fn().mockResolvedValue([galleryEntry]),
+          })),
+        })),
+        update: vi.fn(() => ({
+          set: vi.fn(() => ({
+            where: vi.fn().mockResolvedValue(undefined),
+          })),
+        })),
+      };
+      return fn(tx);
     });
 
     const request = makeRequest({
@@ -229,8 +234,12 @@ describe("POST /api/quest/[id]/complete", () => {
   it("returns 200 without gallery entry when skipping (skipGallery: true)", async () => {
     const quest = createQuest();
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue(quest as never);
-    mockedQuestUpdate.mockResolvedValue(quest as never);
+    mockDb.query.quests.findFirst.mockResolvedValue(quest);
+    mockDb.update.mockReturnValue({
+      set: vi.fn(() => ({
+        where: vi.fn().mockResolvedValue(undefined),
+      })),
+    });
 
     const request = makeRequest({ skipGallery: true });
     const response = await POST(request, {
@@ -247,24 +256,28 @@ describe("POST /api/quest/[id]/complete", () => {
   it("skipGallery updates quest status to completed", async () => {
     const quest = createQuest({ status: "active" });
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue(quest as never);
-    mockedQuestUpdate.mockResolvedValue(quest as never);
+    mockDb.query.quests.findFirst.mockResolvedValue(quest);
+
+    const updateWhereFn = vi.fn().mockResolvedValue(undefined);
+    const updateSetFn = vi.fn(() => ({ where: updateWhereFn }));
+    mockDb.update.mockReturnValue({ set: updateSetFn });
 
     await POST(makeRequest({ skipGallery: true }), {
       params: Promise.resolve({ id: "quest-1" }),
     });
 
-    expect(mockedQuestUpdate).toHaveBeenCalledWith({
-      where: { id: "quest-1" },
-      data: { status: "completed" },
-    });
+    expect(updateSetFn).toHaveBeenCalledWith({ status: "completed" });
   });
 
   it("skipGallery runs quest_completed interest ingestion", async () => {
     const quest = createQuest();
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue(quest as never);
-    mockedQuestUpdate.mockResolvedValue(quest as never);
+    mockDb.query.quests.findFirst.mockResolvedValue(quest);
+    mockDb.update.mockReturnValue({
+      set: vi.fn(() => ({
+        where: vi.fn().mockResolvedValue(undefined),
+      })),
+    });
 
     await POST(makeRequest({ skipGallery: true }), {
       params: Promise.resolve({ id: "quest-1" }),
@@ -282,7 +295,7 @@ describe("POST /api/quest/[id]/complete", () => {
   it("returns 400 when selectedPhotoUrl is not from quest missions", async () => {
     const quest = createQuest();
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue(quest as never);
+    mockDb.query.quests.findFirst.mockResolvedValue(quest);
 
     const request = makeRequest({
       selectedPhotoUrl: "http://localhost:3100/api/storage/unknown-photo.jpg",
@@ -299,7 +312,7 @@ describe("POST /api/quest/[id]/complete", () => {
   it("returns 400 when selectedPhotoUrl is from untrusted origin", async () => {
     const quest = createQuest();
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue(quest as never);
+    mockDb.query.quests.findFirst.mockResolvedValue(quest);
 
     const request = makeRequest({
       selectedPhotoUrl: "http://evil.com/malicious-photo.jpg",
@@ -316,10 +329,10 @@ describe("POST /api/quest/[id]/complete", () => {
   it("returns 409 when gallery entry already exists for this quest", async () => {
     const quest = createQuest();
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue(quest as never);
-    mockedGalleryEntryFindUnique.mockResolvedValue({
+    mockDb.query.quests.findFirst.mockResolvedValue(quest);
+    mockDb.query.galleryEntries.findFirst.mockResolvedValue({
       id: "existing-gallery",
-    } as never);
+    });
 
     const request = makeRequest({
       selectedPhotoUrl: "http://localhost:3100/api/storage/proof-1.jpg",
@@ -335,7 +348,7 @@ describe("POST /api/quest/[id]/complete", () => {
 
   it("returns 400 for invalid request body", async () => {
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue(createQuest() as never);
+    mockDb.query.quests.findFirst.mockResolvedValue(createQuest());
 
     const response = await POST(makeInvalidRequest(), {
       params: Promise.resolve({ id: "quest-1" }),
@@ -362,8 +375,8 @@ describe("POST /api/quest/[id]/complete", () => {
     });
 
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue(quest as never);
-    mockedGalleryEntryFindUnique.mockResolvedValue(null);
+    mockDb.query.quests.findFirst.mockResolvedValue(quest);
+    mockDb.query.galleryEntries.findFirst.mockResolvedValue(null);
 
     const galleryEntry = {
       id: "gallery-1",
@@ -373,18 +386,25 @@ describe("POST /api/quest/[id]/complete", () => {
       talentCategory: "Storytelling",
       country: "village near a river",
       coordinates: null,
+      questContext: null,
       clusterGroup: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    mockedTransaction.mockImplementation(async (fn: unknown) => {
-      if (typeof fn === "function") {
-        return fn({
-          galleryEntry: { create: vi.fn().mockResolvedValue(galleryEntry) },
-          quest: { update: vi.fn() },
-        });
-      }
-      return galleryEntry;
+    mockDb.transaction.mockImplementation(async (fn: (tx: unknown) => unknown) => {
+      const tx = {
+        insert: vi.fn(() => ({
+          values: vi.fn(() => ({
+            returning: vi.fn().mockResolvedValue([galleryEntry]),
+          })),
+        })),
+        update: vi.fn(() => ({
+          set: vi.fn(() => ({
+            where: vi.fn().mockResolvedValue(undefined),
+          })),
+        })),
+      };
+      return fn(tx);
     });
 
     const request = makeRequest({

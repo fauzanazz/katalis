@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { eq, desc } from "drizzle-orm";
 import { getChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { childBadges } from "@/lib/schema";
 import { BADGE_DEFINITIONS } from "@/lib/badges";
 
 /**
@@ -20,14 +22,14 @@ export async function GET() {
     }
 
     // Fetch earned badges for this child
-    const earnedBadges = await prisma.childBadge.findMany({
-      where: { childId: session.childId },
-      select: {
+    const earnedBadges = await db.query.childBadges.findMany({
+      where: eq(childBadges.childId, session.childId),
+      columns: {
         badgeSlug: true,
         createdAt: true,
         questId: true,
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: desc(childBadges.createdAt),
     });
 
     const earnedSlugSet = new Set(earnedBadges.map((b) => b.badgeSlug));

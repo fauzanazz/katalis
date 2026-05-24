@@ -5,24 +5,29 @@ vi.mock("@/lib/auth", () => ({
   getChildSession: vi.fn(),
 }));
 
-// Mock Prisma
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    quest: {
-      findUnique: vi.fn(),
-      update: vi.fn(),
+const mockDb = vi.hoisted(() => ({
+  query: {
+    quests: {
+      findFirst: vi.fn(),
     },
-    mission: {
-      update: vi.fn(),
-      findMany: vi.fn(),
-      updateMany: vi.fn(),
+    mentorSessions: {
+      findFirst: vi.fn().mockResolvedValue(null),
     },
-    mentorSession: {
-      upsert: vi.fn().mockResolvedValue({ id: "ms-1" }),
-    },
-    $transaction: vi.fn(),
   },
+  update: vi.fn(() => ({
+    set: vi.fn(() => ({
+      where: vi.fn(() => ({
+        returning: vi.fn().mockResolvedValue([]),
+      })),
+    })),
+  })),
+  insert: vi.fn(() => ({
+    values: vi.fn().mockResolvedValue(undefined),
+  })),
+  transaction: vi.fn(),
 }));
+
+vi.mock("@/lib/db", () => ({ db: mockDb }));
 
 vi.mock("@/lib/badges", () => ({
   buildBadgeContext: vi.fn().mockResolvedValue({
@@ -40,13 +45,27 @@ vi.mock("@/lib/badges", () => ({
   awardBadges: vi.fn(() => []),
 }));
 
+vi.mock("@/lib/interests/quest-mapper", () => ({
+  mapMissionCompletionToInterestSignals: vi.fn().mockReturnValue([]),
+}));
+
+vi.mock("@/lib/interests/ingest-service", () => ({
+  ingestInterestSignals: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/zpd", () => ({
+  recordZpdEvent: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/interests/mission-reassessment", () => ({
+  assessMissionEngagement: vi.fn().mockReturnValue({ scale: 1, emitFrustration: false }),
+  applyAssessmentToSignals: vi.fn((signals: unknown[]) => signals),
+}));
+
 import { PATCH } from "../[id]/mission/[missionId]/route";
 import { getChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 
 const mockedGetSession = vi.mocked(getChildSession);
-const mockedQuestFindUnique = vi.mocked(prisma.quest.findUnique);
-const mockedTransaction = vi.mocked(prisma.$transaction);
 
 const validSession = {
   childId: "child-1",
@@ -112,6 +131,7 @@ function createParams(
 describe("PATCH /api/quest/[id]/mission/[missionId]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockDb.query.mentorSessions.findFirst.mockResolvedValue(null);
   });
 
   describe("Authentication", () => {
@@ -131,12 +151,18 @@ describe("PATCH /api/quest/[id]/mission/[missionId]", () => {
   describe("Start Mission", () => {
     it("starts an available mission (transitions to in_progress)", async () => {
       mockedGetSession.mockResolvedValue(validSession);
-      mockedQuestFindUnique.mockResolvedValue(mockQuest as never);
-      vi.mocked(prisma.mission.update).mockResolvedValue({
-        id: "mission-1",
-        day: 1,
-        status: "in_progress",
-      } as never);
+      mockDb.query.quests.findFirst.mockResolvedValue(mockQuest);
+      mockDb.update.mockReturnValue({
+        set: vi.fn(() => ({
+          where: vi.fn(() => ({
+            returning: vi.fn().mockResolvedValue([{
+              id: "mission-1",
+              day: 1,
+              status: "in_progress",
+            }]),
+          })),
+        })),
+      });
 
       const res = await PATCH(
         createRequest({ action: "start" }),
@@ -150,7 +176,7 @@ describe("PATCH /api/quest/[id]/mission/[missionId]", () => {
 
     it("rejects starting a locked mission", async () => {
       mockedGetSession.mockResolvedValue(validSession);
-      mockedQuestFindUnique.mockResolvedValue(mockQuest as never);
+      mockDb.query.quests.findFirst.mockResolvedValue(mockQuest);
 
       const res = await PATCH(
         createRequest({ action: "start" }),
@@ -167,9 +193,7 @@ describe("PATCH /api/quest/[id]/mission/[missionId]", () => {
         ...mockQuest,
         missions: createMissions({ day1Status: "in_progress" }),
       };
-      mockedQuestFindUnique.mockResolvedValue(
-        questWithInProgress as never,
-      );
+      mockDb.query.quests.findFirst.mockResolvedValue(questWithInProgress);
 
       const res = await PATCH(
         createRequest({ action: "start" }),
@@ -186,9 +210,7 @@ describe("PATCH /api/quest/[id]/mission/[missionId]", () => {
         ...mockQuest,
         missions: createMissions({ day1Status: "completed" }),
       };
-      mockedQuestFindUnique.mockResolvedValue(
-        questWithCompleted as never,
-      );
+      mockDb.query.quests.findFirst.mockResolvedValue(questWithCompleted);
 
       const res = await PATCH(
         createRequest({ action: "start" }),
@@ -207,30 +229,33 @@ describe("PATCH /api/quest/[id]/mission/[missionId]", () => {
         ...mockQuest,
         missions: createMissions({ day1Status: "in_progress" }),
       };
-      mockedQuestFindUnique.mockResolvedValue(
-        questWithInProgress as never,
-      );
+      mockDb.query.quests.findFirst.mockResolvedValue(questWithInProgress);
 
-      mockedTransaction.mockImplementation(async (fn) => {
+      mockDb.transaction.mockImplementation(async (fn: (tx: unknown) => unknown) => {
         const tx = {
-          mission: {
-            update: vi.fn().mockResolvedValue({
-              id: "mission-1",
-              day: 1,
-              status: "completed",
-              proofPhotoUrl: "http://localhost:3100/uploads/proof.jpg",
-            }),
-            findMany: vi.fn().mockResolvedValue([
-              { status: "completed" },
-              { status: "available" },
-              ...Array(5).fill({ status: "locked" }),
-            ]),
-          },
-          quest: {
-            update: vi.fn(),
-          },
+          update: vi.fn(() => ({
+            set: vi.fn(() => ({
+              where: vi.fn(() => ({
+                returning: vi.fn().mockResolvedValue([{
+                  id: "mission-1",
+                  day: 1,
+                  status: "completed",
+                  proofPhotoUrl: "http://localhost:3100/uploads/proof.jpg",
+                }]),
+              })),
+            })),
+          })),
+          select: vi.fn(() => ({
+            from: vi.fn(() => ({
+              where: vi.fn().mockResolvedValue([
+                { status: "completed" },
+                { status: "available" },
+                ...Array(5).fill({ status: "locked" }),
+              ]),
+            })),
+          })),
         };
-        return fn(tx as never);
+        return fn(tx);
       });
 
       const res = await PATCH(
@@ -253,9 +278,7 @@ describe("PATCH /api/quest/[id]/mission/[missionId]", () => {
         ...mockQuest,
         missions: createMissions({ day1Status: "in_progress" }),
       };
-      mockedQuestFindUnique.mockResolvedValue(
-        questWithInProgress as never,
-      );
+      mockDb.query.quests.findFirst.mockResolvedValue(questWithInProgress);
 
       const res = await PATCH(
         createRequest({ action: "complete" }),
@@ -268,7 +291,7 @@ describe("PATCH /api/quest/[id]/mission/[missionId]", () => {
 
     it("rejects completing an available mission (not started)", async () => {
       mockedGetSession.mockResolvedValue(validSession);
-      mockedQuestFindUnique.mockResolvedValue(mockQuest as never);
+      mockDb.query.quests.findFirst.mockResolvedValue(mockQuest);
 
       const res = await PATCH(
         createRequest({
@@ -299,30 +322,31 @@ describe("PATCH /api/quest/[id]/mission/[missionId]", () => {
         updatedAt: new Date(),
       }));
       const questAlmostDone = { ...mockQuest, missions };
-      mockedQuestFindUnique.mockResolvedValue(
-        questAlmostDone as never,
-      );
+      mockDb.query.quests.findFirst.mockResolvedValue(questAlmostDone);
 
-      mockedTransaction.mockImplementation(async (fn) => {
+      mockDb.transaction.mockImplementation(async (fn: (tx: unknown) => unknown) => {
         const tx = {
-          mission: {
-            update: vi.fn().mockResolvedValue({
-              id: "mission-7",
-              day: 7,
-              status: "completed",
-              proofPhotoUrl: "http://localhost:3100/uploads/final.jpg",
-            }),
-            findMany: vi
-              .fn()
-              .mockResolvedValue(
+          update: vi.fn(() => ({
+            set: vi.fn(() => ({
+              where: vi.fn(() => ({
+                returning: vi.fn().mockResolvedValue([{
+                  id: "mission-7",
+                  day: 7,
+                  status: "completed",
+                  proofPhotoUrl: "http://localhost:3100/uploads/final.jpg",
+                }]),
+              })),
+            })),
+          })),
+          select: vi.fn(() => ({
+            from: vi.fn(() => ({
+              where: vi.fn().mockResolvedValue(
                 Array(7).fill({ status: "completed" }),
               ),
-          },
-          quest: {
-            update: vi.fn(),
-          },
+            })),
+          })),
         };
-        return fn(tx as never);
+        return fn(tx);
       });
 
       const res = await PATCH(
@@ -341,10 +365,10 @@ describe("PATCH /api/quest/[id]/mission/[missionId]", () => {
   describe("Quest state checks", () => {
     it("rejects updates on abandoned quests", async () => {
       mockedGetSession.mockResolvedValue(validSession);
-      mockedQuestFindUnique.mockResolvedValue({
+      mockDb.query.quests.findFirst.mockResolvedValue({
         ...mockQuest,
         status: "abandoned",
-      } as never);
+      });
 
       const res = await PATCH(
         createRequest({ action: "start" }),
@@ -357,10 +381,10 @@ describe("PATCH /api/quest/[id]/mission/[missionId]", () => {
 
     it("rejects updates on completed quests", async () => {
       mockedGetSession.mockResolvedValue(validSession);
-      mockedQuestFindUnique.mockResolvedValue({
+      mockDb.query.quests.findFirst.mockResolvedValue({
         ...mockQuest,
         status: "completed",
-      } as never);
+      });
 
       const res = await PATCH(
         createRequest({ action: "start" }),
@@ -373,7 +397,7 @@ describe("PATCH /api/quest/[id]/mission/[missionId]", () => {
 
     it("returns 404 for non-existent quest", async () => {
       mockedGetSession.mockResolvedValue(validSession);
-      mockedQuestFindUnique.mockResolvedValue(null);
+      mockDb.query.quests.findFirst.mockResolvedValue(null);
 
       const res = await PATCH(
         createRequest({ action: "start" }),
@@ -384,10 +408,10 @@ describe("PATCH /api/quest/[id]/mission/[missionId]", () => {
 
     it("returns 403 when accessing another child's quest", async () => {
       mockedGetSession.mockResolvedValue(validSession);
-      mockedQuestFindUnique.mockResolvedValue({
+      mockDb.query.quests.findFirst.mockResolvedValue({
         ...mockQuest,
         childId: "other-child",
-      } as never);
+      });
 
       const res = await PATCH(
         createRequest({ action: "start" }),
@@ -398,7 +422,7 @@ describe("PATCH /api/quest/[id]/mission/[missionId]", () => {
 
     it("returns 404 for non-existent mission", async () => {
       mockedGetSession.mockResolvedValue(validSession);
-      mockedQuestFindUnique.mockResolvedValue(mockQuest as never);
+      mockDb.query.quests.findFirst.mockResolvedValue(mockQuest);
 
       const res = await PATCH(
         createRequest({ action: "start" }),

@@ -1,30 +1,40 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Mock auth
 vi.mock("@/lib/auth", () => ({
   getChildSession: vi.fn(),
 }));
 
-// Mock Prisma
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    discovery: {
-      create: vi.fn(),
-      findUnique: vi.fn(),
+const mockDb = vi.hoisted(() => ({
+  query: {
+    discoveries: {
+      findFirst: vi.fn(),
       findMany: vi.fn(),
-      count: vi.fn(),
     },
   },
+  insert: vi.fn(),
+  select: vi.fn(),
+}));
+
+vi.mock("@/lib/db", () => ({ db: mockDb }));
+
+vi.mock("@/lib/interests/discovery-mapper", () => ({
+  mapDiscoveryAnalysisToInterestSignals: vi.fn().mockReturnValue([]),
+}));
+
+vi.mock("@/lib/interests/ingest-service", () => ({
+  ingestInterestSignals: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/lib/zpd/service", () => ({
+  recordZpdEvent: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { POST } from "../save/route";
 import { GET as GETResult } from "../[id]/route";
 import { GET as GETHistory } from "../history/route";
 import { getChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 
 const mockedGetSession = vi.mocked(getChildSession);
-const mockedDiscovery = vi.mocked(prisma.discovery);
 
 const validSession = { childId: "child-1", expiresAt: new Date().toISOString() };
 
@@ -81,7 +91,11 @@ describe("POST /api/discovery/save", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    mockedDiscovery.create.mockResolvedValue(mockRecord);
+    mockDb.insert.mockReturnValue({
+      values: vi.fn().mockReturnValue({
+        returning: vi.fn().mockResolvedValue([mockRecord]),
+      }),
+    });
 
     const res = await POST(
       createPostRequest({
@@ -108,7 +122,11 @@ describe("POST /api/discovery/save", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
-    mockedDiscovery.create.mockResolvedValue(mockRecord);
+    mockDb.insert.mockReturnValue({
+      values: vi.fn().mockReturnValue({
+        returning: vi.fn().mockResolvedValue([mockRecord]),
+      }),
+    });
 
     const res = await POST(
       createPostRequest({
@@ -164,7 +182,7 @@ describe("GET /api/discovery/[id]", () => {
 
   it("returns 200 with discovery data for valid request", async () => {
     mockedGetSession.mockResolvedValue(validSession);
-    mockedDiscovery.findUnique.mockResolvedValue({
+    mockDb.query.discoveries.findFirst.mockResolvedValue({
       id: "disc-1",
       childId: "child-1",
       type: "artifact",
@@ -188,7 +206,7 @@ describe("GET /api/discovery/[id]", () => {
 
   it("returns 404 for non-existent discovery", async () => {
     mockedGetSession.mockResolvedValue(validSession);
-    mockedDiscovery.findUnique.mockResolvedValue(null);
+    mockDb.query.discoveries.findFirst.mockResolvedValue(null);
 
     const res = await GETResult(
       createGetRequest("http://localhost:3100/api/discovery/non-existent"),
@@ -199,7 +217,7 @@ describe("GET /api/discovery/[id]", () => {
 
   it("returns 403 when accessing another child's discovery", async () => {
     mockedGetSession.mockResolvedValue(validSession);
-    mockedDiscovery.findUnique.mockResolvedValue({
+    mockDb.query.discoveries.findFirst.mockResolvedValue({
       id: "disc-other",
       childId: "child-other",
       type: "artifact",
@@ -234,8 +252,12 @@ describe("GET /api/discovery/history", () => {
 
   it("returns 200 with empty array for child with no discoveries", async () => {
     mockedGetSession.mockResolvedValue(validSession);
-    mockedDiscovery.findMany.mockResolvedValue([]);
-    mockedDiscovery.count.mockResolvedValue(0);
+    mockDb.query.discoveries.findMany.mockResolvedValue([]);
+    mockDb.select.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue([{ count: 0 }]),
+      }),
+    });
 
     const res = await GETHistory(
       createGetRequest("http://localhost:3100/api/discovery/history"),
@@ -248,7 +270,7 @@ describe("GET /api/discovery/history", () => {
 
   it("returns discoveries ordered by date descending", async () => {
     mockedGetSession.mockResolvedValue(validSession);
-    const discoveries = [
+    const discoveryRows = [
       {
         id: "disc-2",
         childId: "child-1",
@@ -270,8 +292,12 @@ describe("GET /api/discovery/history", () => {
         updatedAt: new Date("2024-01-15"),
       },
     ];
-    mockedDiscovery.findMany.mockResolvedValue(discoveries);
-    mockedDiscovery.count.mockResolvedValue(2);
+    mockDb.query.discoveries.findMany.mockResolvedValue(discoveryRows);
+    mockDb.select.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue([{ count: 2 }]),
+      }),
+    });
 
     const res = await GETHistory(
       createGetRequest("http://localhost:3100/api/discovery/history"),
@@ -285,8 +311,12 @@ describe("GET /api/discovery/history", () => {
 
   it("supports pagination with page and limit params", async () => {
     mockedGetSession.mockResolvedValue(validSession);
-    mockedDiscovery.findMany.mockResolvedValue([]);
-    mockedDiscovery.count.mockResolvedValue(25);
+    mockDb.query.discoveries.findMany.mockResolvedValue([]);
+    mockDb.select.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue([{ count: 25 }]),
+      }),
+    });
 
     const res = await GETHistory(
       createGetRequest("http://localhost:3100/api/discovery/history?page=2&limit=10"),

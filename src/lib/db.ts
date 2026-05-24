@@ -1,23 +1,28 @@
-import { PrismaClient } from "@prisma/client";
-import { PrismaLibSQL } from "@prisma/adapter-libsql";
+import { drizzle } from "drizzle-orm/libsql";
+import type { LibSQLTransaction } from "drizzle-orm/libsql";
+import { createClient } from "@libsql/client";
+import type { ExtractTablesWithRelations } from "drizzle-orm";
+import * as schema from "./schema";
 
-function createPrismaClient() {
-  // Use libSQL adapter when TURSO_DATABASE_URL is set (production)
-  if (process.env.TURSO_DATABASE_URL) {
-    const adapter = new PrismaLibSQL({
-      url: process.env.TURSO_DATABASE_URL,
-      authToken: process.env.TURSO_AUTH_TOKEN,
-    });
-    return new PrismaClient({ adapter });
-  }
-  // Fall back to local SQLite for development
-  return new PrismaClient();
+function createDb() {
+  const url =
+    process.env.TURSO_DATABASE_URL ??
+    process.env.DATABASE_URL ??
+    "file:./dev.db";
+  const authToken = process.env.TURSO_AUTH_TOKEN;
+  const client = createClient({ url, authToken });
+  return drizzle(client, { schema });
 }
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
+const globalForDb = globalThis as unknown as {
+  db: ReturnType<typeof createDb> | undefined;
 };
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+export const db = globalForDb.db ?? createDb();
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV !== "production") globalForDb.db = db;
+
+/** Use as parameter type in functions that accept either db or a transaction. */
+export type DbOrTx =
+  | typeof db
+  | LibSQLTransaction<typeof schema, ExtractTablesWithRelations<typeof schema>>;

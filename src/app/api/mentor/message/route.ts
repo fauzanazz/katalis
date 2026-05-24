@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq, asc } from "drizzle-orm";
 import { getChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { mentorSessions, mentorMessages, missions, children } from "@/lib/schema";
 import { sanitizeInput } from "@/lib/sanitize";
 import { SendMessageInputSchema } from "@/lib/ai/mentor-schemas";
 import { mentorChat, detectFrustration, resolveCheckinAction, applyCheckinOverride } from "@/lib/ai/mentor";
@@ -55,10 +57,10 @@ export async function POST(request: NextRequest) {
     const sanitizedContent = isGreeting ? "" : sanitizeInput(content);
 
     // Fetch session with mission context
-    const mentorSession = await prisma.mentorSession.findUnique({
-      where: { id: sessionId },
-      include: {
-        messages: { orderBy: { createdAt: "asc" } },
+    const mentorSession = await db.query.mentorSessions.findFirst({
+      where: eq(mentorSessions.id, sessionId),
+      with: {
+        messages: { orderBy: asc(mentorMessages.createdAt) },
         adjustments: true,
       },
     });
@@ -85,8 +87,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch mission context
-    const mission = await prisma.mission.findUnique({
-      where: { id: mentorSession.missionId },
+    const mission = await db.query.missions.findFirst({
+      where: eq(missions.id, mentorSession.missionId),
     });
 
     if (!mission) {
@@ -112,19 +114,17 @@ export async function POST(request: NextRequest) {
 
     // Save child message (if not greeting)
     if (!isGreeting) {
-      await prisma.mentorMessage.create({
-        data: {
-          sessionId,
-          role: "child",
-          content: sanitizedContent,
-        },
+      await db.insert(mentorMessages).values({
+        sessionId,
+        role: "child",
+        content: sanitizedContent,
       });
     }
 
     // Resolve age-band from child's DoB (drives prompts + thresholds)
-    const child = await prisma.child.findUnique({
-      where: { id: mentorSession.childId },
-      select: { dateOfBirth: true },
+    const child = await db.query.children.findFirst({
+      where: eq(children.id, mentorSession.childId),
+      columns: { dateOfBirth: true },
     });
     const { band: ageGroup } = getAgeGroup(child?.dateOfBirth);
 
@@ -181,16 +181,16 @@ export async function POST(request: NextRequest) {
 
     // Update checkin state machine
     if (checkinAction === "checkin") {
-      await prisma.mentorSession.update({
-        where: { id: sessionId },
-        data: { checkinPending: true },
-      });
+      await db
+        .update(mentorSessions)
+        .set({ checkinPending: true })
+        .where(eq(mentorSessions.id, sessionId));
     } else if (checkinAction === "adjustment" || checkinAction === null) {
       if (mentorSession.checkinPending) {
-        await prisma.mentorSession.update({
-          where: { id: sessionId },
-          data: { checkinPending: false },
-        });
+        await db
+          .update(mentorSessions)
+          .set({ checkinPending: false })
+          .where(eq(mentorSessions.id, sessionId));
       }
     }
 
@@ -210,18 +210,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Save mentor message
-    const savedMentorMessage = await prisma.mentorMessage.create({
-      data: {
-        sessionId,
-        role: "mentor",
-        content: mentorResponse.message,
-        meta: JSON.stringify({
-          suggestions: mentorResponse.suggestions,
-          frustrationLevel: mentorResponse.frustrationLevel ?? frustrationLevel,
-          offerAdjustment: mentorResponse.offerAdjustment,
-        }),
-      },
-    });
+    const savedMentorMessage = (
+      await db
+        .insert(mentorMessages)
+        .values({
+          sessionId,
+          role: "mentor",
+          content: mentorResponse.message,
+          meta: JSON.stringify({
+            suggestions: mentorResponse.suggestions,
+            frustrationLevel: mentorResponse.frustrationLevel ?? frustrationLevel,
+            offerAdjustment: mentorResponse.offerAdjustment,
+          }),
+        })
+        .returning()
+    )[0];
 
     // Check for trailblazer badge (first mentor chat usage)
     const badgeCtx = await buildBadgeContext({

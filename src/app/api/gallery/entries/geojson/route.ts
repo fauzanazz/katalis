@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { eq, isNotNull, and, desc } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { galleryEntries } from "@/lib/schema";
 
 /**
  * GET /api/gallery/entries/geojson
@@ -16,17 +18,13 @@ export async function GET(request: NextRequest | Request) {
     const url = new URL(request.url);
     const talentCategory = url.searchParams.get("talentCategory");
 
-    // Build where clause
-    const where: Record<string, unknown> = {
-      coordinates: { not: null },
-    };
-    if (talentCategory) {
-      where.talentCategory = talentCategory;
-    }
+    const whereCondition = talentCategory
+      ? and(isNotNull(galleryEntries.coordinates), eq(galleryEntries.talentCategory, talentCategory))
+      : isNotNull(galleryEntries.coordinates);
 
-    const entries = await prisma.galleryEntry.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
+    const entries = await db.query.galleryEntries.findMany({
+      where: whereCondition,
+      orderBy: desc(galleryEntries.createdAt),
     });
 
     // Convert to GeoJSON FeatureCollection

@@ -1,5 +1,7 @@
 import { getTranslations } from "next-intl/server";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { moderationEvents } from "@/lib/schema";
+import { eq, inArray, desc, count } from "drizzle-orm";
 import { Shield, AlertTriangle, CheckCircle, XCircle, Eye } from "lucide-react";
 import { ReviewActions } from "./ReviewActions";
 
@@ -12,18 +14,16 @@ export default async function AdminModerationPage({
   const params = await searchParams;
   const statusFilter = params.status;
 
-  const where = statusFilter ? { status: statusFilter } : {};
-
   const [events, pending, flagged, blocked, approved] = await Promise.all([
-    prisma.moderationEvent.findMany({
-      where,
-      take: 50,
-      orderBy: { createdAt: "desc" },
+    db.query.moderationEvents.findMany({
+      where: statusFilter ? eq(moderationEvents.status, statusFilter) : undefined,
+      limit: 50,
+      orderBy: desc(moderationEvents.createdAt),
     }),
-    prisma.moderationEvent.count({ where: { status: "pending" } }),
-    prisma.moderationEvent.count({ where: { status: "flagged" } }),
-    prisma.moderationEvent.count({ where: { status: "blocked" } }),
-    prisma.moderationEvent.count({ where: { status: "approved" } }),
+    db.select({ count: count() }).from(moderationEvents).where(eq(moderationEvents.status, "pending")).then((r) => r[0]!.count),
+    db.select({ count: count() }).from(moderationEvents).where(eq(moderationEvents.status, "flagged")).then((r) => r[0]!.count),
+    db.select({ count: count() }).from(moderationEvents).where(eq(moderationEvents.status, "blocked")).then((r) => r[0]!.count),
+    db.select({ count: count() }).from(moderationEvents).where(eq(moderationEvents.status, "approved")).then((r) => r[0]!.count),
   ]);
 
   const statCards = [

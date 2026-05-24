@@ -5,7 +5,8 @@
  * Returns EarnedBadge[] for inclusion in API responses.
  */
 
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { childBadges } from "@/lib/schema";
 import { getBadgeDef } from "./definitions";
 import type { BadgeTrigger, EarnedBadge } from "./schemas";
 
@@ -30,14 +31,12 @@ export async function awardBadges({
     const def = getBadgeDef(slug);
     if (!def) continue;
 
-    await prisma.childBadge.create({
-      data: {
-        childId,
-        badgeSlug: slug,
-        questId: questId ?? null,
-        trigger,
-        metadata: JSON.stringify({ trigger }),
-      },
+    await db.insert(childBadges).values({
+      childId,
+      badgeSlug: slug,
+      questId: questId ?? null,
+      trigger,
+      metadata: JSON.stringify({ trigger }),
     });
 
     results.push({

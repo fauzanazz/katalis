@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { eq, asc } from "drizzle-orm";
 import { getChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { quests, missions, mentorSessions } from "@/lib/schema";
 import { sanitizeInput } from "@/lib/sanitize";
 import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 import { buildBadgeContext, evaluateBadges, awardBadges } from "@/lib/badges";
@@ -112,10 +114,10 @@ export async function PATCH(
     }
 
     // Fetch the quest with all missions
-    const quest = await prisma.quest.findUnique({
-      where: { id: questId },
-      include: {
-        missions: { orderBy: { day: "asc" } },
+    const quest = await db.query.quests.findFirst({
+      where: eq(quests.id, questId),
+      with: {
+        missions: { orderBy: asc(missions.day) },
       },
     });
 
@@ -166,22 +168,24 @@ export async function PATCH(
         );
       }
 
-      const updatedMission = await prisma.mission.update({
-        where: { id: missionId },
-        data: { status: "in_progress" },
-      });
+      const [updatedMission] = await db
+        .update(missions)
+        .set({ status: "in_progress" })
+        .where(eq(missions.id, missionId))
+        .returning();
 
       // Auto-create mentor session for this mission
-      await prisma.mentorSession.upsert({
-        where: { missionId },
-        create: {
+      const existingSession = await db.query.mentorSessions.findFirst({
+        where: eq(mentorSessions.missionId, missionId),
+      });
+      if (!existingSession) {
+        await db.insert(mentorSessions).values({
           missionId,
           childId: session.childId,
           questId,
           status: "active",
-        },
-        update: {},
-      });
+        });
+      }
 
       return NextResponse.json({
         success: true,
@@ -218,15 +222,13 @@ export async function PATCH(
       }
 
       // Complete the mission and unlock the next day in a transaction
-      const result = await prisma.$transaction(async (tx) => {
+      const result = await db.transaction(async (tx) => {
         // Update current mission to completed
-        const completedMission = await tx.mission.update({
-          where: { id: missionId },
-          data: {
-            status: "completed",
-            proofPhotoUrl,
-          },
-        });
+        const [completedMission] = await tx
+          .update(missions)
+          .set({ status: "completed", proofPhotoUrl })
+          .where(eq(missions.id, missionId))
+          .returning();
 
         // Find and unlock the next day's mission
         const nextMission = quest.missions.find(
@@ -234,17 +236,17 @@ export async function PATCH(
         );
 
         if (nextMission && nextMission.status === "locked") {
-          await tx.mission.update({
-            where: { id: nextMission.id },
-            data: { status: "available" },
-          });
+          await tx
+            .update(missions)
+            .set({ status: "available" })
+            .where(eq(missions.id, nextMission.id));
         }
 
         // Check if all missions are completed
-        const allMissions = await tx.mission.findMany({
-          where: { questId },
-          select: { status: true },
-        });
+        const allMissions = await tx
+          .select({ status: missions.status })
+          .from(missions)
+          .where(eq(missions.questId, questId));
 
         const allCompleted = allMissions.every(
           (m) => m.status === "completed",
@@ -252,10 +254,10 @@ export async function PATCH(
 
         // If all completed, update quest status
         if (allCompleted) {
-          await tx.quest.update({
-            where: { id: questId },
-            data: { status: "completed" },
-          });
+          await tx
+            .update(quests)
+            .set({ status: "completed" })
+            .where(eq(quests.id, questId));
         }
 
         return {
@@ -285,11 +287,11 @@ export async function PATCH(
       // scales each predicted signal's strength and emits a frustration
       // counter-signal when the prediction was contradicted by behavior.
       try {
-        const mentorSession = await prisma.mentorSession.findUnique({
-          where: { missionId },
-          include: {
-            messages: { select: { meta: true, role: true } },
-            adjustments: { select: { id: true } },
+        const mentorSession = await db.query.mentorSessions.findFirst({
+          where: eq(mentorSessions.missionId, missionId),
+          with: {
+            messages: { columns: { meta: true, role: true } },
+            adjustments: { columns: { id: true } },
           },
         });
         const peakFrustration = mentorSession

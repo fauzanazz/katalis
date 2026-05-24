@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { galleryEntries } from "@/lib/schema";
 
 /**
  * GET /api/gallery/entries/[id]
@@ -14,8 +16,8 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const entry = await prisma.galleryEntry.findUnique({
-      where: { id },
+    const entry = await db.query.galleryEntries.findFirst({
+      where: eq(galleryEntries.id, id),
     });
 
     if (!entry) {

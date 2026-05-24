@@ -3,44 +3,57 @@
  * Provides query functions for squad listing and detail views.
  */
 
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { squads, squadMembers, galleryEntries } from "@/lib/schema";
+import { eq, inArray, count, desc } from "drizzle-orm";
 import type { SquadSummary, SquadDetail } from "./schemas";
 
+async function getMemberCountMap(squadIds: string[]): Promise<Map<string, number>> {
+  if (squadIds.length === 0) return new Map();
+  const rows = await db
+    .select({ squadId: squadMembers.squadId, count: count() })
+    .from(squadMembers)
+    .where(inArray(squadMembers.squadId, squadIds))
+    .groupBy(squadMembers.squadId);
+  return new Map(rows.map((r) => [r.squadId, r.count]));
+}
+
 export async function getAllSquads(): Promise<SquadSummary[]> {
-  const squads = await prisma.squad.findMany({
-    where: { status: "active" },
-    include: { _count: { select: { members: true } } },
-    orderBy: { createdAt: "desc" },
+  const rows = await db.query.squads.findMany({
+    where: eq(squads.status, "active"),
+    orderBy: desc(squads.createdAt),
   });
 
-  return squads.map((squad) => ({
+  const countMap = await getMemberCountMap(rows.map((s) => s.id));
+
+  return rows.map((squad) => ({
     id: squad.id,
     name: squad.name,
     theme: squad.theme,
     description: squad.description,
     icon: squad.icon,
     countries: JSON.parse(squad.countries) as string[],
-    memberCount: squad._count.members,
+    memberCount: countMap.get(squad.id) ?? 0,
     entryCount: (JSON.parse(squad.featuredEntryIds) as string[]).length,
     status: squad.status,
   }));
 }
 
 export async function getSquadById(squadId: string): Promise<SquadDetail | null> {
-  const squad = await prisma.squad.findUnique({
-    where: { id: squadId },
-    include: {
-      members: { select: { childId: true } },
-    },
+  const squad = await db.query.squads.findFirst({
+    where: eq(squads.id, squadId),
+    with: { members: { columns: { childId: true } } },
   });
 
-  if (!squad || squad.status !== "active") return null;
+  if (squad == null || squad.status !== "active") return null;
 
   const featuredIds = JSON.parse(squad.featuredEntryIds) as string[];
-  const entries = await prisma.galleryEntry.findMany({
-    where: { id: { in: featuredIds } },
-    orderBy: { createdAt: "desc" },
-  });
+  const entries = featuredIds.length > 0
+    ? await db.query.galleryEntries.findMany({
+        where: inArray(galleryEntries.id, featuredIds),
+        orderBy: desc(galleryEntries.createdAt),
+      })
+    : [];
 
   return {
     id: squad.id,
@@ -70,14 +83,13 @@ export async function getSquadById(squadId: string): Promise<SquadDetail | null>
 }
 
 export async function getChildSquads(childId: string): Promise<SquadSummary[]> {
-  const memberships = await prisma.squadMember.findMany({
-    where: { childId },
-    include: {
-      squad: {
-        include: { _count: { select: { members: true } } },
-      },
-    },
+  const memberships = await db.query.squadMembers.findMany({
+    where: eq(squadMembers.childId, childId),
+    with: { squad: true },
   });
+
+  const squadIds = memberships.map((m) => m.squad.id);
+  const countMap = await getMemberCountMap(squadIds);
 
   return memberships.map((m) => {
     const squad = m.squad;
@@ -88,7 +100,7 @@ export async function getChildSquads(childId: string): Promise<SquadSummary[]> {
       description: squad.description,
       icon: squad.icon,
       countries: JSON.parse(squad.countries) as string[],
-      memberCount: squad._count.members,
+      memberCount: countMap.get(squad.id) ?? 0,
       entryCount: (JSON.parse(squad.featuredEntryIds) as string[]).length,
       status: squad.status,
     };
@@ -100,20 +112,22 @@ export async function getSquadEntries(
   page = 1,
   pageSize = 20,
 ) {
-  const squad = await prisma.squad.findUnique({
-    where: { id: squadId },
+  const squad = await db.query.squads.findFirst({
+    where: eq(squads.id, squadId),
   });
 
-  if (!squad || squad.status !== "active") return { entries: [], total: 0 };
+  if (squad == null || squad.status !== "active") return { entries: [], total: 0 };
 
   const allEntryIds = JSON.parse(squad.featuredEntryIds) as string[];
   const skip = (page - 1) * pageSize;
   const pagedIds = allEntryIds.slice(skip, skip + pageSize);
 
-  const entries = await prisma.galleryEntry.findMany({
-    where: { id: { in: pagedIds } },
-    orderBy: { createdAt: "desc" },
-  });
+  const entries = pagedIds.length > 0
+    ? await db.query.galleryEntries.findMany({
+        where: inArray(galleryEntries.id, pagedIds),
+        orderBy: desc(galleryEntries.createdAt),
+      })
+    : [];
 
   return {
     entries: entries.map((e) => ({

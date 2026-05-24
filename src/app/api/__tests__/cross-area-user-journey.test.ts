@@ -375,8 +375,10 @@ describe("VAL-CROSS-027/028/029: Returning user data persistence", () => {
     ]);
 
     vi.doMock("@/lib/db", () => ({
-      prisma: {
-        discovery: { findMany: mockFindMany },
+      db: {
+        query: {
+          discoveries: { findMany: mockFindMany },
+        },
       },
     }));
 

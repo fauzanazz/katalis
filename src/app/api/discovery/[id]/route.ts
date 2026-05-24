@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 import { getChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { discoveries } from "@/lib/schema";
 import type { Talent } from "@/lib/ai/schemas";
 
 /**
@@ -26,8 +28,8 @@ export async function GET(
 
     const { id } = await params;
 
-    const discovery = await prisma.discovery.findUnique({
-      where: { id },
+    const discovery = await db.query.discoveries.findFirst({
+      where: eq(discoveries.id, id),
     });
 
     if (!discovery) {

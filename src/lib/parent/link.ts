@@ -3,7 +3,9 @@
  * Handles claiming children via access codes and querying parent-child relationships.
  */
 
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { accessCodes, parentChildren, children, discoveries, quests, squadMembers } from "@/lib/schema";
+import { eq, and, desc } from "drizzle-orm";
 import { getAgeGroup } from "@/lib/age";
 import type { LinkedChild } from "./schemas";
 
@@ -15,9 +17,9 @@ export async function claimChild(
   userId: string,
   accessCode: string,
 ): Promise<{ success: boolean; childId?: string; error?: string }> {
-  const code = await prisma.accessCode.findUnique({
-    where: { code: accessCode },
-    include: { children: true },
+  const code = await db.query.accessCodes.findFirst({
+    where: eq(accessCodes.code, accessCode),
+    with: { children: true },
   });
 
   if (!code) {
@@ -37,19 +39,15 @@ export async function claimChild(
     return { success: false, error: "No child profile found for this code" };
   }
 
-  const existing = await prisma.parentChild.findUnique({
-    where: {
-      userId_childId: { userId, childId: child.id },
-    },
+  const existing = await db.query.parentChildren.findFirst({
+    where: and(eq(parentChildren.userId, userId), eq(parentChildren.childId, child.id)),
   });
 
   if (existing) {
     return { success: false, error: "You have already linked this child" };
   }
 
-  await prisma.parentChild.create({
-    data: { userId, childId: child.id },
-  });
+  await db.insert(parentChildren).values({ userId, childId: child.id });
 
   return { success: true, childId: child.id };
 }
@@ -58,19 +56,22 @@ export async function claimChild(
  * Get all children linked to a parent user, with basic stats.
  */
 export async function getParentChildren(userId: string): Promise<LinkedChild[]> {
-  const links = await prisma.parentChild.findMany({
-    where: { userId },
-    include: {
+  const links = await db.query.parentChildren.findMany({
+    where: eq(parentChildren.userId, userId),
+    with: {
       child: {
-        include: {
-          discoveries: { select: { detectedTalents: true } },
-          quests: { select: { id: true, dream: true, status: true }, orderBy: { createdAt: "desc" } },
-          squadMemberships: { select: { id: true } },
-          accessCode: { select: { code: true } },
+        with: {
+          discoveries: { columns: { detectedTalents: true } },
+          quests: {
+            columns: { id: true, dream: true, status: true },
+            orderBy: desc(quests.createdAt),
+          },
+          squadMemberships: { columns: { id: true } },
+          accessCode: { columns: { code: true } },
         },
       },
     },
-    orderBy: { claimedAt: "desc" },
+    orderBy: desc(parentChildren.claimedAt),
   });
 
   return links.map((link) => {
@@ -110,10 +111,8 @@ export async function verifyParentChildLink(
   userId: string,
   childId: string,
 ): Promise<boolean> {
-  const link = await prisma.parentChild.findUnique({
-    where: {
-      userId_childId: { userId, childId },
-    },
+  const link = await db.query.parentChildren.findFirst({
+    where: and(eq(parentChildren.userId, userId), eq(parentChildren.childId, childId)),
   });
-  return link !== null;
+  return link != null;
 }

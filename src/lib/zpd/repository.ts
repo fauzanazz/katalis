@@ -1,23 +1,30 @@
-import { prisma } from "@/lib/db";
-import type { Prisma } from "@prisma/client";
+import { db } from "@/lib/db";
+import type { DbOrTx } from "@/lib/db";
+import { childZpdStates, childZpdSnapshots } from "@/lib/schema";
+import { eq, and, asc } from "drizzle-orm";
 import type { ZpdBand } from "./band";
 
 export async function getState(childId: string) {
-  return prisma.childZpdState.findUnique({ where: { childId } });
+  return db.query.childZpdStates.findFirst({ where: eq(childZpdStates.childId, childId) });
 }
 
 export async function upsertState(
   childId: string,
   score: number,
   band: ZpdBand,
-  tx?: Prisma.TransactionClient,
+  tx?: DbOrTx,
 ) {
-  const client = tx ?? prisma;
-  return client.childZpdState.upsert({
-    where: { childId },
-    create: { childId, score, band },
-    update: { score, band },
-  });
+  const client = tx ?? db;
+  return (
+    await client
+      .insert(childZpdStates)
+      .values({ childId, score, band })
+      .onConflictDoUpdate({
+        target: childZpdStates.childId,
+        set: { score, band },
+      })
+      .returning()
+  )[0];
 }
 
 export type AppendSnapshotInput = {
@@ -35,25 +42,28 @@ export type AppendSnapshotInput = {
 
 export async function appendSnapshot(
   input: AppendSnapshotInput,
-  tx?: Prisma.TransactionClient,
+  tx?: DbOrTx,
 ) {
-  const client = tx ?? prisma;
-  return client.childZpdSnapshot.create({
-    data: {
-      childId: input.childId,
-      score: input.score,
-      band: input.band,
-      reason: input.reason,
-      missionId: input.missionId ?? null,
-    },
-  });
+  const client = tx ?? db;
+  return (
+    await client
+      .insert(childZpdSnapshots)
+      .values({
+        childId: input.childId,
+        score: input.score,
+        band: input.band,
+        reason: input.reason,
+        missionId: input.missionId ?? null,
+      })
+      .returning()
+  )[0];
 }
 
 export async function listSnapshots(childId: string, limit = 30) {
-  return prisma.childZpdSnapshot.findMany({
-    where: { childId },
-    orderBy: { createdAt: "asc" },
-    take: limit,
+  return db.query.childZpdSnapshots.findMany({
+    where: eq(childZpdSnapshots.childId, childId),
+    orderBy: asc(childZpdSnapshots.createdAt),
+    limit,
   });
 }
 
@@ -61,9 +71,13 @@ export async function hasFrustrationSnapshotForMission(
   childId: string,
   missionId: string,
 ) {
-  const existing = await prisma.childZpdSnapshot.findFirst({
-    where: { childId, missionId, reason: "frustration_sustained" },
-    select: { id: true },
+  const existing = await db.query.childZpdSnapshots.findFirst({
+    where: and(
+      eq(childZpdSnapshots.childId, childId),
+      eq(childZpdSnapshots.missionId, missionId),
+      eq(childZpdSnapshots.reason, "frustration_sustained"),
+    ),
+    columns: { id: true },
   });
-  return existing !== null;
+  return existing != null;
 }

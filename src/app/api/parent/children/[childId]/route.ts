@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { getUserSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { children } from "@/lib/schema";
 import { verifyParentChildLink } from "@/lib/parent/link";
 import { getAgeGroup } from "@/lib/age";
 
@@ -79,11 +81,18 @@ export async function PATCH(
       );
     }
 
-    const updated = await prisma.child.update({
-      where: { id: childId },
-      data: { dateOfBirth: dob },
-      select: { id: true, name: true, locale: true, dateOfBirth: true },
-    });
+    const updated = (
+      await db
+        .update(children)
+        .set({ dateOfBirth: dob })
+        .where(eq(children.id, childId))
+        .returning({
+          id: children.id,
+          name: children.name,
+          locale: children.locale,
+          dateOfBirth: children.dateOfBirth,
+        })
+    )[0];
 
     return NextResponse.json({ child: updated });
   } catch (error) {

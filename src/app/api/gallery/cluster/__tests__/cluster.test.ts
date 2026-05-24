@@ -1,24 +1,23 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Mock Prisma
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    galleryEntry: {
+const mockDb = vi.hoisted(() => ({
+  query: {
+    galleryEntries: {
       findMany: vi.fn(),
     },
   },
 }));
 
-// Mock AI client
+vi.mock("@/lib/db", () => ({ db: mockDb }));
+
 vi.mock("@/lib/ai/client", () => ({
   clusterGalleryEntries: vi.fn(),
 }));
 
 import { POST } from "../route";
-import { prisma } from "@/lib/db";
 import { clusterGalleryEntries } from "@/lib/ai/client";
 
-const mockedFindMany = vi.mocked(prisma.galleryEntry.findMany);
+const mockedFindMany = mockDb.query.galleryEntries.findMany;
 const mockedCluster = vi.mocked(clusterGalleryEntries);
 
 function createEntry(id: string, category: string, country: string) {
@@ -63,7 +62,7 @@ describe("POST /api/gallery/cluster", () => {
       createEntry("e2", "Engineering", "Japan"),
       createEntry("e3", "Art", "Indonesia"),
     ];
-    mockedFindMany.mockResolvedValue(entries as never);
+    mockedFindMany.mockResolvedValue(entries);
 
     mockedCluster.mockResolvedValue({
       clusters: [
@@ -93,20 +92,18 @@ describe("POST /api/gallery/cluster", () => {
     expect(data.clusters).toHaveLength(2);
     expect(data.totalEntries).toBe(3);
 
-    // First cluster
     expect(data.clusters[0].label).toBe("Robot Builders from Asia");
     expect(data.clusters[0].talentTheme).toBe("Engineering");
     expect(data.clusters[0].countries).toEqual(["Indonesia", "Japan"]);
     expect(data.clusters[0].entries).toHaveLength(2);
 
-    // Second cluster
     expect(data.clusters[1].label).toBe("Young Artists from Indonesia");
     expect(data.clusters[1].entries).toHaveLength(1);
   });
 
   it("enriches clusters with entry data", async () => {
     const entries = [createEntry("e1", "Engineering", "Indonesia")];
-    mockedFindMany.mockResolvedValue(entries as never);
+    mockedFindMany.mockResolvedValue(entries);
 
     mockedCluster.mockResolvedValue({
       clusters: [
@@ -134,7 +131,6 @@ describe("POST /api/gallery/cluster", () => {
   });
 
   it("does not require authentication (publicly accessible)", async () => {
-    // No session mock — should work without auth
     mockedFindMany.mockResolvedValue([]);
 
     const response = await POST();
@@ -143,7 +139,7 @@ describe("POST /api/gallery/cluster", () => {
 
   it("returns 500 when clustering fails", async () => {
     const entries = [createEntry("e1", "Engineering", "Indonesia")];
-    mockedFindMany.mockResolvedValue(entries as never);
+    mockedFindMany.mockResolvedValue(entries);
     mockedCluster.mockRejectedValue(new Error("AI service unavailable"));
 
     const response = await POST();
@@ -158,7 +154,7 @@ describe("POST /api/gallery/cluster", () => {
       createEntry("e1", "Engineering", "Indonesia"),
       createEntry("e2", "Art", "Japan"),
     ];
-    mockedFindMany.mockResolvedValue(entries as never);
+    mockedFindMany.mockResolvedValue(entries);
 
     mockedCluster.mockResolvedValue({
       clusters: [

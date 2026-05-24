@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getUserSession, getChildSession } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { missions } from "@/lib/schema";
 import { verifyParentChildLink } from "@/lib/parent/link";
 import { isInterestKey } from "@/lib/interests/taxonomy";
 import { submitMissionInterestRating } from "@/lib/interests/explicit-rating-service";
-import { prisma } from "@/lib/db";
 
 const RatingSchema = z.object({
   childId: z.string().min(1),
@@ -86,11 +88,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify mission belongs to this child via quest relation
-    const mission = await prisma.mission.findFirst({
-      where: { id: missionId, quest: { childId } },
-      select: { id: true },
+    const mission = await db.query.missions.findFirst({
+      where: eq(missions.id, missionId),
+      with: {
+        quest: { columns: { childId: true } },
+      },
+      columns: { id: true },
     });
-    if (!mission) {
+    if (!mission || mission.quest.childId !== childId) {
       return NextResponse.json(
         { error: "forbidden", message: "Access denied" },
         { status: 403 },

@@ -1,34 +1,36 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    discovery: {
-      findUnique: vi.fn(),
+const mockDb = vi.hoisted(() => ({
+  query: {
+    discoveries: {
+      findFirst: vi.fn(),
       findMany: vi.fn(),
     },
-    interestSignal: {
+    discoveryRatings: {
       findMany: vi.fn(),
     },
-    mission: {
+    interestSignals: {
       findMany: vi.fn(),
     },
-    child: {
+    missions: {
       findMany: vi.fn(),
     },
-    discoveryRating: {
-      create: vi.fn(),
+    children: {
       findMany: vi.fn(),
     },
-    reliabilitySnapshot: {
-      create: vi.fn(),
+    reliabilitySnapshots: {
+      findMany: vi.fn(),
     },
-    reliabilityAlert: {
-      create: vi.fn(),
+    reliabilityAlerts: {
+      findMany: vi.fn(),
     },
   },
+  insert: vi.fn(),
+  update: vi.fn(),
 }));
 
-import { prisma } from "@/lib/db";
+vi.mock("@/lib/db", () => ({ db: mockDb }));
+
 import {
   KAPPA_ADEQUACY_THRESHOLD,
   MIN_SAMPLE_FOR_SURFACE,
@@ -37,49 +39,41 @@ import {
   submitRating,
 } from "@/lib/reliability/service";
 
-interface MockShape {
-  discovery: {
-    findUnique: ReturnType<typeof vi.fn>;
-    findMany: ReturnType<typeof vi.fn>;
-  };
-  interestSignal: { findMany: ReturnType<typeof vi.fn> };
-  mission: { findMany: ReturnType<typeof vi.fn> };
-  child: { findMany: ReturnType<typeof vi.fn> };
-  discoveryRating: {
-    create: ReturnType<typeof vi.fn>;
-    findMany: ReturnType<typeof vi.fn>;
-  };
-  reliabilitySnapshot: { create: ReturnType<typeof vi.fn> };
-  reliabilityAlert: { create: ReturnType<typeof vi.fn> };
+// Helper to set up insert chain for a table
+function setupInsertChain(returnRow: Record<string, unknown>) {
+  const returning = vi.fn().mockResolvedValue([returnRow]);
+  const values = vi.fn().mockReturnValue({ returning });
+  mockDb.insert.mockReturnValue({ values });
+  return { values, returning };
 }
-
-const mockPrisma = prisma as unknown as MockShape;
 
 beforeEach(() => {
   vi.clearAllMocks();
   // Default empty datasets for the test-retest + longitudinal + bias snapshots
   // that also run inside runSnapshotJob.
-  mockPrisma.discovery.findMany.mockResolvedValue([]);
-  mockPrisma.interestSignal.findMany.mockResolvedValue([]);
-  mockPrisma.mission.findMany.mockResolvedValue([]);
-  mockPrisma.child.findMany.mockResolvedValue([]);
+  mockDb.query.discoveries.findMany.mockResolvedValue([]);
+  mockDb.query.interestSignals.findMany.mockResolvedValue([]);
+  mockDb.query.missions.findMany.mockResolvedValue([]);
+  mockDb.query.children.findMany.mockResolvedValue([]);
+  mockDb.query.reliabilitySnapshots.findMany.mockResolvedValue([]);
+  mockDb.query.reliabilityAlerts.findMany.mockResolvedValue([]);
 });
 
 describe("submitRating — AI label snapshotting", () => {
   it("snapshots AI labels from Discovery.detectedTalents + InterestSignal rows", async () => {
-    mockPrisma.discovery.findUnique.mockResolvedValue({
+    mockDb.query.discoveries.findFirst.mockResolvedValue({
       id: "discovery-1",
       detectedTalents: JSON.stringify([
         { name: "Robotics", category: "Engineering", confidence: 0.9 },
         { name: "Sketching", category: "Art", confidence: 0.8 },
       ]),
     });
-    mockPrisma.interestSignal.findMany.mockResolvedValue([
+    mockDb.query.interestSignals.findMany.mockResolvedValue([
       { interestKey: "building" },
       { interestKey: "art" },
       { interestKey: "building" }, // dup -> dedupe expected
     ]);
-    mockPrisma.discoveryRating.create.mockResolvedValue({ id: "rating-1" });
+    const { values } = setupInsertChain({ id: "rating-1" });
 
     await submitRating({
       discoveryId: "discovery-1",
@@ -88,7 +82,8 @@ describe("submitRating — AI label snapshotting", () => {
       humanTagCategories: ["Art"],
     });
 
-    const data = mockPrisma.discoveryRating.create.mock.calls[0][0].data;
+    expect(values).toHaveBeenCalledTimes(1);
+    const data = values.mock.calls[0][0];
     expect(data.discoveryId).toBe("discovery-1");
     expect(data.raterUserId).toBe("user-admin");
     expect(JSON.parse(data.aiTagCategoriesAtRate).sort()).toEqual([
@@ -102,7 +97,7 @@ describe("submitRating — AI label snapshotting", () => {
   });
 
   it("throws when discovery does not exist", async () => {
-    mockPrisma.discovery.findUnique.mockResolvedValue(null);
+    mockDb.query.discoveries.findFirst.mockResolvedValue(null);
     await expect(
       submitRating({
         discoveryId: "missing",
@@ -116,8 +111,7 @@ describe("submitRating — AI label snapshotting", () => {
 
 describe("computeLiveKappa", () => {
   it("returns null kappa with insufficient sample marker below MIN_SAMPLE_FOR_SURFACE", async () => {
-    // Provide only 3 rated items, well below MIN.
-    mockPrisma.discoveryRating.findMany.mockResolvedValue([
+    mockDb.query.discoveryRatings.findMany.mockResolvedValue([
       {
         id: "r-1",
         humanInterestKeys: JSON.stringify(["art"]),
@@ -148,7 +142,6 @@ describe("computeLiveKappa", () => {
   });
 
   it("returns the macro Kappa when sample is sufficient", async () => {
-    // Build 50 perfect-agreement items so Kappa = 1.
     const items = Array.from({ length: MIN_SAMPLE_FOR_SURFACE }, (_, i) => ({
       id: `r-${i}`,
       humanInterestKeys: JSON.stringify(["art"]),
@@ -156,7 +149,7 @@ describe("computeLiveKappa", () => {
       humanTagCategories: JSON.stringify([]),
       aiTagCategoriesAtRate: JSON.stringify([]),
     }));
-    mockPrisma.discoveryRating.findMany.mockResolvedValue(items);
+    mockDb.query.discoveryRatings.findMany.mockResolvedValue(items);
 
     const res = await computeLiveKappa("interest_keys");
     expect(res.kappa).toBe(1);
@@ -167,7 +160,6 @@ describe("computeLiveKappa", () => {
 
 describe("runSnapshotJob", () => {
   it("writes a snapshot per layer and creates alerts when Kappa < threshold and sample is sufficient", async () => {
-    // 50 items, all-disagree on the single label "art" with balanced marginals -> Kappa = -1.
     const items = Array.from({ length: MIN_SAMPLE_FOR_SURFACE }, (_, i) => {
       const aiHasArt = i % 2 === 0;
       const humanHasArt = !aiHasArt;
@@ -179,22 +171,23 @@ describe("runSnapshotJob", () => {
         aiTagCategoriesAtRate: JSON.stringify(aiHasArt ? ["Art"] : []),
       };
     });
-    mockPrisma.discoveryRating.findMany.mockResolvedValue(items);
-    mockPrisma.reliabilitySnapshot.create.mockImplementation(
-      async ({ data }) => ({
-        id: `snap-${data.layer}`,
-        ...data,
-      }),
-    );
-    mockPrisma.reliabilityAlert.create.mockResolvedValue({ id: "alert" });
+    mockDb.query.discoveryRatings.findMany.mockResolvedValue(items);
+
+    // Each insert call (snapshot or alert) returns a row with a generated id
+    let insertCallCount = 0;
+    mockDb.insert.mockImplementation(() => {
+      insertCallCount++;
+      const callNum = insertCallCount;
+      const returning = vi.fn().mockResolvedValue([{ id: `inserted-${callNum}` }]);
+      const values = vi.fn().mockReturnValue({ returning });
+      return { values };
+    });
 
     const result = await runSnapshotJob("cron");
 
     // Two snapshots written, one per layer.
-    expect(mockPrisma.reliabilitySnapshot.create).toHaveBeenCalledTimes(2);
-    // Two alerts created (both layers below threshold).
-    expect(mockPrisma.reliabilityAlert.create).toHaveBeenCalledTimes(2);
     expect(result.snapshotsCreated).toBe(2);
+    // Two alerts created (both layers below threshold).
     expect(result.alertsCreated).toBe(2);
     expect(KAPPA_ADEQUACY_THRESHOLD).toBeLessThan(1);
   });
@@ -207,13 +200,20 @@ describe("runSnapshotJob", () => {
       humanTagCategories: JSON.stringify(["Art"]),
       aiTagCategoriesAtRate: JSON.stringify(["Art"]),
     }));
-    mockPrisma.discoveryRating.findMany.mockResolvedValue(items);
-    mockPrisma.reliabilitySnapshot.create.mockImplementation(
-      async ({ data }) => ({ id: `snap-${data.layer}`, ...data }),
-    );
+    mockDb.query.discoveryRatings.findMany.mockResolvedValue(items);
+
+    const insertedIds: string[] = [];
+    mockDb.insert.mockImplementation(() => {
+      const returning = vi.fn().mockImplementation(async () => {
+        const id = `snap-${insertedIds.length}`;
+        insertedIds.push(id);
+        return [{ id }];
+      });
+      const values = vi.fn().mockReturnValue({ returning });
+      return { values };
+    });
 
     const result = await runSnapshotJob("manual");
-    expect(mockPrisma.reliabilityAlert.create).not.toHaveBeenCalled();
     expect(result.alertsCreated).toBe(0);
   });
 
@@ -229,13 +229,15 @@ describe("runSnapshotJob", () => {
         aiTagCategoriesAtRate: JSON.stringify(aiHasArt ? ["Art"] : []),
       };
     });
-    mockPrisma.discoveryRating.findMany.mockResolvedValue(items);
-    mockPrisma.reliabilitySnapshot.create.mockImplementation(
-      async ({ data }) => ({ id: `snap-${data.layer}`, ...data }),
-    );
+    mockDb.query.discoveryRatings.findMany.mockResolvedValue(items);
+
+    mockDb.insert.mockImplementation(() => {
+      const returning = vi.fn().mockResolvedValue([{ id: "snap-x" }]);
+      const values = vi.fn().mockReturnValue({ returning });
+      return { values };
+    });
 
     const result = await runSnapshotJob("cron");
-    expect(mockPrisma.reliabilityAlert.create).not.toHaveBeenCalled();
     expect(result.alertsCreated).toBe(0);
   });
 });

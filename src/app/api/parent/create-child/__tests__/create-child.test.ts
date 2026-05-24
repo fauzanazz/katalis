@@ -4,12 +4,6 @@ vi.mock("@/lib/auth", () => ({
   getUserSession: vi.fn(),
 }));
 
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    $transaction: vi.fn(),
-  },
-}));
-
 vi.mock("@/lib/age", () => ({
   getAgeGroup: vi.fn(),
 }));
@@ -21,13 +15,17 @@ vi.mock("@/i18n/routing", () => ({
   },
 }));
 
+const mockDb = vi.hoisted(() => ({
+  transaction: vi.fn(),
+}));
+
+vi.mock("@/lib/db", () => ({ db: mockDb }));
+
 import { POST } from "../route";
 import { getUserSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import { getAgeGroup } from "@/lib/age";
 
 const mockedGetUserSession = vi.mocked(getUserSession);
-const mockedTransaction = vi.mocked(prisma.$transaction);
 const mockedGetAgeGroup = vi.mocked(getAgeGroup);
 
 const validSession = { userId: "parent-1", role: "user" };
@@ -53,23 +51,46 @@ const mockChild = {
 
 const mockAccessCode = { id: "ac-1", code: "KATAL-ABCDEF" };
 
+function makeTx(overrides?: Partial<{
+  accessCodeFindFirst: ReturnType<typeof vi.fn>;
+  accessCodeInsertReturning: ReturnType<typeof vi.fn>;
+  childInsertReturning: ReturnType<typeof vi.fn>;
+  parentChildInsertValues: ReturnType<typeof vi.fn>;
+}>) {
+  const accessCodeFindFirst = overrides?.accessCodeFindFirst ?? vi.fn().mockResolvedValue(null);
+  const accessCodeInsertReturning = overrides?.accessCodeInsertReturning ?? vi.fn().mockResolvedValue([mockAccessCode]);
+  const childInsertReturning = overrides?.childInsertReturning ?? vi.fn().mockResolvedValue([mockChild]);
+  const parentChildInsertValues = overrides?.parentChildInsertValues ?? vi.fn().mockResolvedValue(undefined);
+
+  return {
+    query: {
+      accessCodes: { findFirst: accessCodeFindFirst },
+    },
+    insert: vi.fn((table: unknown) => {
+      // Distinguish tables by reference — use a map approach
+      return {
+        values: vi.fn((vals: unknown) => {
+          if (vals && typeof vals === "object" && "code" in (vals as Record<string, unknown>)) {
+            return { returning: accessCodeInsertReturning };
+          }
+          if (vals && typeof vals === "object" && "name" in (vals as Record<string, unknown>)) {
+            return { returning: childInsertReturning };
+          }
+          // parentChildren insert — no returning
+          (parentChildInsertValues as (v: unknown) => unknown)(vals);
+          return Promise.resolve(undefined);
+        }),
+      };
+    }),
+    _parentChildInsertValues: parentChildInsertValues,
+  };
+}
+
 function setupHappyPath() {
   mockedGetUserSession.mockResolvedValue(validSession as never);
   mockedGetAgeGroup.mockReturnValue({ years: 7, band: "middle" } as never);
-  mockedTransaction.mockImplementation(async (fn) => {
-    const tx = {
-      accessCode: {
-        findUnique: vi.fn().mockResolvedValue(null),
-        create: vi.fn().mockResolvedValue(mockAccessCode),
-      },
-      child: {
-        create: vi.fn().mockResolvedValue(mockChild),
-      },
-      parentChild: {
-        create: vi.fn().mockResolvedValue({ userId: "parent-1", childId: "child-1" }),
-      },
-    };
-    return fn(tx as never);
+  mockDb.transaction.mockImplementation(async (fn: (tx: ReturnType<typeof makeTx>) => Promise<unknown>) => {
+    return fn(makeTx());
   });
 }
 
@@ -80,59 +101,50 @@ beforeEach(() => {
 describe("POST /api/parent/create-child", () => {
   describe("consent record", () => {
     it("creates ParentChild with consentGivenAt close to now", async () => {
-      setupHappyPath();
+      mockedGetUserSession.mockResolvedValue(validSession as never);
+      mockedGetAgeGroup.mockReturnValue({ years: 7, band: "middle" } as never);
+
+      const parentChildInsertValues = vi.fn().mockResolvedValue(undefined);
+      const capturedTx = makeTx({ parentChildInsertValues });
+
+      mockDb.transaction.mockImplementation(async (fn: (tx: ReturnType<typeof makeTx>) => Promise<unknown>) => {
+        return fn(capturedTx);
+      });
+
       const before = Date.now();
-
       const res = await POST(makePostRequest({ name: "Alice", dateOfBirth: validDobIso }));
-
       expect(res.status).toBe(200);
 
-      const txFn = mockedTransaction.mock.calls[0][0];
-      const capturedTx = {
-        accessCode: {
-          findUnique: vi.fn().mockResolvedValue(null),
-          create: vi.fn().mockResolvedValue(mockAccessCode),
-        },
-        child: {
-          create: vi.fn().mockResolvedValue(mockChild),
-        },
-        parentChild: {
-          create: vi.fn(),
-        },
-      };
-      capturedTx.parentChild.create.mockResolvedValue({});
-      await txFn(capturedTx as never);
+      expect(parentChildInsertValues).toHaveBeenCalledWith(
+        expect.objectContaining({
+          consentGivenAt: expect.any(Date),
+        }),
+      );
 
-      const parentChildCall = capturedTx.parentChild.create.mock.calls[0][0];
-      const consentGivenAt: Date = parentChildCall.data.consentGivenAt;
-
-      expect(consentGivenAt).toBeInstanceOf(Date);
+      const callArgs = parentChildInsertValues.mock.calls[0][0] as Record<string, unknown>;
+      const consentGivenAt = callArgs.consentGivenAt as Date;
       expect(consentGivenAt.getTime()).toBeGreaterThanOrEqual(before);
       expect(consentGivenAt.getTime()).toBeLessThanOrEqual(Date.now() + 5000);
     });
 
     it("creates ParentChild with consentTextVersion = 'v1'", async () => {
-      setupHappyPath();
+      mockedGetUserSession.mockResolvedValue(validSession as never);
+      mockedGetAgeGroup.mockReturnValue({ years: 7, band: "middle" } as never);
+
+      const parentChildInsertValues = vi.fn().mockResolvedValue(undefined);
+      const capturedTx = makeTx({ parentChildInsertValues });
+
+      mockDb.transaction.mockImplementation(async (fn: (tx: ReturnType<typeof makeTx>) => Promise<unknown>) => {
+        return fn(capturedTx);
+      });
 
       await POST(makePostRequest({ name: "Alice", dateOfBirth: validDobIso }));
 
-      const txFn = mockedTransaction.mock.calls[0][0];
-      const capturedTx = {
-        accessCode: {
-          findUnique: vi.fn().mockResolvedValue(null),
-          create: vi.fn().mockResolvedValue(mockAccessCode),
-        },
-        child: {
-          create: vi.fn().mockResolvedValue(mockChild),
-        },
-        parentChild: {
-          create: vi.fn().mockResolvedValue({}),
-        },
-      };
-      await txFn(capturedTx as never);
-
-      const parentChildCall = capturedTx.parentChild.create.mock.calls[0][0];
-      expect(parentChildCall.data.consentTextVersion).toBe("v1");
+      expect(parentChildInsertValues).toHaveBeenCalledWith(
+        expect.objectContaining({
+          consentTextVersion: "v1",
+        }),
+      );
     });
   });
 

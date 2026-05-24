@@ -5,27 +5,21 @@ vi.mock("@/lib/auth", () => ({
   getChildSession: vi.fn(),
 }));
 
-// Mock Prisma
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    quest: {
-      findUnique: vi.fn(),
-      update: vi.fn(),
+const mockDb = vi.hoisted(() => ({
+  query: {
+    quests: {
+      findFirst: vi.fn(),
     },
-    mission: {
-      updateMany: vi.fn(),
-    },
-    $transaction: vi.fn(),
   },
+  transaction: vi.fn(),
 }));
+
+vi.mock("@/lib/db", () => ({ db: mockDb }));
 
 import { POST } from "../route";
 import { getChildSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 
 const mockedGetSession = vi.mocked(getChildSession);
-const mockedQuestFindUnique = vi.mocked(prisma.quest.findUnique);
-const mockedTransaction = vi.mocked(prisma.$transaction);
 
 const validSession = {
   childId: "child-1",
@@ -72,7 +66,7 @@ describe("POST /api/quest/[id]/abandon", () => {
 
   it("returns 404 for non-existent quest", async () => {
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue(null);
+    mockDb.query.quests.findFirst.mockResolvedValue(null);
 
     const res = await POST(createRequest(), createParams("nonexistent"));
     expect(res.status).toBe(404);
@@ -82,10 +76,10 @@ describe("POST /api/quest/[id]/abandon", () => {
 
   it("returns 403 when accessing another child's quest", async () => {
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue({
+    mockDb.query.quests.findFirst.mockResolvedValue({
       ...mockActiveQuest,
       childId: "other-child",
-    } as never);
+    });
 
     const res = await POST(createRequest(), createParams());
     expect(res.status).toBe(403);
@@ -95,10 +89,10 @@ describe("POST /api/quest/[id]/abandon", () => {
 
   it("rejects abandoning an already abandoned quest", async () => {
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue({
+    mockDb.query.quests.findFirst.mockResolvedValue({
       ...mockActiveQuest,
       status: "abandoned",
-    } as never);
+    });
 
     const res = await POST(createRequest(), createParams());
     expect(res.status).toBe(400);
@@ -108,10 +102,10 @@ describe("POST /api/quest/[id]/abandon", () => {
 
   it("rejects abandoning a completed quest", async () => {
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue({
+    mockDb.query.quests.findFirst.mockResolvedValue({
       ...mockActiveQuest,
       status: "completed",
-    } as never);
+    });
 
     const res = await POST(createRequest(), createParams());
     expect(res.status).toBe(400);
@@ -121,17 +115,16 @@ describe("POST /api/quest/[id]/abandon", () => {
 
   it("successfully abandons an active quest", async () => {
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue(mockActiveQuest as never);
-    mockedTransaction.mockImplementation(async (fn) => {
+    mockDb.query.quests.findFirst.mockResolvedValue(mockActiveQuest);
+    mockDb.transaction.mockImplementation(async (fn: (tx: unknown) => unknown) => {
       const tx = {
-        quest: {
-          update: vi.fn(),
-        },
-        mission: {
-          updateMany: vi.fn(),
-        },
+        update: vi.fn(() => ({
+          set: vi.fn(() => ({
+            where: vi.fn().mockResolvedValue(undefined),
+          })),
+        })),
       };
-      return fn(tx as never);
+      return fn(tx);
     });
 
     const res = await POST(createRequest(), createParams());
@@ -142,20 +135,19 @@ describe("POST /api/quest/[id]/abandon", () => {
 
   it("uses a transaction for abandonment", async () => {
     mockedGetSession.mockResolvedValue(validSession);
-    mockedQuestFindUnique.mockResolvedValue(mockActiveQuest as never);
-    mockedTransaction.mockImplementation(async (fn) => {
+    mockDb.query.quests.findFirst.mockResolvedValue(mockActiveQuest);
+    mockDb.transaction.mockImplementation(async (fn: (tx: unknown) => unknown) => {
       const tx = {
-        quest: {
-          update: vi.fn(),
-        },
-        mission: {
-          updateMany: vi.fn(),
-        },
+        update: vi.fn(() => ({
+          set: vi.fn(() => ({
+            where: vi.fn().mockResolvedValue(undefined),
+          })),
+        })),
       };
-      return fn(tx as never);
+      return fn(tx);
     });
 
     await POST(createRequest(), createParams());
-    expect(mockedTransaction).toHaveBeenCalledTimes(1);
+    expect(mockDb.transaction).toHaveBeenCalledTimes(1);
   });
 });

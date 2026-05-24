@@ -1,5 +1,7 @@
 import { Link } from "@/i18n/navigation";
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { interestSignals, discoveries, discoveryRatings } from "@/lib/schema";
+import { eq, isNotNull, count } from "drizzle-orm";
 import { findNextUnratedDiscoveryForUser } from "@/lib/reliability/repository";
 import { getAdminSession } from "@/lib/auth";
 import { redirect } from "@/i18n/navigation";
@@ -37,9 +39,9 @@ export default async function RateDiscoveryPage({
     );
   }
 
-  const signals = await prisma.interestSignal.findMany({
-    where: { discoveryId: discovery.id },
-    select: { interestKey: true },
+  const signals = await db.query.interestSignals.findMany({
+    where: eq(interestSignals.discoveryId, discovery.id),
+    columns: { interestKey: true },
   });
   const aiInterestKeys = [
     ...new Set(signals.map((s) => s.interestKey).filter(Boolean)),
@@ -67,12 +69,13 @@ export default async function RateDiscoveryPage({
     }
   }
 
-  const remaining = await prisma.discovery.count({
-    where: {
-      detectedTalents: { not: null },
-      ratings: { none: { raterUserId: admin!.userId } },
-    },
+  const ratedByUser = await db.query.discoveryRatings.findMany({
+    where: eq(discoveryRatings.raterUserId, admin!.userId),
+    columns: { discoveryId: true },
   });
+  const ratedIds = new Set(ratedByUser.map((r) => r.discoveryId));
+  const allEligible = await db.select({ count: count() }).from(discoveries).where(isNotNull(discoveries.detectedTalents));
+  const remaining = (allEligible[0]?.count ?? 0) - ratedIds.size;
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">

@@ -11,7 +11,9 @@
  * Tags compared: `detectedTalents` category strings, deduplicated.
  */
 
-import { prisma } from "@/lib/db";
+import { db } from "@/lib/db";
+import { discoveries } from "@/lib/schema";
+import { isNotNull } from "drizzle-orm";
 
 export const TEST_RETEST_THRESHOLD = 0.7;
 export const TEST_RETEST_WINDOW_DAYS = 30;
@@ -103,14 +105,14 @@ export function computeChildConsistency(
 }
 
 export async function computeTestRetestSnapshot(): Promise<TestRetestSnapshot> {
-  const rows = (await prisma.discovery.findMany({
-    select: {
+  const rows = await db.query.discoveries.findMany({
+    where: isNotNull(discoveries.detectedTalents),
+    columns: {
       childId: true,
       createdAt: true,
       detectedTalents: true,
     },
-    where: { detectedTalents: { not: null } },
-  })) as RawDiscoveryRow[];
+  }) as RawDiscoveryRow[];
 
   const byChild = new Map<string, RawDiscoveryRow[]>();
   for (const row of rows) {

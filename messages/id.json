@@ -1030,6 +1030,31 @@
       "text": "Untuk pertanyaan privasi atau permintaan penghapusan data, hubungi kami di:"
     },
     "noTracking": "Kami tidak menggunakan pelacak iklan atau menjual data apapun.",
-    "coppa": "Platform ini dirancang untuk anak-anak usia 3–12 tahun dan mematuhi COPPA (Children's Online Privacy Protection Act)."
+    "coppa": "Platform ini dirancang untuk anak-anak usia 3–12 tahun dan mematuhi COPPA (Children's Online Privacy Protection Act).",
+    "cookies": {
+      "title": "Cookie",
+      "intro": "Katalis hanya menggunakan cookie yang benar-benar diperlukan agar layanan dapat berfungsi. Tidak ada cookie iklan, analitik, atau pelacakan — tidak diperlukan banner persetujuan cookie.",
+      "tableHeaderName": "Cookie",
+      "tableHeaderPurpose": "Tujuan",
+      "tableHeaderDuration": "Durasi",
+      "rows": [
+        {
+          "name": "katalis-session",
+          "purpose": "Mengautentikasi sesi orang tua atau anak yang masuk. Hanya berisi ID pengguna terenkripsi dan peran — tidak ada data pribadi.",
+          "duration": "7 hari"
+        },
+        {
+          "name": "katalis_guest_id",
+          "purpose": "Mengidentifikasi sesi unggah tamu agar file dapat dikaitkan dengan pengunjung yang benar. Hanya dikeluarkan saat tamu mengunggah file.",
+          "duration": "7 hari"
+        },
+        {
+          "name": "NEXT_LOCALE",
+          "purpose": "Mengingat bahasa yang dipilih pengguna (en / id / zh).",
+          "duration": "Sesi"
+        }
+      ],
+      "localStorage": "Selain itu, dua kunci penyimpanan browser (katalis_guest_id dan katalis_guest_history) disimpan di localStorage — bukan cookie — untuk mendukung pengalaman penemuan tamu tanpa permintaan server. Ini dihapus saat penyimpanan browser dibersihkan."
+    }
   }
 }

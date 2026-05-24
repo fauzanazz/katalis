@@ -102,6 +102,38 @@ export default async function PrivacyPage() {
         </ul>
       </section>
 
+      <section className="mb-8">
+        <h2 className="mb-3 text-2xl font-black text-black">
+          {t("cookies.title")}
+        </h2>
+        <p className="mb-4 text-base leading-relaxed text-black/80">
+          {t("cookies.intro")}
+        </p>
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="border-b-2 border-black text-left">
+              <th className="pb-2 pr-4 font-bold text-black">{t("cookies.tableHeaderName")}</th>
+              <th className="pb-2 pr-4 font-bold text-black">{t("cookies.tableHeaderPurpose")}</th>
+              <th className="pb-2 font-bold text-black">{t("cookies.tableHeaderDuration")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(t.raw("cookies.rows") as Array<{ name: string; purpose: string; duration: string }>).map(
+              (row) => (
+                <tr key={row.name} className="border-b border-black/10">
+                  <td className="py-3 pr-4 font-mono text-xs font-semibold text-black">{row.name}</td>
+                  <td className="py-3 pr-4 leading-snug text-black/75">{row.purpose}</td>
+                  <td className="py-3 whitespace-nowrap text-black/75">{row.duration}</td>
+                </tr>
+              ),
+            )}
+          </tbody>
+        </table>
+        <p className="mt-4 text-sm leading-relaxed text-black/60">
+          {t("cookies.localStorage")}
+        </p>
+      </section>
+
       <section>
         <h2 className="mb-3 text-2xl font-black text-black">
           {t("contact.title")}

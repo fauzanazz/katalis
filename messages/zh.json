@@ -1019,6 +1019,31 @@
       "text": "如有隐私问题或数据删除请求，请联系我们："
     },
     "noTracking": "我们不使用广告追踪器，也不出售任何数据。",
-    "coppa": "本平台专为 3–12 岁儿童设计，符合 COPPA（儿童在线隐私保护法）的规定。"
+    "coppa": "本平台专为 3–12 岁儿童设计，符合 COPPA（儿童在线隐私保护法）的规定。",
+    "cookies": {
+      "title": "Cookie",
+      "intro": "Katalis 仅使用服务正常运行所必需的 Cookie，不使用广告、分析或追踪 Cookie — 无需 Cookie 同意横幅。",
+      "tableHeaderName": "Cookie",
+      "tableHeaderPurpose": "用途",
+      "tableHeaderDuration": "有效期",
+      "rows": [
+        {
+          "name": "katalis-session",
+          "purpose": "验证已登录的家长或儿童会话，仅包含加密的用户 ID 和角色，不含个人数据。",
+          "duration": "7 天"
+        },
+        {
+          "name": "katalis_guest_id",
+          "purpose": "识别访客上传会话，以便将文件与正确的访客关联。仅在访客上传文件时签发。",
+          "duration": "7 天"
+        },
+        {
+          "name": "NEXT_LOCALE",
+          "purpose": "记录用户选择的语言（en / id / zh）。",
+          "duration": "会话"
+        }
+      ],
+      "localStorage": "此外，两个浏览器存储键（katalis_guest_id 和 katalis_guest_history）保存在 localStorage 中（非 Cookie），用于支持访客探索体验，无需服务器往返。清除浏览器存储时会一并删除。"
+    }
   }
 }

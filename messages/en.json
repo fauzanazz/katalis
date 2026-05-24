@@ -1030,6 +1030,31 @@
       "text": "For privacy questions or data deletion requests, contact us at:"
     },
     "noTracking": "We do not use advertising trackers or sell any data.",
-    "coppa": "This platform is designed for children aged 3–12 and complies with COPPA (Children's Online Privacy Protection Act)."
+    "coppa": "This platform is designed for children aged 3–12 and complies with COPPA (Children's Online Privacy Protection Act).",
+    "cookies": {
+      "title": "Cookies",
+      "intro": "Katalis uses only strictly necessary cookies required for the service to function. No advertising, analytics, or tracking cookies are used — no cookie consent banner is required.",
+      "tableHeaderName": "Cookie",
+      "tableHeaderPurpose": "Purpose",
+      "tableHeaderDuration": "Duration",
+      "rows": [
+        {
+          "name": "katalis-session",
+          "purpose": "Authenticates the logged-in parent or child session. Contains only an encrypted user ID and role — no personal data.",
+          "duration": "7 days"
+        },
+        {
+          "name": "katalis_guest_id",
+          "purpose": "Identifies a guest upload session so files can be linked to the correct visitor. Issued only when a guest uploads a file.",
+          "duration": "7 days"
+        },
+        {
+          "name": "NEXT_LOCALE",
+          "purpose": "Remembers the user's selected language (en / id / zh).",
+          "duration": "Session"
+        }
+      ],
+      "localStorage": "Additionally, two browser storage keys (katalis_guest_id and katalis_guest_history) are saved in localStorage — not cookies — to support the guest discovery experience without a server round-trip. These are cleared when browser storage is cleared."
+    }
   }
 }

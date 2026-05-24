@@ -994,5 +994,31 @@
       "name": "坚韧探索者",
       "description": "即使困难也坚持前进"
     }
+  },
+  "privacy": {
+    "title": "隐私政策",
+    "subtitle": "我们如何保护您孩子的数据",
+    "lastUpdated": "最后更新：2026年5月",
+    "intro": "Katalis 致力于保护儿童的隐私与安全。本页说明我们如何收集、使用和保护数据，符合 COPPA 及国际儿童隐私标准。",
+    "dataRetention": {
+      "title": "数据保留",
+      "mentorChat": "导师聊天消息最多保留 6 个月。",
+      "reflections": "反思内容和语音录音最多保留 1 年。",
+      "discoveryArtifacts": "探索作品和录音在 1 年后删除。",
+      "interestSignals": "行为兴趣信号在 2 年后汇总处理。",
+      "auditLogs": "操作日志至少保留 2 年以确保安全。"
+    },
+    "yourRights": {
+      "title": "您的权利",
+      "deletion": "家长可随时通过家长仪表板申请完全删除数据。",
+      "access": "家长可查看存储的所有关于孩子的数据。",
+      "sla": "删除请求将在 30 天内完成。"
+    },
+    "contact": {
+      "title": "联系我们",
+      "text": "如有隐私问题或数据删除请求，请联系我们："
+    },
+    "noTracking": "我们不使用广告追踪器，也不出售任何数据。",
+    "coppa": "本平台专为 3–12 岁儿童设计，符合 COPPA（儿童在线隐私保护法）的规定。"
   }
 }

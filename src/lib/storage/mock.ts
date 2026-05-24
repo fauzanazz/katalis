@@ -161,5 +161,9 @@ export function createMockStorageClient(): StorageClient {
         // File doesn't exist — treat as no-op
       }
     },
+
+    async listObjects(_prefix: string): Promise<Array<{ key: string; lastModified: Date }>> {
+      return [];
+    },
   };
 }

@@ -308,19 +308,24 @@ model AdjustmentEvent {
 }
 
 model ReflectionEntry {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   childId         String
   questId         String
   missionDay      Int // Which day the reflection is for (1-7)
   type            String // "text" or "voice"
   content         String // Text content or transcription
   fileUrl         String? // Voice recording URL if type is "voice"
+  /// Expiry timestamp for voice recordings stored in R2.
+  /// Set to createdAt + 365 days for voice type. Retention cron deletes R2
+  /// file and nulls this field when expired. COPPA biometric data rule.
+  fileExpiresAt   DateTime?
   aiSummary       String? // AI-generated summary of the reflection
-  createdAt       DateTime @default(now())
+  createdAt       DateTime  @default(now())
   interestSignals InterestSignal[]
 
   @@index([childId])
   @@index([questId])
+  @@index([fileExpiresAt])
 }
 
 model Badge {
@@ -379,10 +384,16 @@ model SquadMember {
 }
 
 model ParentChild {
-  id        String   @id @default(cuid())
-  userId    String
-  childId   String
-  claimedAt DateTime @default(now())
+  id                 String   @id @default(cuid())
+  userId             String
+  childId            String
+  claimedAt          DateTime @default(now())
+  /// Timestamp when the parent gave verifiable consent for the child's account.
+  /// Required for COPPA compliance. Set at account creation time.
+  consentGivenAt     DateTime @default(now())
+  /// Version of the privacy policy/consent text accepted.
+  /// Bump when consent language materially changes — triggers re-consent flow.
+  consentTextVersion String   @default("v1")
 
   user  User  @relation(fields: [userId], references: [id])
   child Child @relation(fields: [childId], references: [id])

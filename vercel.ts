@@ -19,6 +19,14 @@ const config: VercelConfig = {
       path: "/api/admin/reliability/snapshot?triggeredBy=cron",
       schedule: "0 6 * * 1",
     },
+    {
+      path: "/api/admin/storage/cleanup-guests",
+      schedule: "0 4 * * *",
+    },
+    {
+      path: "/api/admin/data-retention/purge",
+      schedule: "0 3 * * *",
+    },
   ],
 };
 

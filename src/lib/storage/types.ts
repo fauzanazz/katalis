@@ -88,4 +88,10 @@ export interface StorageClient {
    * Delete a file identified by its key.
    */
   deleteFile(key: string): Promise<void>;
+
+  /**
+   * List objects under a prefix. Returns key + lastModified for each object.
+   * Used by cleanup crons to find stale guest uploads.
+   */
+  listObjects(prefix: string): Promise<Array<{ key: string; lastModified: Date }>>;
 }

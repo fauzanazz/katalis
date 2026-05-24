@@ -174,12 +174,11 @@ describe("GET /api/gallery/entries", () => {
     expect(entry).toHaveProperty("imageUrl");
     expect(entry).toHaveProperty("talentCategory");
     expect(entry).toHaveProperty("country");
-    expect(entry).toHaveProperty("coordinates");
     expect(entry).toHaveProperty("questContext");
     expect(entry).toHaveProperty("createdAt");
   });
 
-  it("parses coordinates JSON into object", async () => {
+  it("does not include coordinates in GET response entries (COPPA)", async () => {
     const entries = [createGalleryEntry()];
     mockedGalleryFindMany.mockResolvedValue(entries as never);
     mockedGalleryCount.mockResolvedValue(1);
@@ -188,7 +187,7 @@ describe("GET /api/gallery/entries", () => {
     const response = await GET(request);
 
     const data = await response.json();
-    expect(data.entries[0].coordinates).toEqual({ lat: -6.21, lng: 106.85 });
+    expect(data.entries[0]).not.toHaveProperty("coordinates");
   });
 
   it("parses questContext JSON into object", async () => {
@@ -224,6 +223,24 @@ describe("GET /api/gallery/entries", () => {
         }),
       }),
     );
+  });
+
+  it("does not include coordinates in tag-filtered GET response entries (COPPA)", async () => {
+    const entries = [
+      createGalleryEntry({
+        talentTags: JSON.stringify([{ name: "robotics", confidence: 0.9, category: "Engineering" }]),
+      }),
+    ];
+    mockedGalleryFindMany.mockResolvedValue(entries as never);
+
+    const request = new Request(
+      "http://localhost:3100/api/gallery/entries?tag=robotics",
+    );
+    const response = await GET(request);
+
+    expect(response.status).toBe(200);
+    const data = await response.json();
+    expect(data.entries[0]).not.toHaveProperty("coordinates");
   });
 
   it("clamps pageSize to max 100", async () => {
@@ -475,6 +492,68 @@ describe("POST /api/gallery/entries", () => {
     expect(data.galleryEntry.country).toBe("Indonesia");
     // Should not include childId in response (privacy)
     expect(data.galleryEntry).not.toHaveProperty("childId");
+  });
+
+  it("does not include coordinates in POST response (COPPA)", async () => {
+    const missions = Array.from({ length: 7 }, (_, i) => ({
+      id: `m-${i}`,
+      day: i + 1,
+      status: "completed",
+      proofPhotoUrl: `http://localhost:3100/api/storage/proof-${i}.jpg`,
+      title: `Day ${i + 1} Mission`,
+      description: `Description ${i + 1}`,
+    }));
+
+    mockedGetSession.mockResolvedValue(validSession);
+    mockedQuestFindUnique.mockResolvedValue({
+      id: "quest-1",
+      childId: "child-1",
+      status: "completed",
+      dream: "Build robots",
+      localContext: "I live in Jakarta",
+      missions,
+      discovery: {
+        detectedTalents: JSON.stringify([
+          { name: "Engineering", confidence: 0.9 },
+        ]),
+      },
+    } as never);
+    mockedGalleryFindUnique.mockResolvedValue(null);
+
+    const entryWithCoords = {
+      id: "gallery-coppa",
+      childId: "child-1",
+      questId: "quest-1",
+      imageUrl: "http://localhost:3100/api/storage/proof-0.jpg",
+      talentCategory: "Engineering",
+      country: "Indonesia",
+      coordinates: JSON.stringify({ lat: -6.21, lng: 106.85 }),
+      questContext: JSON.stringify({ questTitle: "Build robots", dream: "Build robots", missionSummaries: [] }),
+      clusterGroup: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    mockedTransaction.mockImplementation(async (fn: unknown) => {
+      if (typeof fn === "function") {
+        return fn({
+          galleryEntry: { create: vi.fn().mockResolvedValue(entryWithCoords) },
+          quest: { update: vi.fn() },
+        });
+      }
+      return entryWithCoords;
+    });
+
+    const request = new Request("http://localhost:3100/api/gallery/entries", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ questId: "quest-1" }),
+    });
+    const response = await POST(request);
+
+    expect(response.status).toBe(201);
+    const data = await response.json();
+    expect(data.galleryEntry).not.toHaveProperty("coordinates");
   });
 
   it("returns 400 for invalid photo URL origin", async () => {

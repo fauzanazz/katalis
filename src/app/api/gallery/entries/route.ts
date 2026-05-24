@@ -66,7 +66,6 @@ export async function GET(request: NextRequest | Request) {
           imageUrl: entry.imageUrl,
           talentCategory: entry.talentCategory,
           country: entry.country,
-          coordinates: safeParseJSON(entry.coordinates, null),
           questContext: safeParseJSON(entry.questContext, null),
           talentTags: safeParseJSON<
             Array<{ name: string }> | null
@@ -102,14 +101,13 @@ export async function GET(request: NextRequest | Request) {
       prisma.galleryEntry.count({ where }),
     ]);
 
-    // Map entries to remove childId (privacy) and parse JSON fields
+    // Map entries to remove childId and coordinates (privacy/COPPA)
     const sanitizedEntries = entries.map((entry) => ({
       id: entry.id,
       questId: entry.questId,
       imageUrl: entry.imageUrl,
       talentCategory: entry.talentCategory,
       country: entry.country,
-      coordinates: safeParseJSON(entry.coordinates, null),
       questContext: safeParseJSON(entry.questContext, null),
       talentTags: safeParseJSON(entry.talentTags, null),
       clusterGroup: entry.clusterGroup,
@@ -302,12 +300,10 @@ export async function POST(request: NextRequest | Request) {
     );
     const talentCategory = sortedTalents[0]?.name ?? "Creative";
 
-    // Geocode location from local context
+    // Geocode location from local context — country only (COPPA: no exact coordinates)
     const geoResult = geocodeLocationText(quest.localContext);
     const country = geoResult?.country ?? null;
-    const coordinates = geoResult?.coordinates
-      ? JSON.stringify(geoResult.coordinates)
-      : null;
+    const coordinates = null;
 
     // Build quest context (includes localContext for gallery display)
     const questContext = JSON.stringify({
@@ -367,7 +363,6 @@ export async function POST(request: NextRequest | Request) {
           imageUrl: galleryEntry.imageUrl,
           talentCategory: galleryEntry.talentCategory,
           country: galleryEntry.country,
-          coordinates: safeParseJSON(galleryEntry.coordinates, null),
           questContext: safeParseJSON(galleryEntry.questContext, null),
           talentTags: classifiedTags,
         },

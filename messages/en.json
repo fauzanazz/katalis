@@ -1005,5 +1005,31 @@
       "name": "Persistent Explorer",
       "description": "Kept going even when it was tough"
     }
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "subtitle": "How we protect your child's data",
+    "lastUpdated": "Last updated: May 2026",
+    "intro": "Katalis is committed to protecting the privacy and safety of children. This page explains how we collect, use, and protect data in compliance with COPPA and international child privacy standards.",
+    "dataRetention": {
+      "title": "Data Retention",
+      "mentorChat": "Mentor chat messages are kept for up to 6 months.",
+      "reflections": "Reflections and voice recordings are kept for up to 1 year.",
+      "discoveryArtifacts": "Discovery artwork and recordings are removed after 1 year.",
+      "interestSignals": "Behavioral interest signals are aggregated after 2 years.",
+      "auditLogs": "Action logs are kept for at least 2 years for safety."
+    },
+    "yourRights": {
+      "title": "Your Rights",
+      "deletion": "Parents can request complete data deletion at any time from the parent dashboard.",
+      "access": "Parents can view all data stored about their child.",
+      "sla": "Deletion requests are fulfilled within 30 days."
+    },
+    "contact": {
+      "title": "Contact",
+      "text": "For privacy questions or data deletion requests, contact us at:"
+    },
+    "noTracking": "We do not use advertising trackers or sell any data.",
+    "coppa": "This platform is designed for children aged 3–12 and complies with COPPA (Children's Online Privacy Protection Act)."
   }
 }

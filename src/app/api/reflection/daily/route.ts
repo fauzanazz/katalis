@@ -105,6 +105,8 @@ export async function POST(request: NextRequest) {
         type,
         content: sanitizedContent,
         fileUrl: sanitizedFileUrl,
+        // COPPA: voice recordings are biometric data — enforce 365-day TTL
+        fileExpiresAt: sanitizedFileUrl ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) : null,
         aiSummary: JSON.stringify(aiSummary),
       },
     });

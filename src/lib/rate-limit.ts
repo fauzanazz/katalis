@@ -27,8 +27,8 @@ export async function checkRateLimit(
   const WINDOW_MS = options.windowMs ?? DEFAULT_WINDOW_MS;
   const now = new Date();
 
-  // Periodically clean up expired entries (1% chance per check)
-  if (Math.random() < 0.01) {
+  // Periodically clean up expired entries (10% chance per check)
+  if (Math.random() < 0.10) {
     await prisma.rateLimit.deleteMany({
       where: { resetAt: { lt: now } },
     });

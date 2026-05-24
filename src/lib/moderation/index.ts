@@ -11,6 +11,12 @@ import type {
   ImageModerationInput,
   ContentType,
 } from "./schemas";
+
+export function redactChildUrl(url: string): string {
+  const redacted = url.replace(/((?:child|guest)\/)[^/]+/, "$1[REDACTED]");
+  if (redacted !== url) return redacted;
+  return url.slice(0, 80);
+}
 import { moderateText } from "./moderate-text";
 import { moderateImage } from "./moderate-image";
 
@@ -49,7 +55,7 @@ export async function moderateContent(
 export async function moderateImageContent(
   input: ImageModerationInput,
 ): Promise<ModerationResult & { eventId: string }> {
-  console.log("[Moderation] Starting image moderation for:", input.imageUrl.slice(0, 80));
+  console.log("[Moderation] Starting image moderation for:", redactChildUrl(input.imageUrl));
   const result = await moderateImage(input.imageUrl);
   console.log("[Moderation] Result:", { allowed: result.allowed, status: result.status });
 

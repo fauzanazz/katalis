@@ -85,7 +85,12 @@ export async function POST(request: NextRequest | Request) {
       });
 
       await tx.parentChild.create({
-        data: { userId: session.userId, childId: newChild.id },
+        data: {
+          userId: session.userId,
+          childId: newChild.id,
+          consentGivenAt: new Date(),
+          consentTextVersion: "v1",
+        },
       });
 
       return { child: newChild, accessCode: newAccessCode.code };

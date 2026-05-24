@@ -1005,5 +1005,31 @@
       "name": "Penjelajah Tangguh",
       "description": "Terus maju meskipun sulit"
     }
+  },
+  "privacy": {
+    "title": "Kebijakan Privasi",
+    "subtitle": "Cara kami melindungi data anak Anda",
+    "lastUpdated": "Terakhir diperbarui: Mei 2026",
+    "intro": "Katalis berkomitmen untuk melindungi privasi dan keamanan anak-anak. Halaman ini menjelaskan cara kami mengumpulkan, menggunakan, dan melindungi data sesuai dengan COPPA dan standar privasi anak internasional.",
+    "dataRetention": {
+      "title": "Retensi Data",
+      "mentorChat": "Pesan obrolan mentor disimpan hingga 6 bulan.",
+      "reflections": "Refleksi dan rekaman suara disimpan hingga 1 tahun.",
+      "discoveryArtifacts": "Karya seni dan rekaman Discovery dihapus setelah 1 tahun.",
+      "interestSignals": "Sinyal minat perilaku diagregasi setelah 2 tahun.",
+      "auditLogs": "Log tindakan disimpan setidaknya 2 tahun untuk keamanan."
+    },
+    "yourRights": {
+      "title": "Hak Anda",
+      "deletion": "Orang tua dapat meminta penghapusan data lengkap kapan saja dari dasbor orang tua.",
+      "access": "Orang tua dapat melihat semua data yang tersimpan tentang anak mereka.",
+      "sla": "Permintaan penghapusan dipenuhi dalam 30 hari."
+    },
+    "contact": {
+      "title": "Kontak",
+      "text": "Untuk pertanyaan privasi atau permintaan penghapusan data, hubungi kami di:"
+    },
+    "noTracking": "Kami tidak menggunakan pelacak iklan atau menjual data apapun.",
+    "coppa": "Platform ini dirancang untuk anak-anak usia 3–12 tahun dan mematuhi COPPA (Children's Online Privacy Protection Act)."
   }
 }

@@ -13,6 +13,7 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  ListObjectsV2Command,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type {
@@ -172,6 +173,25 @@ export function createR2StorageClient(): StorageClient {
           Key: key,
         }),
       );
+    },
+
+    async listObjects(prefix: string): Promise<Array<{ key: string; lastModified: Date }>> {
+      const results: Array<{ key: string; lastModified: Date }> = [];
+      let continuationToken: string | undefined;
+      do {
+        const res = await s3.send(new ListObjectsV2Command({
+          Bucket: bucketName,
+          Prefix: prefix,
+          ContinuationToken: continuationToken,
+        }));
+        for (const obj of res.Contents ?? []) {
+          if (obj.Key && obj.LastModified) {
+            results.push({ key: obj.Key, lastModified: obj.LastModified });
+          }
+        }
+        continuationToken = res.NextContinuationToken;
+      } while (continuationToken);
+      return results;
     },
   };
 }

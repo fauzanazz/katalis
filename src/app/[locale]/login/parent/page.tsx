@@ -8,6 +8,85 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { ParentFeatureCarousel } from "@/components/auth/ParentFeatureCarousel";
 
+interface GuestSnapshot {
+  childName: string | undefined;
+  childDob: string | undefined;
+  history: unknown[] | undefined;
+  quest: unknown | undefined;
+}
+
+function readGuestSnapshot(): GuestSnapshot | null {
+  const childDob = sessionStorage.getItem("guest_dob") ?? undefined;
+  const rawHistory = localStorage.getItem("katalis_guest_history");
+  const history = rawHistory ? (JSON.parse(rawHistory) as unknown[]) : undefined;
+  const hasData = childDob || (history && history.length > 0);
+  if (!hasData) return null;
+  return {
+    childName: sessionStorage.getItem("guest_name") ?? undefined,
+    childDob,
+    history,
+    quest: (() => {
+      const raw = sessionStorage.getItem("guest_quest");
+      return raw ? JSON.parse(raw) : undefined;
+    })(),
+  };
+}
+
+function clearGuestStorage() {
+  sessionStorage.removeItem("guest_name");
+  sessionStorage.removeItem("guest_dob");
+  sessionStorage.removeItem("guest_talents");
+  sessionStorage.removeItem("guest_quest");
+  localStorage.removeItem("katalis_guest_history");
+  localStorage.removeItem("katalis_guest_id");
+}
+
+async function migrateGuestData(snapshot: GuestSnapshot) {
+  await fetch("/api/auth/migrate-guest", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(snapshot),
+  });
+  clearGuestStorage();
+}
+
+function GuestMigrationModal({
+  snapshot,
+  onSave,
+  onSkip,
+  isSaving,
+}: {
+  snapshot: GuestSnapshot;
+  onSave: () => void;
+  onSkip: () => void;
+  isSaving: boolean;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div className="w-full max-w-sm rounded-lg border border-border bg-white p-6 shadow-xl">
+        <h2 className="mb-2 text-lg font-bold text-ink">Simpan sesi discovery?</h2>
+        <p className="mb-4 text-sm text-zinc-500">
+          Sesi analisis bakat{snapshot.childName ? ` untuk <strong>${snapshot.childName}</strong>` : ""} dari sebelum
+          login ditemukan. Simpan sebagai profil anak baru?
+        </p>
+        <div className="flex gap-3">
+          <Button onClick={onSave} disabled={isSaving} className="flex-1 bg-ink text-sm hover:bg-zinc-800">
+            {isSaving ? "Menyimpan..." : "Simpan"}
+          </Button>
+          <Button
+            onClick={onSkip}
+            disabled={isSaving}
+            variant="outline"
+            className="flex-1 text-sm"
+          >
+            Lewati
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ParentLoginPageContent() {
   const t = useTranslations("auth.parent");
   const tFeatures = useTranslations("auth.parent.features");
@@ -21,6 +100,31 @@ function ParentLoginPageContent() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [guestSnapshot, setGuestSnapshot] = useState<GuestSnapshot | null>(null);
+  const [isSavingGuest, setIsSavingGuest] = useState(false);
+
+  function redirectAfterLogin() {
+    router.push(safeCallback);
+    router.refresh();
+  }
+
+  async function handleSaveGuest() {
+    if (!guestSnapshot) return;
+    setIsSavingGuest(true);
+    try {
+      await migrateGuestData(guestSnapshot);
+    } catch {
+      // best-effort
+    }
+    setGuestSnapshot(null);
+    redirectAfterLogin();
+  }
+
+  function handleSkipGuest() {
+    clearGuestStorage();
+    setGuestSnapshot(null);
+    redirectAfterLogin();
+  }
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -43,8 +147,12 @@ function ParentLoginPageContent() {
       const data = await response.json();
 
       if (response.ok) {
-        router.push(safeCallback);
-        router.refresh();
+        const snapshot = readGuestSnapshot();
+        if (snapshot) {
+          setGuestSnapshot(snapshot);
+        } else {
+          redirectAfterLogin();
+        }
       } else {
         if (data.error === "rate_limited") {
           setError(data.message || t("errors.invalid"));
@@ -61,6 +169,14 @@ function ParentLoginPageContent() {
 
   return (
     <div className="flex flex-1">
+      {guestSnapshot && (
+        <GuestMigrationModal
+          snapshot={guestSnapshot}
+          onSave={handleSaveGuest}
+          onSkip={handleSkipGuest}
+          isSaving={isSavingGuest}
+        />
+      )}
       {/* Left: Form */}
       <div className="flex w-full flex-col justify-center px-8 py-12 lg:w-1/2 xl:px-16">
         <div className="mx-auto w-full max-w-sm">

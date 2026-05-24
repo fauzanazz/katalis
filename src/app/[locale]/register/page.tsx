@@ -19,6 +19,37 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  async function migrateGuestData() {
+    try {
+      const childName = sessionStorage.getItem("guest_name") ?? undefined;
+      const childDob = sessionStorage.getItem("guest_dob") ?? undefined;
+      const rawHistory = localStorage.getItem("katalis_guest_history");
+      const rawQuest = sessionStorage.getItem("guest_quest");
+
+      const history = rawHistory ? JSON.parse(rawHistory) : undefined;
+      const quest = rawQuest ? JSON.parse(rawQuest) : undefined;
+
+      const hasData = childDob || (history && history.length > 0) || quest;
+      if (!hasData) return;
+
+      await fetch("/api/auth/migrate-guest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ childName, childDob, history, quest }),
+      });
+
+      // Clear guest storage regardless of API outcome
+      sessionStorage.removeItem("guest_name");
+      sessionStorage.removeItem("guest_dob");
+      sessionStorage.removeItem("guest_talents");
+      sessionStorage.removeItem("guest_quest");
+      localStorage.removeItem("katalis_guest_history");
+      localStorage.removeItem("katalis_guest_id");
+    } catch {
+      // Best-effort — don't block registration redirect
+    }
+  }
+
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
@@ -49,6 +80,7 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (response.ok) {
+        await migrateGuestData();
         router.push("/parent");
         router.refresh();
       } else {

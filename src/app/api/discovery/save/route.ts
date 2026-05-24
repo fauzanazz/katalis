@@ -6,6 +6,7 @@ import { mapDiscoveryAnalysisToInterestSignals } from "@/lib/interests/discovery
 import { ingestInterestSignals } from "@/lib/interests/ingest-service";
 
 import { KidsArtBenchScoreSchema } from "@/lib/ai/kidsartbench-schemas";
+import { recordZpdEvent } from "@/lib/zpd/service";
 
 /** Schema for saving a discovery result */
 const SaveDiscoverySchema = z.object({
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
 
     // Ingest interest signals from discovery (fire-and-forget; failure must not break discovery save)
     try {
-      const signals = mapDiscoveryAnalysisToInterestSignals({ talents });
+      const signals = mapDiscoveryAnalysisToInterestSignals({ talents }, kidsArtBench);
       if (signals.length > 0) {
         await ingestInterestSignals({
           childId: session.childId,
@@ -93,6 +94,22 @@ export async function POST(request: NextRequest) {
       }
     } catch (interestError) {
       console.error("Interest ingestion failed for discovery, continuing:", interestError);
+    }
+
+    // ZPD nudge from artwork complexity — high-quality artwork is evidence of current capability
+    // (fire-and-forget; failure must not block response)
+    if (kidsArtBench) {
+      try {
+        const dims = Object.values(kidsArtBench) as number[];
+        const artComplexity = dims.reduce((sum, v) => sum + v, 0) / dims.length;
+        if (artComplexity >= 0.5) {
+          const outcome =
+            artComplexity >= 0.7 ? "completion_strong_reflection" : "completion";
+          await recordZpdEvent({ childId: session.childId, outcome });
+        }
+      } catch (zpdError) {
+        console.error("ZPD nudge failed for artwork, continuing:", zpdError);
+      }
     }
 
     return NextResponse.json(

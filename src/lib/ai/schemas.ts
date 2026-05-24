@@ -17,6 +17,8 @@ export const AnalysisInputSchema = z.object({
   }),
   /** Optional. Guest-supplied ISO date string for age-band gating. */
   guestDob: z.string().datetime().optional(),
+  /** Optional. Child's narration about their artwork — enriches multimodal talent detection. */
+  storyContext: z.string().max(500).optional(),
 });
 
 export type AnalysisInput = z.infer<typeof AnalysisInputSchema>;

@@ -284,15 +284,17 @@
   "discover": {
     "kicker": "天赋侦探",
     "title": "发现你的天赋",
-    "subtitle": "上传画作、照片，或录制你的声音，来发现你独特的天赋！",
+    "subtitle": "上传作品或创作故事，发现你的独特才能！",
     "flowSelection": {
       "title": "你想如何分享？",
-      "uploadArtifact": "上传图片",
-      "uploadArtifactDesc": "分享画作、照片或任何创意作品",
-      "recordAudio": "录制你的声音",
-      "recordAudioDesc": "讲述你的兴趣、唱歌或分享故事",
-      "storyMode": "故事模式",
-      "storyModeDesc": "看图片并创作精彩故事",
+      "uploadArtifact": "你的作品",
+      "uploadArtifactDesc": "分享画作、照片或任何创意作品来发现你的天赋",
+      "storyMode": "故事与声音",
+      "storyModeDesc": "用文字或录音创作图片故事",
+      "artworkStoryOptional": "告诉我们关于你作品的故事（可选）",
+      "artworkStoryWrite": "写故事",
+      "artworkStoryRecord": "录音",
+      "artworkStoryPlaceholder": "你的作品是关于什么的？随意告诉我们...",
       "back": "返回选择"
     },
     "upload": {

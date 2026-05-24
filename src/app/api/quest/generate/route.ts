@@ -19,6 +19,8 @@ import {
   type ProfileSummary,
 } from "@/lib/ai/quest/exploration";
 import { isInterestKey } from "@/lib/interests/taxonomy";
+import { mapToGardner } from "@/lib/ai/kidsartbench-schemas";
+import type { KidsArtBenchScore } from "@/lib/ai/kidsartbench-schemas";
 
 /**
  * POST /api/quest/generate
@@ -125,6 +127,34 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Enrich quest generation with Gardner intelligence profile from artwork analysis
+    let artworkSignals:
+      | { gardnerScores: Record<string, number>; dominantIntelligences: string[] }
+      | undefined;
+    if (discoveryId && session?.childId) {
+      try {
+        const discovery = await prisma.discovery.findUnique({
+          where: { id: discoveryId },
+          select: { aiAnalysis: true },
+        });
+        if (discovery?.aiAnalysis) {
+          const analysisJson = JSON.parse(discovery.aiAnalysis) as {
+            kidsArtBench?: KidsArtBenchScore;
+          };
+          if (analysisJson.kidsArtBench) {
+            const gardnerScores = mapToGardner(analysisJson.kidsArtBench);
+            const dominantIntelligences = Object.entries(gardnerScores)
+              .sort((a, b) => b[1] - a[1])
+              .slice(0, 3)
+              .map(([k]) => k);
+            artworkSignals = { gardnerScores, dominantIntelligences };
+          }
+        }
+      } catch {
+        // Non-fatal — proceed without artwork signals
+      }
+    }
+
     // Generate quest; validate per-band duration cap; retry once on violation.
     let result = await generateQuest({
       dream,
@@ -134,6 +164,7 @@ export async function POST(request: NextRequest) {
       zpdScore,
       ageGroup,
       explorationInterests,
+      artworkSignals,
     });
 
     let cap = clampOrRejectMissions(result.missions, ageGroup);
@@ -147,6 +178,7 @@ export async function POST(request: NextRequest) {
         zpdScore,
         ageGroup,
         explorationInterests,
+        artworkSignals,
       });
       cap = clampOrRejectMissions(result.missions, ageGroup);
       if (!cap.ok) {

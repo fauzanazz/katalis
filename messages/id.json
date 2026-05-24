@@ -295,15 +295,17 @@
   "discover": {
     "kicker": "Pencari bakat",
     "title": "Temukan Bakatmu",
-    "subtitle": "Unggah gambar, foto, atau rekam suaramu untuk menemukan bakat unikmu!",
+    "subtitle": "Unggah karyamu atau buat cerita untuk temukan bakatmu!",
     "flowSelection": {
       "title": "Bagaimana kamu ingin berbagi?",
-      "uploadArtifact": "Unggah Gambar",
-      "uploadArtifactDesc": "Bagikan gambar, lukisan, foto, atau karya kreatif apa pun",
-      "recordAudio": "Rekam Suaramu",
-      "recordAudioDesc": "Ceritakan minatmu, bernyanyi, atau berbagi cerita",
-      "storyMode": "Mode Cerita",
-      "storyModeDesc": "Lihat gambar dan buat cerita menarik tentangnya",
+      "uploadArtifact": "Karyamu",
+      "uploadArtifactDesc": "Bagikan gambar, lukisan, atau foto untuk temukan bakatmu",
+      "storyMode": "Cerita & Suara",
+      "storyModeDesc": "Tulis atau rekam cerita dari gambar inspirasi",
+      "artworkStoryOptional": "Ceritakan tentang karyamu (opsional)",
+      "artworkStoryWrite": "Tulis",
+      "artworkStoryRecord": "Rekam",
+      "artworkStoryPlaceholder": "Karyamu tentang apa? Ceritakan apa saja...",
       "back": "Kembali ke pilihan"
     },
     "upload": {

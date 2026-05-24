@@ -254,19 +254,23 @@ export const openaiProvider: AIProvider = {
   capabilities: new Set(["text", "image"] as const),
 
   async analyzeArtifact(input: AnalysisInput): Promise<AnalysisOutput> {
+    const storyBlock = input.storyContext?.trim()
+      ? `\n\nThe child also described their artwork: "${input.storyContext}". Use this narration alongside the visual content to enrich your talent analysis — what additional interests or thinking patterns does their description reveal?`
+      : "";
+
     const userContent =
       input.artifactType === "image"
         ? [
             {
               type: "text" as const,
-              text: "Please analyze this child's artwork and detect their interests and talents. Look beyond surface-level categorization.",
+              text: `Please analyze this child's artwork and detect their interests and talents. Look beyond surface-level categorization.${storyBlock}`,
             },
             { type: "image_url" as const, image_url: { url: input.artifactUrl } },
           ]
         : [
             {
               type: "text" as const,
-              text: `Please analyze this child's audio recording (available at: ${input.artifactUrl}) and detect their interests and talents based on vocal patterns, narrative structure, and content themes. Look beyond surface-level categorization.`,
+              text: `Please analyze this child's audio recording (available at: ${input.artifactUrl}) and detect their interests and talents based on vocal patterns, narrative structure, and content themes. Look beyond surface-level categorization.${storyBlock}`,
             },
           ];
 
@@ -302,6 +306,12 @@ export const openaiProvider: AIProvider = {
 The child's profile shows strong existing interests. To prevent interest fixation, include at least ONE mission in the 7-day plan that explores one of these less-touched interest areas: ${input.explorationInterests.join(", ")}. Frame it as "trying something new" rather than as off-topic.`
         : "";
 
+    const artworkBlock =
+      input.artworkSignals && input.artworkSignals.dominantIntelligences.length > 0
+        ? `\n\n**Artwork Intelligence Profile (KidsArtBench):**
+The child's artwork reveals strong ${input.artworkSignals.dominantIntelligences.join(", ")} intelligence(s). Design missions that naturally leverage these cognitive strengths alongside their stated dream.`
+        : "";
+
     const userMessage = `Create a 7-day quest for a child with these details:
 
 **Dream:** "${input.dream}"
@@ -309,7 +319,7 @@ The child's profile shows strong existing interests. To prevent interest fixatio
 **Local Context:** "${input.localContext}"
 
 **Detected Talents:**
-${talentSummary}${explorationBlock}
+${talentSummary}${explorationBlock}${artworkBlock}
 
 Design missions that connect their dream with their talents, using materials available in their local environment. Make it practical, fun, and progressively challenging.
 ${buildZpdPromptBlock(input.zpdScore)}`;

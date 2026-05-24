@@ -54,6 +54,16 @@ export const QuestGenerationInputSchema = z.object({
   explorationInterests: z.array(z.string()).max(3).optional(),
   /** Optional. Guest-supplied ISO date string for age-band derivation. */
   guestDob: z.string().datetime().optional(),
+  /**
+   * Optional. Gardner intelligence profile derived from KidsArtBench artwork analysis.
+   * Injected by quest/generate route when discoveryId resolves to a scored artwork.
+   */
+  artworkSignals: z
+    .object({
+      gardnerScores: z.record(z.string(), z.number()),
+      dominantIntelligences: z.array(z.string()).max(3),
+    })
+    .optional(),
 });
 
 export type QuestGenerationInput = z.infer<typeof QuestGenerationInputSchema>;

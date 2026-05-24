@@ -51,7 +51,7 @@ interface DiscoveryItem {
   createdAt: string;
 }
 
-type DiscoveryFlow = "image" | "audio" | "story";
+type DiscoveryFlow = "artwork" | "story";
 type AnalysisState = "idle" | "analyzing" | "done" | "error";
 type ErrorType = "ai_failure" | "timeout" | "network" | "content_blocked" | "guest_limit_reached";
 type AuthState = "loading" | "child" | "parent" | "unauthenticated";
@@ -88,6 +88,11 @@ export default function DiscoverPage() {
   const [analysisResults, setAnalysisResults] = useState<AnalysisOutput | null>(null);
   const [errorType, setErrorType] = useState<ErrorType>("ai_failure");
   const [currentUpload, setCurrentUpload] = useState<UploadResultData | null>(null);
+
+  const [artworkStoryMode, setArtworkStoryMode] = useState<"text" | "audio">("text");
+  const [artworkStoryText, setArtworkStoryText] = useState("");
+  const [artworkStoryAudio, setArtworkStoryAudio] = useState<UploadResultData | null>(null);
+  const [isTranscribingAudio, setIsTranscribingAudio] = useState(false);
 
   const [historyItems, setHistoryItems] = useState<DiscoveryItem[]>([]);
   const [historyTotal, setHistoryTotal] = useState(0);
@@ -147,7 +152,7 @@ export default function DiscoverPage() {
     if (authState === "child") fetchHistory(1);
   }, [authState, fetchHistory]);
 
-  const runAnalysis = useCallback(async (upload: UploadResultData) => {
+  const runAnalysis = useCallback(async (upload: UploadResultData, resolvedStoryContext?: string) => {
     setAnalysisState("analyzing");
     setAnalysisResults(null);
 
@@ -163,6 +168,7 @@ export default function DiscoverPage() {
           artifactUrl: upload.url,
           artifactType: upload.category,
           ...(guestDob ? { guestDob } : {}),
+          ...(resolvedStoryContext ? { storyContext: resolvedStoryContext } : {}),
         }),
       });
 
@@ -232,18 +238,42 @@ export default function DiscoverPage() {
     [authState],
   );
 
-  const handleAnalyze = useCallback(() => {
+  const handleAnalyze = useCallback(async () => {
     if (!currentUpload) return;
     const upload = currentUpload;
+
+    // Resolve story context: text mode uses state directly; audio mode transcribes first
+    let resolvedStoryContext: string | undefined;
+    if (artworkStoryMode === "text" && artworkStoryText.trim()) {
+      resolvedStoryContext = artworkStoryText.trim();
+    } else if (artworkStoryMode === "audio" && artworkStoryAudio) {
+      setIsTranscribingAudio(true);
+      try {
+        const res = await fetch("/api/discovery/transcribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ audioUrl: artworkStoryAudio.url }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          resolvedStoryContext = (data.transcript as string | undefined) || undefined;
+        }
+      } catch {
+        // Non-fatal — proceed without story context
+      } finally {
+        setIsTranscribingAudio(false);
+      }
+    }
+
     ensureGuestProfile(() => {
       try {
         sessionStorage.removeItem("katalis-upload-discover");
       } catch {
         // Ignore
       }
-      runAnalysis(upload);
+      runAnalysis(upload, resolvedStoryContext);
     });
-  }, [currentUpload, ensureGuestProfile, runAnalysis]);
+  }, [currentUpload, ensureGuestProfile, runAnalysis, artworkStoryMode, artworkStoryText, artworkStoryAudio]);
 
   const handleStoryBeforeSubmit = useCallback((): Promise<boolean> => {
     if (authState !== "unauthenticated") return Promise.resolve(true);
@@ -314,6 +344,10 @@ export default function DiscoverPage() {
     } catch {
       // Ignore
     }
+    setArtworkStoryMode("text");
+    setArtworkStoryText("");
+    setArtworkStoryAudio(null);
+    setIsTranscribingAudio(false);
   }, []);
 
   const handleRetry = useCallback(() => {
@@ -331,6 +365,10 @@ export default function DiscoverPage() {
     } catch {
       // Ignore
     }
+    setArtworkStoryMode("text");
+    setArtworkStoryText("");
+    setArtworkStoryAudio(null);
+    setIsTranscribingAudio(false);
   }, []);
 
   const handleNewDiscovery = useCallback(() => {
@@ -343,6 +381,10 @@ export default function DiscoverPage() {
     } catch {
       // Ignore
     }
+    setArtworkStoryMode("text");
+    setArtworkStoryText("");
+    setArtworkStoryAudio(null);
+    setIsTranscribingAudio(false);
   }, []);
 
   const handleStoryAnalysisComplete = useCallback(
@@ -429,25 +471,18 @@ export default function DiscoverPage() {
 
   const flowTabs: { id: DiscoveryFlow; icon: React.ReactNode; label: string; activeColor: string; activeBg: string }[] = [
     {
-      id: "story",
-      icon: <BookOpen className="size-5 shrink-0" strokeWidth={1.5} />,
-      label: t("flowSelection.storyMode"),
-      activeColor: "text-blue-ocean-deep",
-      activeBg: "bg-[#eef4ff] ring-1 ring-blue-ocean/20",
-    },
-    {
-      id: "image",
+      id: "artwork",
       icon: <ImageIcon className="size-5 shrink-0" strokeWidth={1.5} />,
       label: t("flowSelection.uploadArtifact"),
       activeColor: "text-yellow-sun-deep",
       activeBg: "bg-[#fff9e6] ring-1 ring-yellow-sun/30",
     },
     {
-      id: "audio",
-      icon: <Mic className="size-5 shrink-0" strokeWidth={1.5} />,
-      label: t("flowSelection.recordAudio"),
-      activeColor: "text-mint-cloud",
-      activeBg: "bg-[#f0f9f7] ring-1 ring-mint-cloud/30",
+      id: "story",
+      icon: <BookOpen className="size-5 shrink-0" strokeWidth={1.5} />,
+      label: t("flowSelection.storyMode"),
+      activeColor: "text-blue-ocean-deep",
+      activeBg: "bg-[#eef4ff] ring-1 ring-blue-ocean/20",
     },
   ];
 
@@ -505,7 +540,7 @@ export default function DiscoverPage() {
                 )}
               >
                 {tab.icon}
-                <span className="hidden sm:block lg:block">{tab.label}</span>
+                <span className="block">{tab.label}</span>
               </button>
             );
           })}
@@ -549,7 +584,7 @@ export default function DiscoverPage() {
           <AnalysisError
             errorType={errorType}
             onRetry={handleRetry}
-            onResetUpload={flow === "image" ? resetDiscoveryUpload : undefined}
+            onResetUpload={flow === "artwork" ? resetDiscoveryUpload : undefined}
           />
         )}
 
@@ -557,36 +592,71 @@ export default function DiscoverPage() {
           <DiscoverIdleScene />
         )}
 
-        {analysisState === "idle" && flow === "image" && (
+        {analysisState === "idle" && flow === "artwork" && (
           <div className="flex flex-col gap-6">
             <UploadZone
               onUploadComplete={handleUploadComplete}
               storageKey="katalis-upload-discover"
             />
-            {currentUpload && (
-              <Button
-                onClick={handleAnalyze}
-                size="lg"
-                className="w-full bg-yellow-sun-deep font-bold text-white hover:bg-yellow-sun"
-              >
-                <Sparkles className="mr-2 size-5" />
-                {t("analysis.analyzeButton")}
-              </Button>
-            )}
-          </div>
-        )}
 
-        {analysisState === "idle" && flow === "audio" && (
-          <div className="flex flex-col gap-6">
-            <AudioRecorder onUploadComplete={handleUploadComplete} />
+            {/* Optional story about the artwork */}
+            {currentUpload && (
+              <div className="rounded-xl border-2 border-dashed border-black/10 bg-white/60 px-5 pt-5 pb-3">
+                <p className="mb-3 text-sm font-bold text-ink">
+                  {t("flowSelection.artworkStoryOptional")}
+                </p>
+                <div className="mb-4 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setArtworkStoryMode("text")}
+                    className={cn(
+                      "rounded-full border-2 px-4 py-2.5 text-xs font-bold transition-all min-h-[44px] touch-manipulation",
+                      artworkStoryMode === "text"
+                        ? "border-black bg-white shadow-[2px_2px_0_#000]"
+                        : "border-black/20 bg-white/60 text-black/60",
+                    )}
+                  >
+                    ✏️ {t("flowSelection.artworkStoryWrite")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setArtworkStoryMode("audio")}
+                    className={cn(
+                      "rounded-full border-2 px-4 py-2.5 text-xs font-bold transition-all min-h-[44px] touch-manipulation",
+                      artworkStoryMode === "audio"
+                        ? "border-black bg-white shadow-[2px_2px_0_#000]"
+                        : "border-black/20 bg-white/60 text-black/60",
+                    )}
+                  >
+                    🎙️ {t("flowSelection.artworkStoryRecord")}
+                  </button>
+                </div>
+                {artworkStoryMode === "text" && (
+                  <textarea
+                    value={artworkStoryText}
+                    onChange={(e) => setArtworkStoryText(e.target.value.slice(0, 500))}
+                    placeholder={t("flowSelection.artworkStoryPlaceholder")}
+                    rows={3}
+                    className="w-full resize-none sm:resize-y rounded-lg border-2 border-black/10 bg-white p-3 text-sm focus:border-black/30 focus:outline-none"
+                  />
+                )}
+                {artworkStoryMode === "audio" && (
+                  <div className="-mx-5">
+                    <AudioRecorder onUploadComplete={setArtworkStoryAudio} />
+                  </div>
+                )}
+              </div>
+            )}
+
             {currentUpload && (
               <Button
                 onClick={handleAnalyze}
+                disabled={isTranscribingAudio}
                 size="lg"
-                className="w-full bg-yellow-sun-deep font-bold text-white hover:bg-yellow-sun"
+                className="w-full bg-yellow-sun-deep font-bold text-white hover:bg-yellow-sun disabled:opacity-70"
               >
                 <Sparkles className="mr-2 size-5" />
-                {t("analysis.analyzeButton")}
+                {isTranscribingAudio ? "Processing audio..." : t("analysis.analyzeButton")}
               </Button>
             )}
           </div>

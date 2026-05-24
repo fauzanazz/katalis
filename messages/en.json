@@ -295,15 +295,17 @@
   "discover": {
     "kicker": "Talent scout",
     "title": "Discover Your Talents",
-    "subtitle": "Upload a drawing, photo, or record your voice to discover your unique talents!",
+    "subtitle": "Upload your artwork or create a story to discover your unique talents!",
     "flowSelection": {
       "title": "How would you like to share?",
-      "uploadArtifact": "Upload an Image",
-      "uploadArtifactDesc": "Share a drawing, painting, photo, or any creative work",
-      "recordAudio": "Record Your Voice",
-      "recordAudioDesc": "Tell us about your interests, sing, or share a story",
-      "storyMode": "Story Mode",
-      "storyModeDesc": "See pictures and create an amazing story about them",
+      "uploadArtifact": "Your Artwork",
+      "uploadArtifactDesc": "Share a drawing, painting, or photo to discover your talents",
+      "storyMode": "Story & Voice",
+      "storyModeDesc": "Write or record a story inspired by picture prompts",
+      "artworkStoryOptional": "Tell us about your artwork (optional)",
+      "artworkStoryWrite": "Write",
+      "artworkStoryRecord": "Record",
+      "artworkStoryPlaceholder": "What's your artwork about? Tell us anything...",
       "back": "Back to choices"
     },
     "upload": {

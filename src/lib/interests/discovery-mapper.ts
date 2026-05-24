@@ -1,5 +1,7 @@
 import type { InterestKey, InterestSignalDimension } from "./taxonomy";
 import { isInterestKey } from "./taxonomy";
+import { mapToGardner } from "@/lib/ai/kidsartbench-schemas";
+import type { KidsArtBenchScore } from "@/lib/ai/kidsartbench-schemas";
 
 export type MappedInterestSignal = {
   interestKey: InterestKey;
@@ -68,7 +70,50 @@ function extractTextFromAnalysis(analysis: unknown): string {
   return parts.join(" ");
 }
 
-export function mapDiscoveryAnalysisToInterestSignals(analysis: unknown): MappedInterestSignal[] {
+const GARDNER_TO_INTEREST_KEYS: Partial<Record<string, InterestKey[]>> = {
+  spatial:               ["art", "building", "space"],
+  logical_mathematical:  ["math_patterns", "building", "technology"],
+  visual_arts:           ["art"],
+  naturalist:            ["nature", "animals"],
+  linguistic:            ["storytelling", "reading"],
+  intrapersonal:         ["storytelling"],
+  interpersonal:         ["social_helping", "leadership"],
+  bodily_kinesthetic:    ["movement", "sports"],
+};
+
+const KIDSARTBENCH_SIGNAL_THRESHOLD = 0.4;
+
+/** Maps KidsArtBench 9-dim scores → Gardner intelligences → InterestSignals (dimension: "skill"). */
+export function mapKidsArtBenchToInterestSignals(score: KidsArtBenchScore): MappedInterestSignal[] {
+  const gardnerScores = mapToGardner(score);
+  const signals: MappedInterestSignal[] = [];
+  const seenKeys = new Set<InterestKey>();
+
+  for (const [intelligence, gardnerScore] of Object.entries(gardnerScores)) {
+    if (gardnerScore < KIDSARTBENCH_SIGNAL_THRESHOLD) continue;
+    const interestKeys = GARDNER_TO_INTEREST_KEYS[intelligence];
+    if (!interestKeys) continue;
+
+    for (const interestKey of interestKeys) {
+      if (seenKeys.has(interestKey)) continue;
+      seenKeys.add(interestKey);
+      signals.push({
+        interestKey,
+        dimension: "skill_growth",
+        strength: Math.min(1, gardnerScore),
+        confidence: Math.min(1, gardnerScore * 0.9),
+        metadataJson: { source: "kidsartbench", intelligence, gardnerScore },
+      });
+    }
+  }
+
+  return signals;
+}
+
+export function mapDiscoveryAnalysisToInterestSignals(
+  analysis: unknown,
+  kidsArtBench?: KidsArtBenchScore,
+): MappedInterestSignal[] {
   if (!analysis || typeof analysis !== "object") return [];
 
   const obj = analysis as Record<string, unknown>;
@@ -133,5 +178,12 @@ export function mapDiscoveryAnalysisToInterestSignals(analysis: unknown): Mapped
     }
   }
 
-  return signals;
+  if (!kidsArtBench) return signals;
+
+  // Merge kidsArtBench skill signals (higher confidence) with keyword signals
+  const artBenchSignals = mapKidsArtBenchToInterestSignals(kidsArtBench);
+  const artBenchKeys = new Set(artBenchSignals.map((s) => s.interestKey));
+  // Only keep keyword signals for keys not covered by kidsArtBench
+  const keywordOnly = signals.filter((s) => !artBenchKeys.has(s.interestKey));
+  return [...artBenchSignals, ...keywordOnly];
 }

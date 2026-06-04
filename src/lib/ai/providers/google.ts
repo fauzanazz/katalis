@@ -247,6 +247,10 @@ async function geminiNativeGenerateContent<T>(
           responseMimeType: "application/json",
           maxOutputTokens: maxTokens,
           temperature: 0.7,
+          // Disable Gemini 2.5 "thinking" — reasoning tokens otherwise consume
+          // the maxOutputTokens budget, truncating the JSON body (MAX_TOKENS)
+          // and breaking JSON.parse. These calls need structured output, not CoT.
+          thinkingConfig: { thinkingBudget: 0 },
         },
       }),
     });
@@ -344,16 +348,20 @@ async function chatJSON<T>(
   const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
 
   try {
+    const params = {
+      model: resolveModel("google", tier, MODEL),
+      messages: [
+        { role: "system" as const, content: systemPrompt },
+        { role: "user" as const, content: userContent },
+      ],
+      max_tokens: maxTokens,
+      temperature: 0.7,
+    };
+    // Gemini-only: disable 2.5 "thinking" so reasoning tokens don't eat the
+    // max_tokens budget and truncate the JSON body. Not in OpenAI SDK types,
+    // so cast back to the base params shape to keep the non-streaming overload.
     const response = await client.chat.completions.create(
-      {
-        model: resolveModel("google", tier, MODEL),
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userContent },
-        ],
-        max_tokens: maxTokens,
-        temperature: 0.7,
-      },
+      { ...params, reasoning_effort: "none" } as typeof params,
       { signal: controller.signal },
     );
 

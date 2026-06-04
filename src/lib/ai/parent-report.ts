@@ -136,7 +136,7 @@ async function callProviderForReport(userMessage: string): Promise<string> {
     });
 
     const response = await client.chat.completions.create({
-      model: process.env.GOOGLE_AI_MODEL ?? "gemini-2.0-flash",
+      model: process.env.GOOGLE_AI_MODEL ?? "gemini-2.5-flash",
       messages: [
         { role: "system", content: REPORT_SYSTEM_PROMPT },
         { role: "user", content: userMessage },

@@ -14,7 +14,7 @@ import { resolveModel, type ModelTier } from "../models";
 
 const API_TIMEOUT_MS = 30_000;
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/";
-const MODEL = process.env.GOOGLE_AI_MODEL ?? "gemini-2.0-flash";
+const MODEL = process.env.GOOGLE_AI_MODEL ?? "gemini-2.5-flash";
 
 const TEXT_MODERATION_PROMPT = `You are a child safety content moderator. Analyze the following text content for any harmful, inappropriate, or unsafe material for children (ages 6-12).
 

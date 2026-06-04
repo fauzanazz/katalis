@@ -81,7 +81,7 @@ async function callProviderForTags(userMessage: string): Promise<string> {
     });
 
     const model = vertexAI.preview.getGenerativeModel({
-      model: process.env.VERTEX_AI_MODEL ?? "gemini-2.0-flash",
+      model: process.env.VERTEX_AI_MODEL ?? "gemini-2.5-flash",
     });
 
     const response = await model.generateContent({

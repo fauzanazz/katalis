@@ -22,7 +22,7 @@ import { resolveModel, type ModelTier } from "../models";
 const API_TIMEOUT_MS = 30_000;
 const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT ?? "";
 const REGION = process.env.GOOGLE_CLOUD_LOCATION ?? "us-central1";
-const MODEL_ID = process.env.VERTEX_AI_MODEL ?? "gemini-2.0-flash";
+const MODEL_ID = process.env.VERTEX_AI_MODEL ?? "gemini-2.5-flash";
 
 const TEXT_MODERATION_PROMPT = `You are a child safety content moderator. Analyze the following text content for any harmful, inappropriate, or unsafe material for children (ages 6-12).
 

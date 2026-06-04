@@ -1,5 +1,7 @@
 // USD per 1M tokens — update as pricing changes
 const PRICING: Record<string, { input: number; output: number }> = {
+  "gemini-2.5-flash":         { input: 0.30,  output: 2.50 },
+  "gemini-2.5-flash-lite":    { input: 0.10,  output: 0.40 },
   "gemini-2.0-flash":         { input: 0.10,  output: 0.40 },
   "gemini-2.0-flash-lite":    { input: 0.075, output: 0.30 },
   "gemini-1.5-flash":         { input: 0.075, output: 0.30 },

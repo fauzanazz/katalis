@@ -1,34 +1,45 @@
 /**
- * Strip EXIF metadata from images before sending to external AI providers.
+ * Prepare a stored image for an external AI provider (moderation, analysis).
  *
- * COPPA April 2026: expanded definition of "personal information" includes
- * biometric identifiers and device-linked metadata (GPS, device serial).
- * Children's artwork uploads may carry EXIF with GPS coords, device model,
- * or timestamps — all stripped here before external provider ingestion.
+ * Two jobs:
+ *  1. Cap dimensions + re-encode to JPEG so the inline payload stays small.
+ *     Full-resolution child artwork (multi-MB PNGs) otherwise pushes the
+ *     provider call past its 30s timeout — moderation then fails closed (403)
+ *     and analysis throws (504), blocking discovery.
+ *  2. Drop EXIF (GPS/device/timestamp) as a side effect of re-encoding. COPPA
+ *     April 2026 expands PII to device metadata. (Uploads are already stripped
+ *     by lib/storage/exif; this is defense in depth before external egress.)
  *
- * Uses sharp: re-encode image through pipeline with withMetadata(false).
- * Pixel data is preserved; only metadata block is removed.
  * Non-image content types pass through unchanged.
  */
 
 import sharp from "sharp";
 
-/**
- * Strip EXIF/XMP/IPTC metadata from an image buffer.
- * @param buffer      Raw image bytes from storage
- * @param contentType MIME type (e.g. "image/jpeg")
- * @returns           Cleaned buffer, or original if not an image type
- */
-export async function stripExif(buffer: Buffer, contentType: string): Promise<Buffer> {
-  if (!contentType.startsWith("image/")) return buffer;
+// Gemini samples images down to ~1568px tiles; larger inputs add payload and
+// latency without improving accuracy.
+const MAX_DIMENSION = 1568;
+const JPEG_QUALITY = 82;
+
+export async function sanitizeImageForAI(
+  buffer: Buffer,
+  contentType: string,
+): Promise<{ data: Buffer; contentType: string }> {
+  if (!contentType.startsWith("image/")) return { data: buffer, contentType };
 
   try {
-    // withMetadata() with empty object = keep orientation only, strip all other metadata.
-    // Omitting withMetadata() entirely strips everything including orientation.
-    return await sharp(buffer).toBuffer();
+    const data = await sharp(buffer)
+      // Bake EXIF orientation into pixels before the metadata block is dropped.
+      .rotate()
+      .resize(MAX_DIMENSION, MAX_DIMENSION, {
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .jpeg({ quality: JPEG_QUALITY })
+      .toBuffer();
+    return { data, contentType: "image/jpeg" };
   } catch (err) {
-    // Never fail analysis because of metadata stripping — log and pass through
-    console.error("[strip-exif] Failed to strip metadata, passing through:", err);
-    return buffer;
+    // Never fail analysis because of image prep — log and pass through.
+    console.error("[sanitize-image] re-encode failed, passing through:", err);
+    return { data: buffer, contentType };
   }
 }

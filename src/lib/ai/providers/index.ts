@@ -36,7 +36,11 @@ const MODALITY_ENV: Record<ProviderModality | "moderation", string> = {
 };
 
 function resolveProviderName(modalityEnvKey: string): string {
-  return process.env[modalityEnvKey] ?? process.env.AI_PROVIDER ?? "openai";
+  // Trim + treat blank as unset: env values can carry stray whitespace/newlines
+  // (e.g. `echo "google" | vercel env add` appends "\n"), which would otherwise
+  // fail the PROVIDERS lookup. Empty string also falls through to the default.
+  const raw = process.env[modalityEnvKey] || process.env.AI_PROVIDER || "openai";
+  return raw.trim() || "openai";
 }
 
 function getProviderByName(name: string): AIProvider {

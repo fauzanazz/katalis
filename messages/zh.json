@@ -1,4 +1,8 @@
 {
+  "metadata": {
+    "title": "Katalis - 发现、行动、连接",
+    "description": "面向儿童的天赋发现与培养平台"
+  },
   "common": {
     "appName": "Katalis",
     "loading": "加载中...",

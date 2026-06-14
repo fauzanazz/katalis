@@ -1,4 +1,8 @@
 {
+  "metadata": {
+    "title": "Katalis - Temukan, Bertindak, Terhubung",
+    "description": "Platform penemuan dan pengembangan bakat untuk anak-anak"
+  },
   "common": {
     "appName": "Katalis",
     "loading": "Memuat...",

@@ -1,4 +1,8 @@
 {
+  "metadata": {
+    "title": "Katalis - Discover, Act, Connect",
+    "description": "A talent discovery and development platform for children"
+  },
   "common": {
     "appName": "Katalis",
     "loading": "Loading...",

@@ -70,20 +70,39 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   const isPublic = isPublicPage(pathnameWithoutLocale);
   const isAuthenticated = !!(session?.childId || session?.userId);
+  const isUser = session?.type === "user";
+  const isAdmin = isUser && session?.role === "admin";
+
+  // Authenticated landing target by role: admin → /admin, parent → /parent,
+  // child → /discover (matches child login default in login/child/page.tsx).
+  const homeFor = (l: string) =>
+    isAdmin ? `/${l}/admin` : isUser ? `/${l}/parent` : `/${l}/discover`;
 
   if (isAuthenticated && (pathnameWithoutLocale === "/login" || pathnameWithoutLocale === "/register")) {
-    return NextResponse.redirect(new URL(`/${locale}/parent`, request.url));
+    return NextResponse.redirect(new URL(homeFor(locale), request.url));
   }
 
   if (!isAuthenticated && !isPublic) {
     return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
   }
 
+  // Parent area requires a parent (user-type) session. A child session is
+  // "authenticated" but the parent APIs reject it (401) — without this guard
+  // the page bounces /parent → /login → /parent forever.
+  if (pathnameWithoutLocale.startsWith("/parent")) {
+    if (!isAuthenticated) {
+      return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
+    }
+    if (!isUser) {
+      return NextResponse.redirect(new URL(`/${locale}/discover`, request.url));
+    }
+  }
+
   if (pathnameWithoutLocale.startsWith("/admin")) {
     if (!isAuthenticated) {
       return NextResponse.redirect(new URL(`/${locale}/login`, request.url));
     }
-    if (session?.type !== "user" || session?.role !== "admin") {
+    if (!isAdmin) {
       return NextResponse.redirect(new URL(`/${locale}/parent`, request.url));
     }
   }

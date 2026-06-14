@@ -56,6 +56,7 @@ vi.mock("react-map-gl/maplibre", () => {
 
 // Mock next-intl
 vi.mock("next-intl", () => ({
+  useLocale: () => "en",
   useTranslations: () => (key: string, params?: Record<string, unknown>) => {
     const translations: Record<string, string> = {
       "map.loading": "Loading gallery map...",

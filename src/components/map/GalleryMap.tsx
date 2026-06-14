@@ -12,7 +12,7 @@ import Map, {
 } from "react-map-gl/maplibre";
 import type { MapGeoJSONFeature, StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   getTalentCategoryColor,
@@ -20,6 +20,7 @@ import {
   TALENT_CATEGORY_COLORS,
 } from "@/types/gallery";
 import type { GalleryEntryFeatureCollection } from "@/types/gallery";
+import { localizeMediaUrl } from "@/lib/storage/media-url";
 
 interface GalleryMapProps {
   data: GalleryEntryFeatureCollection | null;
@@ -43,36 +44,60 @@ interface PopupInfo {
 
 const MAPTILER_KEY = process.env.NEXT_PUBLIC_MAPTILER_KEY || "mock-maptiler-key";
 
+// MapTiler and OpenStreetMap tiles are throttled/blocked by the Great Firewall,
+// so the `zh` locale falls back to a China-reachable raster source (e.g. Tianditu
+// 天地图). Set NEXT_PUBLIC_CN_TILE_URL to a `{x}/{y}/{z}`-templated tile URL.
+const CN_TILE_URL = process.env.NEXT_PUBLIC_CN_TILE_URL;
+const CN_TILE_ATTRIBUTION =
+  process.env.NEXT_PUBLIC_CN_TILE_ATTRIBUTION ||
+  '&copy; <a href="https://www.tianditu.gov.cn/">天地图</a>';
+
 /**
- * Build MapTiler style URL. Falls back to a basic OSM-like style if key is invalid.
+ * Build a single-source raster map style from a `{x}/{y}/{z}`-templated tile URL.
  */
-function getMapStyle(): string | StyleSpecification {
-  if (MAPTILER_KEY && MAPTILER_KEY !== "mock-maptiler-key") {
-    return `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`;
-  }
-  // Fallback to demo tiles for development
+function buildRasterStyle(
+  tileUrl: string,
+  attribution: string,
+): StyleSpecification {
   return {
     version: 8,
-    name: "Katalis Fallback Map",
+    name: "Katalis Raster Map",
     sources: {
-      osm: {
+      raster: {
         type: "raster",
-        tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+        tiles: [tileUrl],
         tileSize: 256,
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        attribution,
       },
     },
     layers: [
       {
-        id: "osm-tiles",
+        id: "raster-tiles",
         type: "raster",
-        source: "osm",
+        source: "raster",
         minzoom: 0,
         maxzoom: 19,
       },
     ],
   };
+}
+
+/**
+ * Pick a map style for the active locale. Chinese users get a GFW-reachable
+ * tile source when configured; everyone else gets MapTiler with an OSM fallback.
+ */
+function getMapStyle(locale: string): string | StyleSpecification {
+  if (locale === "zh" && CN_TILE_URL) {
+    return buildRasterStyle(CN_TILE_URL, CN_TILE_ATTRIBUTION);
+  }
+  if (MAPTILER_KEY && MAPTILER_KEY !== "mock-maptiler-key") {
+    return `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`;
+  }
+  // Fallback to demo tiles for development
+  return buildRasterStyle(
+    "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  );
 }
 
 /**
@@ -107,12 +132,13 @@ function buildClusterColorExpression(): unknown[] {
 
 export function GalleryMap({ data, isLoading }: GalleryMapProps) {
   const t = useTranslations("gallery");
+  const locale = useLocale();
   const mapRef = useRef<MapRef | null>(null);
   const [popupInfo, setPopupInfo] = useState<PopupInfo | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
 
-  const mapStyle = useMemo(() => getMapStyle(), []);
+  const mapStyle = useMemo(() => getMapStyle(locale), [locale]);
   const categories = useMemo(
     () => getUniqueTalentCategories(data),
     [data],
@@ -394,7 +420,7 @@ export function GalleryMap({ data, isLoading }: GalleryMapProps) {
                 <div className="relative aspect-video w-full overflow-hidden rounded">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={popupInfo.properties.imageUrl}
+                    src={localizeMediaUrl(popupInfo.properties.imageUrl, locale)}
                     alt={t("map.pinImageAlt", {
                       category: popupInfo.properties.talentCategory,
                       country: popupInfo.properties.country,
@@ -470,6 +496,7 @@ function WebGLFallback({
   data: GalleryEntryFeatureCollection | null;
 }) {
   const t = useTranslations("gallery");
+  const locale = useLocale();
 
   if (!data || data.features.length === 0) {
     return (
@@ -496,7 +523,7 @@ function WebGLFallback({
             <div className="relative aspect-video overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={feature.properties.imageUrl}
+                src={localizeMediaUrl(feature.properties.imageUrl, locale)}
                 alt={t("map.pinImageAlt", {
                   category: feature.properties.talentCategory,
                   country: feature.properties.country,

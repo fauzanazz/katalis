@@ -29,7 +29,7 @@ const eslintConfig = defineConfig([
   ]),
   reactHooks.configs.flat.recommended,
   {
-    files: ["**/*.{ts,tsx}"],
+    files: ["**/*.{ts,tsx,mts,cts}"],
     languageOptions: {
       parser: tseslint.parser,
     },

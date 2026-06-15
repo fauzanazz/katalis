@@ -1,11 +1,11 @@
 import {
   ErrorComponent,
-  Link,
   rootRouteId,
   useMatch,
   useRouter,
 } from "@tanstack/react-router";
 import type { ErrorComponentProps } from "@tanstack/react-router";
+import { LocaleLink } from "@/i18n/start-navigation";
 
 export function DefaultCatchBoundary({ error }: ErrorComponentProps) {
   const router = useRouter();
@@ -26,15 +26,15 @@ export function DefaultCatchBoundary({ error }: ErrorComponentProps) {
           Try Again
         </button>
         {isRoot ? (
-          <Link
-            to="/"
+          <LocaleLink
+            href="/"
             className="rounded bg-gray-800 px-3 py-1 text-sm font-medium text-white"
           >
             Home
-          </Link>
+          </LocaleLink>
         ) : (
-          <Link
-            to="/"
+          <LocaleLink
+            href="/"
             className="rounded bg-gray-800 px-3 py-1 text-sm font-medium text-white"
             onClick={(e) => {
               e.preventDefault();
@@ -42,7 +42,7 @@ export function DefaultCatchBoundary({ error }: ErrorComponentProps) {
             }}
           >
             Go Back
-          </Link>
+          </LocaleLink>
         )}
       </div>
     </div>

@@ -20,19 +20,21 @@ interface UseStepUp {
 
 export function useStepUp(): UseStepUp {
   const [open, setOpen] = useState(false);
-  const resolverRef = useRef<((verified: boolean) => void) | null>(null);
+  const resolversRef = useRef<Array<(verified: boolean) => void>>([]);
 
   const requestStepUp = useCallback(() => {
     setOpen(true);
     return new Promise<boolean>((resolve) => {
-      resolverRef.current = resolve;
+      resolversRef.current.push(resolve);
     });
   }, []);
 
+  // One password verification satisfies every concurrent `withStepUp` waiter.
   const handleResolved = useCallback((verified: boolean) => {
     setOpen(false);
-    resolverRef.current?.(verified);
-    resolverRef.current = null;
+    const pending = resolversRef.current;
+    resolversRef.current = [];
+    pending.forEach((resolve) => resolve(verified));
   }, []);
 
   const withStepUp = useCallback(

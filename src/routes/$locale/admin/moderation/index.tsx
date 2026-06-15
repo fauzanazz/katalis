@@ -174,7 +174,7 @@ function AdminModerationPage() {
                   </td>
                   <td className="px-4 py-3">
                     {(event.status === "flagged" || event.status === "pending") ? (
-                      <ReviewActions eventId={event.id} onReviewed={() => {}} />
+                      <ReviewActions eventId={event.id} />
                     ) : event.reviewedAt ? (
                       <span className="text-xs text-muted-foreground">✓ {m.admin_moderation_reviewed()}</span>
                     ) : null}

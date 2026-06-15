@@ -13,6 +13,11 @@ interface Props {
   allTagCategories: string[];
 }
 
+const RATING_ERRORS: Record<string, string> = {
+  unauthorized: "You don't have permission to submit ratings.",
+  submission_failed: "Could not save the rating. Please try again.",
+};
+
 export function RatingForm({
   discoveryId,
   aiInterestKeys,
@@ -49,7 +54,9 @@ export function RatingForm({
         },
       });
       if (!res.ok) {
-        toast.error(res.error ?? "Submission failed");
+        toast.error(
+          RATING_ERRORS[res.error] ?? "Could not save the rating. Please try again.",
+        );
         return;
       }
       toast.success("Rating saved");

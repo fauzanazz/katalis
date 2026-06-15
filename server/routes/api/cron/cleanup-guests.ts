@@ -21,7 +21,11 @@ export default defineEventHandler(async (event) => {
   const objects = await storage.listObjects("guest/");
   const stale = objects.filter((o) => o.lastModified < cutoff);
 
-  await Promise.allSettled(stale.map((o) => storage.deleteFile(o.key)));
+  const results = await Promise.allSettled(
+    stale.map((o) => storage.deleteFile(o.key)),
+  );
+  const deleted = results.filter((r) => r.status === "fulfilled").length;
+  const failed = results.length - deleted;
 
-  return { deleted: stale.length };
+  return { deleted, failed };
 });

@@ -8,7 +8,6 @@ import { useLocaleRouter } from "@/i18n/start-navigation";
 
 interface ReviewActionsProps {
   eventId: string;
-  onReviewed: () => void;
 }
 
 export function ReviewActions({ eventId }: ReviewActionsProps) {

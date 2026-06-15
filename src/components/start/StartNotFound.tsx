@@ -1,5 +1,5 @@
-import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { LocaleLink } from "@/i18n/start-navigation";
 
 export function StartNotFound({ children }: { children?: ReactNode }) {
   return (
@@ -7,12 +7,12 @@ export function StartNotFound({ children }: { children?: ReactNode }) {
       <div className="text-gray-600">
         {children ?? <p>The page you are looking for does not exist.</p>}
       </div>
-      <Link
-        to="/"
+      <LocaleLink
+        href="/"
         className="rounded bg-gray-800 px-3 py-1 text-sm font-medium text-white"
       >
         Home
-      </Link>
+      </LocaleLink>
     </div>
   );
 }

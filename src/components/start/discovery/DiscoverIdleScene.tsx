@@ -37,7 +37,9 @@ export function DiscoverIdleScene() {
       <img
         src="/images/discover/garden-scene.webp"
         alt=""
-        className="w-full object-cover"
+        width={1792}
+        height={1024}
+        className="aspect-[7/4] w-full object-cover"
         aria-hidden="true"
       />
 

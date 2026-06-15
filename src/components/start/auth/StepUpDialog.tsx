@@ -60,8 +60,13 @@ export function StepUpDialog({ open, onResolved }: StepUpDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && handleCancel()}>
-      <DialogContent>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o && !submitting) handleCancel();
+      }}
+    >
+      <DialogContent showCloseButton={!submitting}>
         <DialogHeader>
           <DialogTitle>{m.stepUp_title()}</DialogTitle>
           <DialogDescription>{m.stepUp_description()}</DialogDescription>

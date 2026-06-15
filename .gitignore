@@ -17,6 +17,17 @@
 /.next/
 /out/
 
+# tanstack start / vite / nitro (build artifacts)
+/.output/
+/.nitro/
+/.tanstack/
+/.vite/
+.vite-temp/
+
+# cloudflare wrangler local state + local runtime upload dir
+/.wrangler/
+/guest/
+
 # production
 /build
 

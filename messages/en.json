@@ -24,14 +24,28 @@
     "gallery": "Gallery",
     "login": "Login",
     "logout": "Logout",
+    "exitChild": "Exit",
     "register": "Sign Up",
     "admin": "Admin"
+  },
+  "stepUp": {
+    "title": "Confirm it's you",
+    "description": "Enter your password to continue with this sensitive action.",
+    "passwordLabel": "Password",
+    "submit": "Confirm",
+    "verifying": "Verifying...",
+    "cancel": "Cancel",
+    "error": "Incorrect password. Please try again."
   },
   "childHome": {
     "kicker": "Kid zone",
     "cta": "Let's go",
-    "greetingNamed": "{dayPart, select, morning {Good morning, {name}!} afternoon {Hello, {name}!} evening {Good evening, {name}!} other {Hi, {name}!}}",
-    "greetingAnon": "{dayPart, select, morning {Good morning, explorer!} afternoon {Hello, explorer!} evening {Good evening, explorer!} other {Hi, explorer!}}",
+    "greetingNamedMorning": "Good morning, {name}!",
+    "greetingNamedAfternoon": "Hello, {name}!",
+    "greetingNamedEvening": "Good evening, {name}!",
+    "greetingAnonMorning": "Good morning, explorer!",
+    "greetingAnonAfternoon": "Hello, explorer!",
+    "greetingAnonEvening": "Good evening, explorer!",
     "subtitle": "Where do you want to adventure today?",
     "cards": {
       "discover": {
@@ -756,9 +770,9 @@
       "subtitle": "Track your child's progress and get mentoring tips",
       "loading": "Loading your children...",
       "addChild": "Add Child",
-      "linkWithCode": "Already have a code?",
+      "settings": "Settings",
       "noChildren": "No children linked yet",
-      "noChildrenHint": "Create a child profile, or enter an access code shared by another parent to link an existing profile.",
+      "noChildrenHint": "Create a child profile to start their journey.",
       "childTitle": "Child {id}",
       "claimedAt": "Linked {date}",
       "questCount": "{count, plural, one {# quest} other {# quests}}",
@@ -791,11 +805,8 @@
       "creating": "Creating...",
       "errorDefault": "Could not create child profile. Please try again.",
       "successTitle": "Child Created!",
-      "successDescription": "Share this access code with {name} to log in",
-      "accessCodeLabel": "Access Code",
-      "accessCodeHint": "The child enters this code on the login screen.",
-      "copyTooltip": "Click to copy",
-      "copied": "Copied!",
+      "successDescription": "{name}'s profile is ready!",
+      "successHint": "Open the dashboard and tap \"Open as Child\" to start their journey.",
       "done": "Done"
     },
     "backfillDob": {
@@ -808,15 +819,20 @@
       "unnamed": "this child",
       "errorDefault": "Could not save date of birth. Please try again."
     },
-    "claim": {
-      "title": "Link an Existing Child Profile",
-      "description": "If another parent already created this child's profile, ask them for the access code shown on their dashboard. Enter it here to link the same profile to your account.",
-      "codeLabel": "Access Code",
-      "codePlaceholder": "e.g. KATAL-001",
-      "submit": "Link Profile",
-      "cancel": "Cancel",
-      "linking": "Linking...",
-      "errorDefault": "Could not link child. Please check the code and try again."
+    "settings": {
+      "title": "Account Settings",
+      "subtitle": "Manage your account security.",
+      "backToDashboard": "Back to Dashboard",
+      "changePasswordTitle": "Change Password",
+      "changePasswordHint": "Choose a strong password with at least 8 characters.",
+      "newPasswordLabel": "New Password",
+      "confirmPasswordLabel": "Confirm New Password",
+      "save": "Save Password",
+      "saving": "Saving...",
+      "passwordTooShort": "Password must be at least 8 characters.",
+      "passwordMismatch": "Passwords do not match.",
+      "passwordChanged": "Password updated.",
+      "passwordError": "Could not update password. Please try again."
     },
     "reports": {
       "title": "Progress Reports",

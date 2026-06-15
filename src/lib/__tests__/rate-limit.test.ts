@@ -1,20 +1,31 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("@/lib/db", () => ({
-  prisma: {
-    rateLimit: {
-      findUnique: vi.fn(),
-      upsert: vi.fn(),
-      update: vi.fn(),
-      deleteMany: vi.fn(),
+const mockDb = vi.hoisted(() => ({
+  query: {
+    rateLimits: {
+      findFirst: vi.fn(),
     },
   },
+  insert: vi.fn(() => ({
+    values: vi.fn(() => ({
+      onConflictDoUpdate: vi.fn(() => ({
+        returning: vi.fn().mockResolvedValue([]),
+      })),
+    })),
+  })),
+  update: vi.fn(() => ({
+    set: vi.fn(() => ({
+      where: vi.fn().mockResolvedValue(undefined),
+    })),
+  })),
+  delete: vi.fn(() => ({
+    where: vi.fn().mockResolvedValue(undefined),
+  })),
 }));
 
-import { checkRateLimit } from "@/lib/rate-limit";
-import { prisma } from "@/lib/db";
+vi.mock("@/lib/db", () => ({ db: mockDb }));
 
-const mockPrisma = vi.mocked(prisma.rateLimit);
+import { checkRateLimit } from "@/lib/rate-limit";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -24,26 +35,24 @@ beforeEach(() => {
 
 describe("checkRateLimit", () => {
   it("allows first request and creates new entry", async () => {
-    mockPrisma.findUnique.mockResolvedValue(null);
-    mockPrisma.upsert.mockResolvedValue({} as never);
+    mockDb.query.rateLimits.findFirst.mockResolvedValue(null);
 
     const result = await checkRateLimit("192.168.1.1", "login");
 
     expect(result.limited).toBe(false);
     expect(result.remaining).toBe(9);
-    expect(mockPrisma.upsert).toHaveBeenCalledOnce();
+    expect(mockDb.insert).toHaveBeenCalledOnce();
   });
 
   it("allows requests within limit", async () => {
     const resetAt = new Date(Date.now() + 60000);
-    mockPrisma.findUnique.mockResolvedValue({
+    mockDb.query.rateLimits.findFirst.mockResolvedValue({
       id: "1",
       identifier: "192.168.1.1",
       endpoint: "login",
       count: 5,
       resetAt,
     });
-    mockPrisma.update.mockResolvedValue({} as never);
 
     const result = await checkRateLimit("192.168.1.1", "login");
 
@@ -53,7 +62,7 @@ describe("checkRateLimit", () => {
 
   it("blocks requests over limit", async () => {
     const resetAt = new Date(Date.now() + 60000);
-    mockPrisma.findUnique.mockResolvedValue({
+    mockDb.query.rateLimits.findFirst.mockResolvedValue({
       id: "1",
       identifier: "192.168.1.1",
       endpoint: "login",
@@ -69,29 +78,27 @@ describe("checkRateLimit", () => {
 
   it("resets expired windows", async () => {
     const expiredResetAt = new Date(Date.now() - 1000);
-    mockPrisma.findUnique.mockResolvedValue({
+    mockDb.query.rateLimits.findFirst.mockResolvedValue({
       id: "1",
       identifier: "192.168.1.1",
       endpoint: "login",
       count: 100,
       resetAt: expiredResetAt,
     });
-    mockPrisma.upsert.mockResolvedValue({} as never);
 
     const result = await checkRateLimit("192.168.1.1", "login");
 
     expect(result.limited).toBe(false);
     expect(result.remaining).toBe(9);
-    expect(mockPrisma.upsert).toHaveBeenCalledOnce();
+    expect(mockDb.insert).toHaveBeenCalledOnce();
   });
 
   it("separates endpoints independently", async () => {
-    mockPrisma.findUnique.mockResolvedValue(null);
-    mockPrisma.upsert.mockResolvedValue({} as never);
+    mockDb.query.rateLimits.findFirst.mockResolvedValue(null);
 
     await checkRateLimit("192.168.1.1", "login");
     await checkRateLimit("192.168.1.1", "register");
 
-    expect(mockPrisma.upsert).toHaveBeenCalledTimes(2);
+    expect(mockDb.insert).toHaveBeenCalledTimes(2);
   });
 });

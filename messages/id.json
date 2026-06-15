@@ -24,14 +24,28 @@
     "gallery": "Galeri",
     "login": "Masuk",
     "logout": "Keluar",
+    "exitChild": "Keluar",
     "register": "Daftar",
     "admin": "Admin"
+  },
+  "stepUp": {
+    "title": "Konfirmasi identitas Anda",
+    "description": "Masukkan kata sandi Anda untuk melanjutkan tindakan sensitif ini.",
+    "passwordLabel": "Kata Sandi",
+    "submit": "Konfirmasi",
+    "verifying": "Memverifikasi...",
+    "cancel": "Batal",
+    "error": "Kata sandi salah. Silakan coba lagi."
   },
   "childHome": {
     "kicker": "Zona anak",
     "cta": "Yuk mulai",
-    "greetingNamed": "{dayPart, select, morning {Selamat pagi, {name}!} afternoon {Halo, {name}!} evening {Selamat sore, {name}!} other {Hai, {name}!}}",
-    "greetingAnon": "{dayPart, select, morning {Selamat pagi, penjelajah!} afternoon {Halo, penjelajah!} evening {Selamat sore, penjelajah!} other {Hai, penjelajah!}}",
+    "greetingNamedMorning": "Selamat pagi, {name}!",
+    "greetingNamedAfternoon": "Halo, {name}!",
+    "greetingNamedEvening": "Selamat sore, {name}!",
+    "greetingAnonMorning": "Selamat pagi, penjelajah!",
+    "greetingAnonAfternoon": "Halo, penjelajah!",
+    "greetingAnonEvening": "Selamat sore, penjelajah!",
     "subtitle": "Mau berpetualang ke mana hari ini?",
     "cards": {
       "discover": {
@@ -756,9 +770,9 @@
       "subtitle": "Pantau perkembangan anak dan dapatkan tips bimbingan",
       "loading": "Memuat data anak...",
       "addChild": "Tambah Anak",
-      "linkWithCode": "Sudah punya kode?",
+      "settings": "Pengaturan",
       "noChildren": "Belum ada anak yang terhubung",
-      "noChildrenHint": "Buat profil anak baru, atau masukkan kode akses yang dibagikan orang tua lain untuk menautkan profil yang sudah ada.",
+      "noChildrenHint": "Buat profil anak untuk memulai perjalanan mereka.",
       "childTitle": "Anak {id}",
       "claimedAt": "Terhubung {date}",
       "questCount": "{count, plural, one {# misi} other {# misi}}",
@@ -791,11 +805,8 @@
       "creating": "Membuat...",
       "errorDefault": "Tidak dapat membuat profil anak. Silakan coba lagi.",
       "successTitle": "Profil Anak Dibuat!",
-      "successDescription": "Bagikan kode akses ini kepada {name} untuk masuk",
-      "accessCodeLabel": "Kode Akses",
-      "accessCodeHint": "Anak memasukkan kode ini di layar login.",
-      "copyTooltip": "Klik untuk menyalin",
-      "copied": "Tersalin!",
+      "successDescription": "Profil {name} sudah siap!",
+      "successHint": "Buka dasbor dan ketuk \"Masuk sebagai Anak\" untuk memulai perjalanan mereka.",
       "done": "Selesai"
     },
     "backfillDob": {
@@ -808,15 +819,20 @@
       "unnamed": "anak ini",
       "errorDefault": "Tidak dapat menyimpan tanggal lahir. Silakan coba lagi."
     },
-    "claim": {
-      "title": "Tautkan Profil Anak yang Sudah Ada",
-      "description": "Jika orang tua lain sudah membuat profil anak ini, minta kode akses yang tertera di dasbor mereka. Masukkan kode tersebut di sini untuk menautkan profil yang sama ke akun Anda.",
-      "codeLabel": "Kode Akses",
-      "codePlaceholder": "contoh: KATAL-001",
-      "submit": "Tautkan Profil",
-      "cancel": "Batal",
-      "linking": "Menautkan...",
-      "errorDefault": "Tidak dapat menautkan anak. Periksa kode dan coba lagi."
+    "settings": {
+      "title": "Pengaturan Akun",
+      "subtitle": "Kelola keamanan akun Anda.",
+      "backToDashboard": "Kembali ke Dasbor",
+      "changePasswordTitle": "Ubah Kata Sandi",
+      "changePasswordHint": "Pilih kata sandi kuat minimal 8 karakter.",
+      "newPasswordLabel": "Kata Sandi Baru",
+      "confirmPasswordLabel": "Konfirmasi Kata Sandi Baru",
+      "save": "Simpan Kata Sandi",
+      "saving": "Menyimpan...",
+      "passwordTooShort": "Kata sandi minimal 8 karakter.",
+      "passwordMismatch": "Kata sandi tidak cocok.",
+      "passwordChanged": "Kata sandi diperbarui.",
+      "passwordError": "Tidak dapat memperbarui kata sandi. Silakan coba lagi."
     },
     "reports": {
       "title": "Laporan Perkembangan",

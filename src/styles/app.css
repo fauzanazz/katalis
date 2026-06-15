@@ -1,0 +1,13 @@
+/* TanStack Start global stylesheet. Owns the Tailwind v4 theme/tokens (relocated
+   out of the deleted Next app at Phase 5 cutover). */
+@import "./globals.css";
+
+/* next/font sets these CSS variables on <html> in the Next app. TanStack loads
+   the same families via a Google Fonts <link> in __root.tsx, so we declare the
+   variables here to keep `font-sans` etc. resolving to the same typefaces. */
+:root {
+  --font-instrument-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-montserrat: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --font-luckiest-guy: "Luckiest Guy", ui-sans-serif, system-ui, cursive;
+  --font-schoolbell: "Schoolbell", ui-sans-serif, system-ui, cursive;
+}

@@ -173,9 +173,12 @@ export function geocodeLocationText(
         : new RegExp(escapeRegExp(key), "i");
 
     if (pattern.test(normalizedText)) {
-      const coords = COUNTRY_COORDINATES[key];
       // Determine the display country name
       const countryName = getCountryDisplayName(key);
+      const coords =
+        countryName === "Indonesia"
+          ? COUNTRY_COORDINATES.indonesia
+          : COUNTRY_COORDINATES[key];
       return { country: countryName, coordinates: coords };
     }
   }

@@ -1,0 +1,17 @@
+{
+  "rules": [
+    {
+      "allowed": {
+        "origins": [
+          "http://localhost:3000",
+          "http://localhost:3100",
+          "https://katalis.vercel.app"
+        ],
+        "methods": ["PUT", "GET", "HEAD"],
+        "headers": ["content-type", "x-amz-*"]
+      },
+      "exposeHeaders": ["ETag"],
+      "maxAgeSeconds": 3600
+    }
+  ]
+}

@@ -42,14 +42,18 @@ describe("geocodeLocationText", () => {
     const result = geocodeLocationText("I live in Jakarta with my family");
     expect(result).not.toBeNull();
     expect(result!.country).toBe("Indonesia");
-    expect(result!.coordinates.lat).toBeCloseTo(-6.21, 0);
+    // Privacy: return country-level coordinates for Indonesia.
+    expect(result!.coordinates.lat).toBeCloseTo(-2.5, 0);
+    expect(result!.coordinates.lng).toBeCloseTo(118.0, 0);
   });
 
   it("geocodes Indonesian region names (Bali)", () => {
     const result = geocodeLocationText("We have a house in Bali near the beach");
     expect(result).not.toBeNull();
     expect(result!.country).toBe("Indonesia");
-    expect(result!.coordinates.lat).toBeCloseTo(-8.34, 0);
+    // Privacy: return country-level coordinates for Indonesia.
+    expect(result!.coordinates.lat).toBeCloseTo(-2.5, 0);
+    expect(result!.coordinates.lng).toBeCloseTo(118.0, 0);
   });
 
   it("geocodes Indonesian keywords (desa/kampung) as Indonesia fallback", () => {

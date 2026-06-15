@@ -5,13 +5,6 @@
 
 import { z } from "zod";
 
-/** Claim a child via access code */
-export const ClaimChildSchema = z.object({
-  accessCode: z.string().min(1, "Access code is required"),
-});
-
-export type ClaimChildInput = z.infer<typeof ClaimChildSchema>;
-
 /** A single actionable home tip */
 export const HomeTipSchema = z.object({
   title: z.string().min(1),
@@ -71,7 +64,6 @@ export const LinkedChildSchema = z.object({
   quests: z
     .array(z.object({ id: z.string(), dream: z.string(), status: z.string() }))
     .optional(),
-  accessCode: z.string().optional(),
 });
 
 export type LinkedChild = z.infer<typeof LinkedChildSchema>;

@@ -10,7 +10,12 @@ import type { CapacitorConfig } from "@capacitor/cli";
  * locale URL routing. There is no separate client bundle to maintain.
  *
  * The target is env-driven and baked into the native project at `cap sync` time:
- *   - prod (default): https://katalis.app
+ *   - prod (default): https://katalis.vercel.app — the deployed TanStack app.
+ *                     NOTE: the apex katalis.app / www.katalis.app currently
+ *                     serve an UNRELATED WordPress site ("Katalis App |
+ *                     Omnichannel"), not this app. Override once a dedicated
+ *                     custom domain (e.g. app.katalis.app) points at the Vercel
+ *                     deployment.
  *   - staging:        CAP_SERVER_URL=https://<preview>.vercel.app bun cap:sync
  *   - LAN dev:        CAP_SERVER_URL=http://192.168.x.x:3101 bun cap:sync
  *                     (cleartext HTTP is auto-enabled for http:// URLs)
@@ -19,7 +24,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
  * functionality). Before store submission, add native capability via Capacitor
  * plugins (push notifications, camera, share) and an offline shell.
  */
-const serverUrl = process.env.CAP_SERVER_URL ?? "https://katalis.app";
+const serverUrl = process.env.CAP_SERVER_URL ?? "https://katalis.vercel.app";
 const allowCleartext = process.env.CAP_CLEARTEXT === "1" || serverUrl.startsWith("http://");
 
 const config: CapacitorConfig = {
@@ -32,6 +37,10 @@ const config: CapacitorConfig = {
   server: {
     url: serverUrl,
     cleartext: allowCleartext,
+    // Confine in-WebView navigation to the app host; any other link (the
+    // WordPress katalis.app marketing site, YouTube embeds, etc.) opens in the
+    // system browser instead of hijacking the app session.
+    allowNavigation: ["katalis.vercel.app"],
   },
 };
 

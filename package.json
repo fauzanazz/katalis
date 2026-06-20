@@ -16,12 +16,19 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "bun scripts/seed.ts"
+    "db:seed": "bun scripts/seed.ts",
+    "cap:sync": "cap sync",
+    "cap:doctor": "cap doctor",
+    "cap:ios": "cap open ios",
+    "cap:android": "cap open android",
+    "cap:run:ios": "cap run ios",
+    "cap:run:android": "cap run android"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.81.0",
     "@aws-sdk/client-s3": "^3.1020.0",
     "@aws-sdk/s3-request-presigner": "^3.1020.0",
+    "@capacitor/core": "8.4.1",
     "@google-cloud/vertexai": "^0.2.0",
     "@inlang/paraglide-js": "^2.19.0",
     "@libsql/client": "^0.17.3",
@@ -54,6 +61,9 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@capacitor/android": "8.4.1",
+    "@capacitor/cli": "8.4.1",
+    "@capacitor/ios": "8.4.1",
     "@tailwindcss/vite": "^4.3.1",
     "@tanstack/react-router-devtools": "^1.167.0",
     "@testing-library/dom": "^10.4.1",

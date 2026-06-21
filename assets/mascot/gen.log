@@ -1,0 +1,58 @@
+[1780073285] START 17 parts
+[1780073285] GEN 01_ear-left
+[1780073314]   OK 01_ear-left matte=rembg fg=0.0129
+[1780073338] GEN 02_ear-right
+[1780073422]   OK 02_ear-right matte=rembg fg=0.0133
+[1780073446] GEN 03_hair-tuft
+[1780073527]   OK 03_hair-tuft matte=rembg fg=0.0474
+[1780073551] GEN 04_head-face
+[1780073614]   OK 04_head-face matte=rembg fg=0.1342
+[1780073638] GEN 05_eye-left
+[1780073684]   OK 05_eye-left matte=rembg fg=0.0058
+[1780073708] GEN 06_eye-right
+[1780073776]   OK 06_eye-right matte=rembg fg=0.0037
+[1780073800] GEN 07_mouth
+[1780073856]   OK 07_mouth matte=rembg fg=0.0029
+[1780073880] GEN 08_glasses
+[1780073971]   OK 08_glasses matte=rembg fg=0.0374
+[1780073995] GEN 09_scarf
+[1780074035]   OK 09_scarf matte=rembg fg=0.0185
+[1780074059] GEN 10_body
+[1780074156]   OK 10_body matte=rembg fg=0.1084
+[1780074242] GEN 11_arm-left
+[1780074242]   attempt 1 HTTP 502 ra=30 b'{"error":{"message":"[codex/gpt-5.5-image] [502]: fetch failed (cause: ENOTFOUND: getaddrinfo ENOTFOUND chatgpt.com) (reset after 30s)"}}'; sleep 33s
+[1780074795]   attempt 2 err timed out; sleep 25s
+[1780074876]   attempt 3 HTTP 502 ra=29 b'{"error":{"message":"[codex/gpt-5.5-image] [502]: fetch failed (cause: ECONNRESET: read ECONNRESET) (reset after 29s)"}}'; sleep 32s
+[1780075088]   attempt 4 err timed out; sleep 25s
+[1780075204]   attempt 5 HTTP 502 ra=12 b'{"error":{"message":"[codex/gpt-5.5-image] [502]: fetch failed (cause: EPIPE: write EPIPE) (reset after 12s)"}}'; sleep 15s
+[1780075399]   attempt 6 err timed out; sleep 25s
+[1780075424]   FAIL 11_arm-left (no image)
+[1780075424] GEN 12_bottle
+[1780075604]   attempt 1 err timed out; sleep 25s
+--- resume 00:43 ---
+[1780076617] START 17 parts
+[1780076617] skip 01_ear-left (exists)
+[1780076617] skip 02_ear-right (exists)
+[1780076617] skip 03_hair-tuft (exists)
+[1780076617] skip 04_head-face (exists)
+[1780076617] skip 05_eye-left (exists)
+[1780076617] skip 06_eye-right (exists)
+[1780076617] skip 07_mouth (exists)
+[1780076617] skip 08_glasses (exists)
+[1780076617] skip 09_scarf (exists)
+[1780076617] skip 10_body (exists)
+[1780076617] GEN 11_arm-left
+[1780076674]   OK 11_arm-left matte=rembg fg=0.0161
+[1780076698] GEN 12_bottle
+[1780076775]   OK 12_bottle matte=rembg fg=0.0192
+[1780076799] GEN 13_bottle-bubble
+[1780076893]   OK 13_bottle-bubble matte=rembg fg=0.0053
+[1780076917] GEN 14_arm-right
+[1780077038]   OK 14_arm-right matte=rembg fg=0.0316
+[1780077062] GEN 15_paw-pad
+[1780077230]   OK 15_paw-pad matte=rembg fg=0.0039
+[1780077254] GEN 16_leg-left
+[1780077322]   OK 16_leg-left matte=rembg fg=0.0167
+[1780077346] GEN 17_leg-right
+[1780077408]   OK 17_leg-right matte=rembg fg=0.0153
+[1780077432] DONE

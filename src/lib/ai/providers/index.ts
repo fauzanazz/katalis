@@ -9,6 +9,12 @@ import { vertexAiProvider } from "./vertex-ai";
 
 const PROVIDERS: Record<string, AIProvider> = {
   anthropic: anthropicProvider,
+  // DashScope/Qwen exposes an OpenAI-compatible API. Configure with:
+  // AI_PROVIDER=dashscope
+  // OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+  // OPENAI_API_KEY=<DASHSCOPE_API_KEY>
+  // OPENAI_MODEL=qwen-plus
+  dashscope: openaiProvider,
   google: googleProvider,
   grok: grokProvider,
   nvidia: nvidiaProvider,

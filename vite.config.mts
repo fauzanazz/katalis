@@ -73,6 +73,10 @@ export default defineConfig(({ mode }) => {
     // breaking `build:start`. Nothing reads HTML from server-asset storage at
     // runtime, so a Nitro module excludes *.html from the server-asset scan.
     nitro({
+      // Vercel still needs its Build Output API preset, but VPS/Docker needs a
+      // plain Node server in `.output`. Keep the deployment target explicit so
+      // local and container builds don't accidentally inherit Vercel output.
+      preset: process.env.NITRO_PRESET ?? (process.env.VERCEL ? "vercel" : "node-server"),
       // Nitro's `serverDir` defaults to `false` under the Vite integration, so
       // it never scans a `server/` dir. Enable it (→ "server") so the Vercel
       // cron endpoints at server/routes/api/cron/*.ts are discovered and bundled

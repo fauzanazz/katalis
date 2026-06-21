@@ -24,6 +24,10 @@ const eslintConfig = defineConfig([
     "src/paraglide/**",
     // Skill scripts ship their own tooling configs.
     ".agents/**",
+    // Generated Capacitor native projects + the bundled offline build output.
+    "android/**",
+    "ios/**",
+    "offline/dist/**",
     // Vendored / minified third-party bundles (e.g. lottie.min.js).
     "**/*.min.js",
   ]),

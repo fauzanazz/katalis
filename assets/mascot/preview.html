@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Panda mascot preview</title>
+<style>
+  body { margin: 0; display: grid; place-items: center; min-height: 100vh; background: #fffdf5; font-family: system-ui, sans-serif; }
+  #anim { width: 360px; height: 360px; }
+  .hint { color: #888; font-size: 13px; margin-top: 8px; }
+</style>
+</head>
+<body>
+  <div>
+    <div id="anim"></div>
+    <div class="hint">panda.lottie.json — loops at 30fps</div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+  <script>
+    lottie.loadAnimation({
+      container: document.getElementById('anim'),
+      renderer: 'svg',
+      loop: true,
+      autoplay: true,
+      path: './panda.lottie.json',
+    });
+  </script>
+</body>
+</html>

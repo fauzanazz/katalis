@@ -12,6 +12,7 @@ describe("getStorageClient", () => {
   });
 
   it("returns mock client when USE_MOCK_AI=true", () => {
+    vi.stubEnv("USE_MOCK_STORAGE", "true");
     vi.stubEnv("USE_MOCK_AI", "true");
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3100");
 
@@ -22,6 +23,7 @@ describe("getStorageClient", () => {
   });
 
   it("returns R2 client when USE_MOCK_AI is not 'true'", () => {
+    vi.stubEnv("USE_MOCK_STORAGE", "false");
     vi.stubEnv("USE_MOCK_AI", "false");
     vi.stubEnv("R2_ACCOUNT_ID", "test-account");
     vi.stubEnv("R2_ACCESS_KEY_ID", "test-key");
@@ -35,6 +37,7 @@ describe("getStorageClient", () => {
   });
 
   it("caches the client across multiple calls (singleton)", () => {
+    vi.stubEnv("USE_MOCK_STORAGE", "true");
     vi.stubEnv("USE_MOCK_AI", "true");
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3100");
 
@@ -44,6 +47,7 @@ describe("getStorageClient", () => {
   });
 
   it("creates a new client after reset", () => {
+    vi.stubEnv("USE_MOCK_STORAGE", "true");
     vi.stubEnv("USE_MOCK_AI", "true");
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3100");
 
@@ -54,6 +58,7 @@ describe("getStorageClient", () => {
   });
 
   it("throws when R2 env vars are missing in non-mock mode", () => {
+    vi.stubEnv("USE_MOCK_STORAGE", "false");
     vi.stubEnv("USE_MOCK_AI", "false");
     // Don't set any R2 env vars
     delete process.env.R2_ACCOUNT_ID;

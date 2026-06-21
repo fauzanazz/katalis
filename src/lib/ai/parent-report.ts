@@ -150,15 +150,16 @@ async function callProviderForReport(userMessage: string): Promise<string> {
     return content;
   }
 
-  // Default to OpenAI
+  // Default to OpenAI-compatible APIs (OpenAI, DashScope/Qwen, etc.).
   const { default: OpenAI } = await import("openai");
   const client = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
+    baseURL: process.env.OPENAI_BASE_URL,
     timeout: API_TIMEOUT_MS,
   });
 
   const response = await client.chat.completions.create({
-    model: "gpt-4o",
+    model: process.env.OPENAI_MODEL ?? "gpt-4o",
     messages: [
       { role: "system", content: REPORT_SYSTEM_PROMPT },
       { role: "user", content: userMessage },

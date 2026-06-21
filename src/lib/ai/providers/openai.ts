@@ -13,7 +13,7 @@ import { mapToModerationResult } from "@/lib/moderation/map-result";
 import { resolveModel, type ModelTier } from "../models";
 
 const API_TIMEOUT_MS = 30_000;
-const BASE_MODEL = "gpt-4o";
+const BASE_MODEL = process.env.OPENAI_MODEL ?? "gpt-4o";
 
 const TEXT_MODERATION_PROMPT = `You are a child safety content moderator. Analyze the following text content for any harmful, inappropriate, or unsafe material for children (ages 6-12).
 
@@ -206,7 +206,11 @@ Respond ONLY with valid JSON in this exact format:
 
 async function getClient() {
   const { default: OpenAI } = await import("openai");
-  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY, timeout: API_TIMEOUT_MS });
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    baseURL: process.env.OPENAI_BASE_URL,
+    timeout: API_TIMEOUT_MS,
+  });
 }
 
 async function chatJSON<T>(

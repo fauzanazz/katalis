@@ -55,6 +55,10 @@ next-env.d.ts
 **/dev.db
 **/dev.db-journal
 
+# offline Capacitor build output (bundles the baked VITE_GEMINI_API_KEY) + APKs
+/offline/dist/
+*.apk
+
 # uploads
 public/uploads/
 
@@ -73,3 +77,5 @@ public/uploads/
 # stray lockfiles (project uses bun)
 package-lock.json
 pnpm-lock.yaml
+# Local Pi runtime state
+.atl/

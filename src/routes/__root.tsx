@@ -23,17 +23,9 @@ export const Route = createRootRoute({
       { name: "description", content: m.metadata_description() },
     ],
     links: [
+      // Webfonts self-hosted via src/styles/fonts.css (woff2 in public/fonts).
+      // The Google Fonts <link> was removed: render-blocking + GFW-blocked in China.
       { rel: "stylesheet", href: appCss },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      {
-        rel: "preconnect",
-        href: "https://fonts.gstatic.com",
-        crossOrigin: "anonymous",
-      },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Luckiest+Guy&family=Schoolbell&display=swap",
-      },
       { rel: "icon", href: "/favicon.ico" },
     ],
   }),

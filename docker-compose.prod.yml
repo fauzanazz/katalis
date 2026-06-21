@@ -1,0 +1,43 @@
+services:
+  app:
+    image: katalis:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - path: .env.production
+        required: false
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - katalis_data:/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:3000/id').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  migrate:
+    image: oven/bun:1.2-alpine
+    profiles: ["tools"]
+    working_dir: /app
+    env_file:
+      - path: .env.production
+        required: false
+    volumes:
+      - ./:/app
+      - katalis_data:/data
+    command: sh -lc "bun install --frozen-lockfile && bun run db:migrate:prod"
+
+volumes:
+  katalis_data:

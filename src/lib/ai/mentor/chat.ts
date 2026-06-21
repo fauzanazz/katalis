@@ -198,15 +198,16 @@ async function callProviderForMentor(
     return JSON.parse(result.text);
   }
 
-  // Default to OpenAI
+  // Default to OpenAI-compatible APIs (OpenAI, DashScope/Qwen, etc.).
   const { default: OpenAI } = await import("openai");
   const client = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
+    baseURL: process.env.OPENAI_BASE_URL,
     timeout: API_TIMEOUT_MS,
   });
 
   const response = await client.chat.completions.create({
-    model: resolveModel("openai", tier, OPENAI_BASE_MODEL),
+    model: resolveModel("openai", tier, process.env.OPENAI_MODEL ?? OPENAI_BASE_MODEL),
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userMessage },
@@ -378,15 +379,16 @@ async function callProviderForJSON(
     return JSON.parse(result.text);
   }
 
-  // Default to OpenAI
+  // Default to OpenAI-compatible APIs (OpenAI, DashScope/Qwen, etc.).
   const { default: OpenAI } = await import("openai");
   const client = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
+    baseURL: process.env.OPENAI_BASE_URL,
     timeout: API_TIMEOUT_MS,
   });
 
   const response = await client.chat.completions.create({
-    model: resolveModel("openai", tier, OPENAI_BASE_MODEL),
+    model: resolveModel("openai", tier, process.env.OPENAI_MODEL ?? OPENAI_BASE_MODEL),
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userMessage },

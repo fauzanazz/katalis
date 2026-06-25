@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Camera, CheckCircle2, Sparkles } from "lucide-react";
+import { Camera, CheckCircle2, Images, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { m } from "@/paraglide/messages";
 import { useApp } from "../app/context";
 import { QUESTS, getQuest } from "../data/content";
 import { listProgress } from "../data/store";
+import { evaluateAwards } from "../data/awards";
 import { aiReachable, analyzeArtwork, type ArtworkAnalysis, type QuestCatalogEntry } from "../data/ai";
 import { downscaleDataUrl, fileToDataUrl } from "../data/image";
 import { t } from "../data/types";
@@ -22,7 +23,8 @@ function confidenceStars(confidence: number): number {
 export function Discover() {
   const { profile, locale } = useApp();
   const navigate = useNavigate();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const [doneByQuest, setDoneByQuest] = useState<Record<string, number>>({});
   const [completed, setCompleted] = useState<Set<string>>(new Set());
@@ -32,6 +34,7 @@ export function Discover() {
   const [scoutImage, setScoutImage] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<ArtworkAnalysis | null>(null);
   const [errorOffline, setErrorOffline] = useState(false);
+  const [description, setDescription] = useState("");
 
   const catalog = useMemo<QuestCatalogEntry[]>(
     () => QUESTS.map((quest) => ({ id: quest.id, talent: quest.talent.en, theme: quest.theme })),
@@ -57,8 +60,12 @@ export function Discover() {
     };
   }, [profile]);
 
-  function openScanner() {
-    fileInputRef.current?.click();
+  function openCamera() {
+    cameraInputRef.current?.click();
+  }
+
+  function openGallery() {
+    galleryInputRef.current?.click();
   }
 
   function resetScout() {
@@ -66,6 +73,7 @@ export function Discover() {
     setScoutImage(null);
     setAnalysis(null);
     setErrorOffline(false);
+    setDescription("");
   }
 
   async function handleScanFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -83,6 +91,9 @@ export function Discover() {
       return;
     }
     setScoutImage(preview);
+    // Exploring a creation earns the trailblazer badge — even offline, so it
+    // fires before the AI-reachability gate below.
+    void evaluateAwards(profile.id, { usedScout: true }).catch(() => {});
 
     if (!aiReachable()) {
       setErrorOffline(true);
@@ -98,6 +109,7 @@ export function Discover() {
         locale,
         childName: profile.name,
         catalog,
+        description,
       });
       setAnalysis(result);
       setScoutState("done");
@@ -119,30 +131,45 @@ export function Discover() {
       </header>
 
       <input
-        ref={fileInputRef}
+        ref={cameraInputRef}
         type="file"
         accept="image/*"
         capture="environment"
         hidden
         onChange={handleScanFile}
       />
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={handleScanFile}
+      />
 
       {/* ── Talent Scout ──────────────────────────────────────────────── */}
       {scoutState === "idle" && (
-        <button
-          type="button"
-          onClick={openScanner}
-          className="flex flex-col items-start gap-2 rounded-3xl bg-pink-bloom-soft p-5 text-left shadow-sm transition-transform active:scale-[0.98]"
-        >
+        <div className="flex flex-col gap-3 rounded-3xl bg-pink-bloom-soft p-5 shadow-sm">
           <span className="flex size-12 items-center justify-center rounded-2xl bg-pink-bloom/25 text-pink-bloom">
             <Sparkles className="size-6" aria-hidden />
           </span>
           <span className="text-lg font-bold text-ink">{t(STR.scoutTitle, locale)}</span>
           <span className="text-sm text-muted-foreground">{t(STR.scoutSubtitle, locale)}</span>
-          <span className="mt-1 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
-            <Camera className="size-4" aria-hidden /> {t(STR.scoutScan, locale)}
-          </span>
-        </button>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder={t(STR.scoutDescribe, locale)}
+            rows={2}
+            className="w-full resize-none rounded-2xl border border-border bg-plain-surface px-4 py-3 text-sm text-ink placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          <div className="flex gap-2">
+            <Button className="flex-1 active:scale-[0.98]" onClick={openCamera}>
+              <Camera className="size-4" /> {t(STR.scoutTakePhoto, locale)}
+            </Button>
+            <Button variant="secondary" className="flex-1 active:scale-[0.98]" onClick={openGallery}>
+              <Images className="size-4" /> {t(STR.scoutFromGallery, locale)}
+            </Button>
+          </div>
+        </div>
       )}
 
       {scoutState === "analyzing" && (
@@ -165,7 +192,7 @@ export function Discover() {
           <p className="text-sm text-ink">
             {errorOffline ? t(STR.scoutOffline, locale) : t(STR.scoutError, locale)}
           </p>
-          <Button size="sm" variant="secondary" onClick={openScanner}>
+          <Button size="sm" variant="secondary" onClick={resetScout}>
             <Camera className="size-4" /> {t(STR.scoutAgain, locale)}
           </Button>
         </div>

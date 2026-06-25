@@ -20,6 +20,7 @@ const eslintConfig = defineConfig([
     // Build artifacts of the TanStack Start / Nitro pipeline.
     ".output/**",
     ".nitro/**",
+    ".vercel/**",
     // Generated Paraglide message modules.
     "src/paraglide/**",
     // Skill scripts ship their own tooling configs.

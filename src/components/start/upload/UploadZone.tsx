@@ -21,6 +21,11 @@ import {
 
 const DEFAULT_STORAGE_KEY = "katalis-upload-default";
 
+// Open the OS gallery picker to all images so users aren't blocked by HEIC or
+// unknown-MIME photos. Unsupported types are rejected by validateFile with a
+// friendly translated message rather than being grayed out in the picker.
+const GALLERY_IMAGE_ACCEPT = "image/*";
+
 interface UploadZoneProps {
   onUploadComplete: (result: UploadResultData) => void;
   onError?: (error: string) => void;
@@ -382,7 +387,7 @@ export function UploadZone({
         <input
           ref={fileInputRef}
           type="file"
-          accept={ACCEPTED_IMAGE_TYPES.join(",")}
+          accept={GALLERY_IMAGE_ACCEPT}
           onChange={handleFileChange}
           className="hidden"
           aria-hidden="true"
@@ -557,7 +562,7 @@ export function UploadZone({
       <input
         ref={fileInputRef}
         type="file"
-        accept={ACCEPTED_IMAGE_TYPES.join(",")}
+        accept={GALLERY_IMAGE_ACCEPT}
         onChange={handleFileChange}
         className="hidden"
         aria-hidden="true"
@@ -566,7 +571,7 @@ export function UploadZone({
       <input
         ref={cameraInputRef}
         type="file"
-        accept="image/*"
+        accept={GALLERY_IMAGE_ACCEPT}
         capture="environment"
         onChange={handleFileChange}
         className="hidden"

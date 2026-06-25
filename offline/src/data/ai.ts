@@ -1,31 +1,71 @@
 import type { Locale } from "@/paraglide/runtime";
-import type { MentorMessage } from "./types";
 
 /**
- * Client-side AI via Google Gemini (OpenAI-compatible endpoint).
+ * Client-side AI for the offline mobile app (OpenAI-compatible chat).
  *
- * With no backend, the app calls Gemini directly from the device when online.
- * The key is injected at build time (VITE_GEMINI_API_KEY) and ships inside the
- * APK — it IS extractable, so scope it to a usage-capped key. When the key is
- * absent or the device is offline, callers fall back to a scripted experience
- * so every screen still works.
+ * With no backend, the app calls an OpenAI-compatible chat endpoint directly
+ * from the device when online. The key is injected at build time and ships
+ * inside the APK — it IS extractable, so scope it to a usage-capped key. When
+ * no key is set or the device is offline, callers fall back to a scripted
+ * experience so every screen still works.
  *
- * Powers four features, all degrading gracefully offline:
- *  - {@link mentorReply}      — Kit chat
+ * Provider is chosen at build time via VITE_AI_PROVIDER:
+ *   - "gemini"  (default) — Google Gemini's OpenAI-compatible endpoint.
+ *                generativelanguage.googleapis.com is GFW-blocked in mainland
+ *                China, so its live features only work outside the firewall.
+ *   - "alibaba"           — Alibaba Cloud Model Studio (Qwen) via the DashScope
+ *                OpenAI-compatible endpoint (dashscope.aliyuncs.com). Reachable
+ *                inside mainland China and CORS-enabled for any WebView origin.
+ *                An optional VITE_ALIBABA_WORKSPACE_ID is sent as the
+ *                X-DashScope-WorkspaceId header to scope to a sub-workspace.
+ *
+ * Generic VITE_AI_{API_KEY,MODEL,VISION_MODEL,BASE_URL} always win; the
+ * provider-specific VITE_GEMINI_* / VITE_ALIBABA_* vars supply the defaults.
+ *
+ * Powers three features, all degrading gracefully offline:
  *  - {@link analyzeArtwork}   — Talent Scout (Explore): detect talents from a drawing
  *  - {@link artworkFeedback}  — Gallery: warm, specific feedback on a saved creation
  *  - {@link missionTip}       — Quest: a personalized tip for today's mission
  *
- * NOTE: generativelanguage.googleapis.com is GFW-blocked in mainland China, so
- * the live features only work outside the firewall (or via a proxy). The bundled
- * offline experience (quests/missions/badges/gallery + scripted fallbacks) needs
- * no network and works in China regardless.
+ * The bundled offline experience (quests/missions/badges/gallery + scripted
+ * fallbacks) needs no network and works regardless of provider.
  */
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-const MODEL = (import.meta.env.VITE_GEMINI_MODEL as string | undefined) ?? "gemini-2.5-flash";
+type AIProviderName = "gemini" | "alibaba";
+
+const ENV = import.meta.env;
+const PROVIDER: AIProviderName =
+  ENV.VITE_AI_PROVIDER === "alibaba" ? "alibaba" : "gemini";
+
+/** First non-empty value, so an unset/blank env var falls through to the next. */
+const pickEnv = (...values: Array<string | undefined>): string | undefined =>
+  values.find((value) => typeof value === "string" && value.length > 0);
+
+/** Optional DashScope sub-workspace; sent as the X-DashScope-WorkspaceId header. */
+const WORKSPACE_ID = PROVIDER === "alibaba" ? ENV.VITE_ALIBABA_WORKSPACE_ID : undefined;
+
+const API_KEY =
+  PROVIDER === "alibaba"
+    ? pickEnv(ENV.VITE_AI_API_KEY, ENV.VITE_ALIBABA_API_KEY)
+    : pickEnv(ENV.VITE_AI_API_KEY, ENV.VITE_GEMINI_API_KEY);
+
 const BASE_URL =
-  (import.meta.env.VITE_GEMINI_BASE_URL as string | undefined) ??
-  "https://generativelanguage.googleapis.com/v1beta/openai";
+  PROVIDER === "alibaba"
+    ? pickEnv(ENV.VITE_AI_BASE_URL, ENV.VITE_ALIBABA_BASE_URL) ??
+      "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    : pickEnv(ENV.VITE_AI_BASE_URL, ENV.VITE_GEMINI_BASE_URL) ??
+      "https://generativelanguage.googleapis.com/v1beta/openai";
+
+const MODEL =
+  PROVIDER === "alibaba"
+    ? pickEnv(ENV.VITE_AI_MODEL, ENV.VITE_ALIBABA_MODEL) ?? "qwen-plus"
+    : pickEnv(ENV.VITE_AI_MODEL, ENV.VITE_GEMINI_MODEL) ?? "gemini-2.5-flash";
+
+// Vision-capable model for image features. Gemini's base model is multimodal,
+// so it reuses MODEL; Qwen's qwen-plus is text-only and needs a qwen-vl-* model.
+const VISION_MODEL =
+  PROVIDER === "alibaba"
+    ? pickEnv(ENV.VITE_AI_VISION_MODEL, ENV.VITE_ALIBABA_VISION_MODEL) ?? "qwen-vl-plus"
+    : pickEnv(ENV.VITE_AI_VISION_MODEL, ENV.VITE_GEMINI_VISION_MODEL) ?? MODEL;
 
 /** True when an AI key is configured AND the device currently has a connection. */
 export function aiReachable(): boolean {
@@ -39,7 +79,7 @@ const LANGUAGE_NAME: Record<Locale, string> = {
   zh: "Simplified Chinese (简体中文)",
 };
 
-// ── Low-level Gemini chat ────────────────────────────────────────────────────
+// ── Low-level chat (OpenAI-compatible) ───────────────────────────────────────
 
 type TextPart = { type: "text"; text: string };
 type ImagePart = { type: "image_url"; image_url: { url: string } };
@@ -50,12 +90,19 @@ interface ChatTurn {
 }
 
 /**
- * One call to Gemini's OpenAI-compatible chat endpoint. Throws on no-key /
- * offline / API error so callers can fall back to a scripted experience.
+ * One call to the active provider's OpenAI-compatible chat endpoint. Pass
+ * `vision: true` for image inputs so providers with a separate vision model
+ * (Qwen) route to it. Throws on no-key / offline / API error so callers can
+ * fall back to a scripted experience.
  */
 async function chat(
   messages: ChatTurn[],
-  opts: { maxTokens?: number; temperature?: number; signal?: AbortSignal } = {},
+  opts: {
+    maxTokens?: number;
+    temperature?: number;
+    vision?: boolean;
+    signal?: AbortSignal;
+  } = {},
 ): Promise<string> {
   if (!API_KEY) throw new Error("AI not configured");
 
@@ -64,22 +111,24 @@ async function chat(
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${API_KEY}`,
+      ...(WORKSPACE_ID ? { "X-DashScope-WorkspaceId": WORKSPACE_ID } : {}),
     },
     body: JSON.stringify({
-      model: MODEL,
+      model: opts.vision ? VISION_MODEL : MODEL,
       messages,
       temperature: opts.temperature ?? 0.7,
       max_tokens: opts.maxTokens ?? 400,
       // Gemini 2.5 models "think" by default, and those reasoning tokens are
       // drawn from max_tokens — large/structured replies get truncated
       // (finish_reason "length") before any visible JSON. Disable thinking for
-      // fast, complete, cheap replies suited to a children's app.
-      reasoning_effort: "none",
+      // fast, complete, cheap replies suited to a children's app. Not a valid
+      // Qwen parameter, so it is sent for Gemini only.
+      ...(PROVIDER === "gemini" ? { reasoning_effort: "none" } : {}),
     }),
     signal: opts.signal,
   });
 
-  if (!response.ok) throw new Error(`Gemini ${response.status}`);
+  if (!response.ok) throw new Error(`${PROVIDER} ${response.status}`);
   const data = await response.json();
   const content = data?.choices?.[0]?.message?.content;
   if (typeof content !== "string" || !content.trim()) throw new Error("Empty AI response");
@@ -98,35 +147,6 @@ function parseJson<T>(raw: string): T {
 
 const clamp01 = (n: number): number => Math.max(0, Math.min(1, n));
 const asText = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
-
-// ── Mentor chat ──────────────────────────────────────────────────────────────
-
-const SYSTEM_PROMPT: Record<Locale, string> = {
-  id: "Kamu Kit, mentor yang hangat dan ceria untuk anak usia 6-12 tahun. Bicara sederhana, positif, dan menyemangati. Jawaban singkat (2-4 kalimat), aman untuk anak, tanpa topik dewasa. Dorong rasa ingin tahu dan ketekunan. Selalu balas dalam Bahasa Indonesia.",
-  en: "You are Kit, a warm and cheerful mentor for children aged 6-12. Speak simply, positively, and encouragingly. Keep replies short (2-4 sentences), child-safe, and free of adult topics. Nurture curiosity and persistence. Always reply in English.",
-  zh: "你是 Kit，一位温暖开朗的儿童导师，面向 6 至 12 岁的孩子。用简单、积极、鼓励的语气交流。回答简短（2-4 句），适合儿童，不涉及成人话题。培养好奇心和坚持力。始终用中文回复。",
-};
-
-/**
- * Ask the mentor for a reply. Throws on no-key / offline / API error so the
- * caller can fall back to {@link scriptedReply}.
- */
-export async function mentorReply(
-  history: MentorMessage[],
-  opts: { locale: Locale; childName: string; questTitle?: string; signal?: AbortSignal },
-): Promise<string> {
-  const context =
-    ` Anak bernama ${opts.childName}.` +
-    (opts.questTitle ? ` Sedang mengerjakan petualangan "${opts.questTitle}".` : "");
-
-  return chat(
-    [
-      { role: "system", content: SYSTEM_PROMPT[opts.locale] + context },
-      ...history.map((m) => ({ role: m.role, content: m.content })),
-    ],
-    { temperature: 0.8, maxTokens: 400, signal: opts.signal },
-  );
-}
 
 // ── Talent Scout: detect talents from a child's drawing (Explore) ─────────────
 
@@ -164,7 +184,13 @@ export interface QuestCatalogEntry {
  */
 export async function analyzeArtwork(
   imageDataUrl: string,
-  opts: { locale: Locale; childName: string; catalog: QuestCatalogEntry[]; signal?: AbortSignal },
+  opts: {
+    locale: Locale;
+    childName: string;
+    catalog: QuestCatalogEntry[];
+    description?: string;
+    signal?: AbortSignal;
+  },
 ): Promise<ArtworkAnalysis> {
   const catalogLines = opts.catalog.map((q) => `- ${q.id}: ${q.talent} (${q.theme})`).join("\n");
 
@@ -188,12 +214,17 @@ Respond ONLY with valid JSON in this exact shape:
       {
         role: "user",
         content: [
-          { type: "text", text: "Here is my creation! What are my talents?" },
+          {
+            type: "text",
+            text: opts.description?.trim()
+              ? `Here is my creation! I made it about: "${opts.description.trim()}". What are my talents?`
+              : "Here is my creation! What are my talents?",
+          },
           { type: "image_url", image_url: { url: imageDataUrl } },
         ],
       },
     ],
-    { temperature: 0.6, maxTokens: 800, signal: opts.signal },
+    { temperature: 0.6, maxTokens: 800, vision: true, signal: opts.signal },
   );
 
   const parsed = parseJson<{
@@ -262,7 +293,7 @@ Respond ONLY with valid JSON in this exact shape:
         ],
       },
     ],
-    { temperature: 0.7, maxTokens: 400, signal: opts.signal },
+    { temperature: 0.7, maxTokens: 400, vision: true, signal: opts.signal },
   );
 
   const parsed = parseJson<{ praise?: unknown; noticed?: unknown; tryNext?: unknown }>(raw);

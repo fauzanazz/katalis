@@ -1,15 +1,21 @@
 import { useNavigate } from "@tanstack/react-router";
-import { Award, Compass, Image, MessageCircle, UserRound } from "lucide-react";
+import { Award, Compass, Image, Settings as SettingsIcon, UserRound } from "lucide-react";
+import type { Locale } from "@/paraglide/runtime";
 import { m } from "@/paraglide/messages";
 import { useApp } from "../app/context";
 import { t } from "../data/types";
 import { STR } from "../strings";
 
-const TILES = [
-  { to: "/discover" as const, icon: Compass, label: () => m.nav_discover(), tone: "bg-blue-ocean-light" },
-  { to: "/badges" as const, icon: Award, label: () => m.badges_title(), tone: "bg-yellow-sun-light" },
-  { to: "/gallery" as const, icon: Image, label: () => m.nav_gallery(), tone: "bg-green-leaf-light" },
-  { to: "/mentor" as const, icon: MessageCircle, label: () => m.mentor_chatTitle(), tone: "bg-pink-bloom-soft" },
+const TILES: ReadonlyArray<{
+  to: "/discover" | "/badges" | "/gallery" | "/settings";
+  icon: typeof Compass;
+  label: (locale: Locale) => string;
+  tone: string;
+}> = [
+  { to: "/discover", icon: Compass, label: () => m.nav_discover(), tone: "bg-blue-ocean-light" },
+  { to: "/badges", icon: Award, label: () => m.badges_title(), tone: "bg-yellow-sun-light" },
+  { to: "/gallery", icon: Image, label: () => m.nav_gallery(), tone: "bg-green-leaf-light" },
+  { to: "/settings", icon: SettingsIcon, label: (locale) => t(STR.settingsTitle, locale), tone: "bg-pink-bloom-soft" },
 ];
 
 export function Home() {
@@ -55,7 +61,7 @@ export function Home() {
             className={`flex flex-col items-start gap-3 rounded-2xl ${tone} p-5 text-left text-ink shadow-sm transition-transform active:scale-[0.98]`}
           >
             <Icon className="size-7" aria-hidden />
-            <span className="font-semibold">{label()}</span>
+            <span className="font-semibold">{label(locale)}</span>
           </button>
         ))}
       </div>

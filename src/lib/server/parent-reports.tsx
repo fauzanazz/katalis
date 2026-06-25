@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { eq, count, inArray } from "drizzle-orm";
+import { eq, count, inArray, asc, desc } from "drizzle-orm";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { db } from "@/lib/db";
 import {
@@ -12,11 +12,18 @@ import {
   reflectionEntries,
   galleryEntries,
   childBadges,
+  badges,
   parentQuestFollows,
   discoveryRatings,
   discoveries,
   quests,
+  missions,
   children,
+  childGardnerProfiles,
+  childZpdStates,
+  childZpdSnapshots,
+  mentorSessions,
+  mentorMessages,
 } from "@/lib/schema";
 import { getUserSession, isStepUpFresh } from "@/lib/auth-start";
 import { verifyParentChildLink } from "@/lib/parent/link";
@@ -28,6 +35,11 @@ import { GenerateReportSchema } from "@/lib/parent/schemas";
 import { ParentReportPDF } from "@/lib/parent/pdf-template";
 import { createInterestAuditEvent } from "@/lib/interests/repository";
 import { hashPassword } from "@/lib/password";
+import {
+  summarizeTalentJourney,
+  type TalentJourneySummary,
+  type ExportTalent,
+} from "@/lib/parent/data-export";
 import { ok, err, type Result } from "@/lib/server/result";
 
 // ---------------------------------------------------------------------------
@@ -103,6 +115,18 @@ const DeleteChildDataSchema = z.object({
   childId: z.string().min(1),
   reason: z.string().max(500).optional(),
 });
+
+const ExportChildDataSchema = z.object({
+  childId: z.string().min(1),
+});
+
+export interface ChildDataExport {
+  filename: string;
+  generatedAt: string;
+  summary: TalentJourneySummary;
+  /** Pre-serialized JSON bundle, ready to write to a downloaded file. */
+  data: string;
+}
 
 // ---------------------------------------------------------------------------
 // Server functions
@@ -350,3 +374,251 @@ export const deleteChildDataFn = createServerFn({ method: "POST" })
       });
     },
   );
+
+function parseJSON<T>(value: string | null | undefined, fallback: T): T {
+  if (!value) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function slugifyName(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40);
+}
+
+/**
+ * Export the complete talent journey for one child as a structured JSON bundle.
+ * Parent-only, step-up protected. Leads with a derived success summary, then
+ * the full raw record across every child-scoped table for downstream analysis.
+ */
+export const exportChildDataFn = createServerFn({ method: "POST" })
+  .validator((d: unknown) => ExportChildDataSchema.parse(d))
+  .handler(async ({ data }): Promise<Result<ChildDataExport>> => {
+    const session = await getUserSession();
+    if (!session) return err("unauthorized", "Authentication required");
+
+    if (!(await isStepUpFresh()))
+      return err("step_up_required", "Password re-authentication required");
+
+    const linked = await verifyParentChildLink(session.userId, data.childId);
+    if (!linked) return err("forbidden", "Access denied");
+
+    const childId = data.childId;
+    const child = await db.query.children.findFirst({
+      where: eq(children.id, childId),
+    });
+    if (!child) return err("not_found", "Child not found");
+
+    const [
+      discoveryRows,
+      questRows,
+      galleryRows,
+      interestProfileRows,
+      gardnerRows,
+      zpdState,
+      zpdSnapshotRows,
+      reflectionRows,
+      badgeRows,
+      interestSignalRows,
+      assessmentRows,
+      reportRows,
+      sessionRows,
+    ] = await Promise.all([
+      db.query.discoveries.findMany({
+        where: eq(discoveries.childId, childId),
+        orderBy: asc(discoveries.createdAt),
+      }),
+      db.query.quests.findMany({
+        where: eq(quests.childId, childId),
+        orderBy: asc(quests.createdAt),
+        with: { missions: { orderBy: asc(missions.day) } },
+      }),
+      db.query.galleryEntries.findMany({
+        where: eq(galleryEntries.childId, childId),
+        orderBy: asc(galleryEntries.createdAt),
+      }),
+      db.query.childInterestProfiles.findMany({
+        where: eq(childInterestProfiles.childId, childId),
+        orderBy: desc(childInterestProfiles.score),
+      }),
+      db.query.childGardnerProfiles.findMany({
+        where: eq(childGardnerProfiles.childId, childId),
+      }),
+      db.query.childZpdStates.findFirst({ where: eq(childZpdStates.childId, childId) }),
+      db.query.childZpdSnapshots.findMany({
+        where: eq(childZpdSnapshots.childId, childId),
+        orderBy: asc(childZpdSnapshots.createdAt),
+      }),
+      db.query.reflectionEntries.findMany({
+        where: eq(reflectionEntries.childId, childId),
+        orderBy: asc(reflectionEntries.createdAt),
+      }),
+      db.query.childBadges.findMany({
+        where: eq(childBadges.childId, childId),
+        orderBy: asc(childBadges.createdAt),
+      }),
+      db.query.interestSignals.findMany({
+        where: eq(interestSignals.childId, childId),
+        orderBy: asc(interestSignals.observedAt),
+      }),
+      db.query.missionInterestAssessments.findMany({
+        where: eq(missionInterestAssessments.childId, childId),
+      }),
+      db.query.parentReports.findMany({
+        where: eq(parentReports.childId, childId),
+        orderBy: asc(parentReports.createdAt),
+      }),
+      db.query.mentorSessions.findMany({
+        where: eq(mentorSessions.childId, childId),
+        orderBy: asc(mentorSessions.createdAt),
+      }),
+    ]);
+
+    const sessionIds = sessionRows.map((s) => s.id);
+    const discoveryIds = discoveryRows.map((d) => d.id);
+    const badgeSlugs = badgeRows.map((b) => b.badgeSlug);
+
+    const [messageRows, ratingRows, badgeDefs] = await Promise.all([
+      sessionIds.length > 0
+        ? db.query.mentorMessages.findMany({
+            where: inArray(mentorMessages.sessionId, sessionIds),
+            orderBy: asc(mentorMessages.createdAt),
+          })
+        : Promise.resolve([]),
+      discoveryIds.length > 0
+        ? db.query.discoveryRatings.findMany({
+            where: inArray(discoveryRatings.discoveryId, discoveryIds),
+          })
+        : Promise.resolve([]),
+      badgeSlugs.length > 0
+        ? db.query.badges.findMany({ where: inArray(badges.slug, badgeSlugs) })
+        : Promise.resolve([]),
+    ]);
+
+    const badgeMetaBySlug = new Map(badgeDefs.map((b) => [b.slug, b]));
+
+    // ── Parse JSON-text columns into structured values ───────────────────────
+    const parsedDiscoveries = discoveryRows.map((d) => ({
+      ...d,
+      detectedTalents: parseJSON<ExportTalent[]>(d.detectedTalents, []),
+      aiAnalysis: parseJSON<unknown>(d.aiAnalysis, null),
+    }));
+    const parsedGallery = galleryRows.map((g) => ({
+      ...g,
+      detectedTalents: parseJSON<ExportTalent[]>(g.detectedTalents, []),
+      talentTags: parseJSON<unknown>(g.talentTags, null),
+      coordinates: parseJSON<unknown>(g.coordinates, null),
+      questContext: parseJSON<unknown>(g.questContext, null),
+    }));
+    const enrichedBadges = badgeRows.map((b) => {
+      const meta = badgeMetaBySlug.get(b.badgeSlug);
+      return {
+        ...b,
+        metadata: parseJSON<unknown>(b.metadata, null),
+        category: meta?.category ?? null,
+        tier: meta?.tier ?? null,
+        icon: meta?.icon ?? null,
+      };
+    });
+
+    const summary = summarizeTalentJourney({
+      child: { dateOfBirth: child.dateOfBirth ?? null, createdAt: child.createdAt },
+      discoveries: parsedDiscoveries.map((d) => ({
+        type: d.type,
+        detectedTalents: d.detectedTalents,
+      })),
+      quests: questRows.map((q) => ({
+        status: q.status,
+        createdAt: q.createdAt,
+        missions: q.missions.map((mission) => ({
+          status: mission.status,
+          proofPhotoUrl: mission.proofPhotoUrl,
+        })),
+      })),
+      galleryEntries: parsedGallery.map((g) => ({
+        talentCategory: g.talentCategory,
+        talentConfidence: g.talentConfidence,
+        questDurationDays: g.questDurationDays,
+        detectedTalents: g.detectedTalents,
+      })),
+      badges: badgeRows.map((b) => ({ badgeSlug: b.badgeSlug })),
+      reflectionCount: reflectionRows.length,
+      mentorSessionCount: sessionRows.length,
+      mentorMessageCount: messageRows.length,
+      interestProfiles: interestProfileRows.map((p) => ({
+        interestKey: p.interestKey,
+        score: p.score,
+        trend: p.trend,
+        stability: p.stability,
+      })),
+      gardnerProfiles: gardnerRows.map((g) => ({
+        intelligence: g.intelligence,
+        score: g.score,
+      })),
+      zpd: {
+        current: zpdState ? { score: zpdState.score, band: zpdState.band } : null,
+        snapshots: zpdSnapshotRows.map((s) => ({ score: s.score, createdAt: s.createdAt })),
+      },
+    });
+
+    const bundle: Record<string, unknown> = {
+      schemaVersion: 1,
+      exportedAt: summary.generatedAt,
+      child: {
+        id: child.id,
+        name: child.name,
+        locale: child.locale,
+        dateOfBirth: child.dateOfBirth ? child.dateOfBirth.toISOString() : null,
+        createdAt: child.createdAt.toISOString(),
+      },
+      summary,
+      discoveries: parsedDiscoveries,
+      quests: questRows,
+      galleryEntries: parsedGallery,
+      interestProfiles: interestProfileRows,
+      interestSignals: interestSignalRows,
+      missionAssessments: assessmentRows,
+      gardnerProfiles: gardnerRows,
+      zpd: { current: zpdState ?? null, snapshots: zpdSnapshotRows },
+      reflections: reflectionRows,
+      badges: enrichedBadges,
+      mentorSessions: sessionRows,
+      mentorMessages: messageRows,
+      discoveryRatings: ratingRows,
+      reports: reportRows,
+    };
+
+    const label = child.name ? slugifyName(child.name) || child.id : child.id;
+    const datePart = summary.generatedAt.slice(0, 10);
+    const filename = `katalis-export-${label}-${datePart}.json`;
+
+    try {
+      await createInterestAuditEvent({
+        childId,
+        actorUserId: session.userId,
+        eventType: "parent_data_export",
+        entityType: "child",
+        entityId: childId,
+        metadataJson: {
+          discoveries: discoveryRows.length,
+          quests: questRows.length,
+          galleryEntries: galleryRows.length,
+        },
+      });
+    } catch (auditError) {
+      console.error(`Audit event write failed for child ${childId} export:`, auditError);
+    }
+
+    return ok({
+      filename,
+      generatedAt: summary.generatedAt,
+      summary,
+      data: JSON.stringify(bundle, null, 2),
+    });
+  });

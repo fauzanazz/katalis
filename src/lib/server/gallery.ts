@@ -1,17 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 import { z } from "zod";
-import { eq, desc, asc, count, isNotNull, and } from "drizzle-orm";
+import { eq, desc, count, isNotNull, and } from "drizzle-orm";
 
-import { getChildSession } from "@/lib/auth-start";
 import { db } from "@/lib/db";
-import { galleryEntries, quests, missions, moderationEvents } from "@/lib/schema";
+import { galleryEntries, moderationEvents } from "@/lib/schema";
 import { ok, err } from "@/lib/server/result";
 import { sanitizeInput } from "@/lib/sanitize";
-import { isAllowedStorageUrl } from "@/lib/url-allowlist";
-import { geocodeLocationText } from "@/lib/geocoding";
-import { moderateImageContent } from "@/lib/moderation";
-import { classifyTags } from "@/lib/ai/tag-classifier";
 import { stripLocalContext } from "@/lib/privacy/quest-context";
 import { clusterGalleryEntries } from "@/lib/ai/client";
 import type { ClusterEntry } from "@/lib/ai/clustering-schemas";
@@ -37,11 +32,6 @@ export const ListGalleryEntriesInputSchema = z.object({
   pageSize: z.number().int().min(1).max(100).default(20),
   talentCategory: z.string().optional(),
   tag: z.string().optional(),
-});
-
-export const CreateGalleryEntryInputSchema = z.object({
-  questId: z.string().min(1, "Quest ID is required"),
-  selectedPhotoUrl: z.string().url().optional(),
 });
 
 export const GetGalleryEntryInputSchema = z.object({
@@ -174,176 +164,6 @@ export const listGalleryEntriesFn = createServerFn({ method: "GET" })
   });
 
 // ---------------------------------------------------------------------------
-// createGalleryEntryFn
-// ---------------------------------------------------------------------------
-
-export const createGalleryEntryFn = createServerFn({ method: "POST" })
-  .validator((d: unknown) => CreateGalleryEntryInputSchema.parse(d))
-  .handler(async ({ data }) => {
-    try {
-      const session = await getChildSession();
-      if (!session) {
-        return err("unauthorized", "Authentication required");
-      }
-
-      const { questId, selectedPhotoUrl: rawPhotoUrl } = data;
-
-      const quest = await db.query.quests.findFirst({
-        where: eq(quests.id, questId),
-        with: {
-          missions: { orderBy: asc(missions.day) },
-          discovery: true,
-        },
-      });
-
-      if (!quest) {
-        return err("not_found", "Quest not found");
-      }
-
-      if (quest.childId !== session.childId) {
-        return err("forbidden", "Access denied");
-      }
-
-      const allCompleted = quest.missions.every((m) => m.status === "completed");
-      if (!allCompleted) {
-        return err(
-          "incomplete_quest",
-          "All 7 missions must be completed before creating a gallery entry.",
-        );
-      }
-
-      let photoUrl = rawPhotoUrl;
-      if (photoUrl) {
-        photoUrl = sanitizeInput(photoUrl);
-        if (!isAllowedStorageUrl(photoUrl)) {
-          return err("invalid", "Invalid photo URL origin");
-        }
-      } else {
-        const firstProof = quest.missions.find((m) => m.proofPhotoUrl);
-        photoUrl = firstProof?.proofPhotoUrl ?? undefined;
-      }
-
-      if (!photoUrl) {
-        return err("invalid", "No photo available for gallery entry");
-      }
-
-      if (rawPhotoUrl) {
-        const validPhotoUrls = quest.missions
-          .filter((m) => m.proofPhotoUrl)
-          .map((m) => m.proofPhotoUrl);
-        if (!validPhotoUrls.includes(photoUrl)) {
-          return err(
-            "invalid_photo",
-            "Selected photo must be from one of the quest's completed missions.",
-          );
-        }
-      }
-
-      const existingEntry = await db.query.galleryEntries.findFirst({
-        where: eq(galleryEntries.questId, questId),
-      });
-      if (existingEntry) {
-        return err("duplicate_entry", "A gallery entry already exists for this quest.");
-      }
-
-      const imageModeration = await moderateImageContent({
-        imageUrl: photoUrl,
-        sourceType: "gallery",
-        sourceId: questId,
-        childId: session.childId,
-      });
-
-      if (!imageModeration.allowed) {
-        // PRESERVE: content_blocked stays as ok (HTTP-200 quirk, NOT err)
-        return ok({
-          error: "content_blocked" as const,
-          message:
-            imageModeration.redirectMessage ??
-            "This image cannot be displayed publicly. Try a different photo!",
-          redirect: true as const,
-        });
-      }
-
-      const detectedTalents = quest.discovery?.detectedTalents
-        ? safeParseJSON<Array<{ name: string; confidence: number }>>(
-            quest.discovery.detectedTalents,
-            [],
-          )
-        : [];
-
-      const sortedTalents = [...detectedTalents].sort(
-        (a, b) => (b.confidence ?? 0) - (a.confidence ?? 0),
-      );
-      const talentCategory = sortedTalents[0]?.name ?? "Creative";
-
-      const geoResult = geocodeLocationText(quest.localContext);
-      const country = geoResult?.country ?? null;
-      const coordinates = null;
-
-      const questContext = JSON.stringify({
-        questTitle: quest.dream,
-        dream: quest.dream,
-        missionSummaries: quest.missions.map((m) => m.title),
-      });
-
-      const galleryEntry = await db.transaction(async (tx) => {
-        const [entry] = await tx
-          .insert(galleryEntries)
-          .values({
-            childId: session.childId,
-            questId,
-            imageUrl: photoUrl!,
-            talentCategory,
-            country,
-            coordinates,
-            questContext,
-          })
-          .returning();
-
-        await tx
-          .update(quests)
-          .set({ status: "completed" })
-          .where(eq(quests.id, questId));
-
-        return entry;
-      });
-
-      let classifiedTags: Array<{ name: string; confidence: number; category: string }> | null = null;
-      try {
-        const tagResult = await classifyTags(
-          talentCategory,
-          quest.discovery?.detectedTalents ?? undefined,
-        );
-        if (tagResult.tags.length > 0) {
-          classifiedTags = tagResult.tags;
-          await db
-            .update(galleryEntries)
-            .set({ talentTags: JSON.stringify(tagResult.tags) })
-            .where(eq(galleryEntries.id, galleryEntry.id));
-        }
-      } catch (tagError) {
-        console.warn("Tag classification failed (non-blocking):", tagError);
-      }
-
-      return ok({
-        success: true as const,
-        galleryEntry: {
-          id: galleryEntry.id,
-          questId: galleryEntry.questId,
-          imageUrl: galleryEntry.imageUrl,
-          talentCategory: galleryEntry.talentCategory,
-          country: galleryEntry.country,
-          questContext: stripLocalContext(safeParseJSON(galleryEntry.questContext, null)) as QuestContextShape,
-          talentTags: classifiedTags,
-        },
-      });
-    } catch (error) {
-      console.error("Gallery entry creation error:", error);
-      return err("server_error", "Failed to create gallery entry");
-    }
-  });
-
-// ---------------------------------------------------------------------------
 // getGalleryEntryFn
 // ---------------------------------------------------------------------------
 
@@ -368,14 +188,32 @@ export const getGalleryEntryFn = createServerFn({ method: "GET" })
         dream?: string;
         missionSummaries?: string[];
       } | null>(entry.questContext, null);
+      const detectedTalents = safeParseJSON<Array<{ name: string; confidence: number }> | null>(
+        entry.detectedTalents,
+        null,
+      );
+      const talentTags = safeParseJSON<Array<{ name: string; confidence: number; category: string }> | null>(
+        entry.talentTags,
+        null,
+      );
 
       return ok({
         id: entry.id,
+        questId: entry.questId,
         imageUrl: entry.imageUrl,
         talentCategory: entry.talentCategory,
+        talentConfidence: entry.talentConfidence,
+        detectedTalents,
+        talentTags,
+        artworkStory: entry.artworkStory,
         country: entry.country,
         coordinates,
-        questContext,
+        questContext: stripLocalContext(questContext) as typeof questContext,
+        journey: {
+          missionCount: entry.missionCount,
+          proofPhotoCount: entry.proofPhotoCount,
+          questDurationDays: entry.questDurationDays,
+        },
         createdAt: entry.createdAt.toISOString(),
       });
     } catch (error) {

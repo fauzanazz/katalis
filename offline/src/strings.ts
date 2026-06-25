@@ -49,14 +49,6 @@ export const STR = {
   save: { id: "Simpan", en: "Save", zh: "保存" },
   delete: { id: "Hapus", en: "Delete", zh: "删除" },
 
-  // Mentor
-  mentorOffline: {
-    id: "Kit sedang offline, tapi tetap menyemangatimu!",
-    en: "Kit is offline, but still cheering you on!",
-    zh: "Kit 现在离线，但依然为你加油！",
-  },
-  askKit: { id: "Tanya Kit…", en: "Ask Kit…", zh: "问问 Kit……" },
-
   // Talent Scout (Explore)
   scoutTitle: { id: "Pemandu Bakat", en: "Talent Scout", zh: "天赋探子" },
   scoutSubtitle: {
@@ -102,4 +94,40 @@ export const STR = {
     zh: "Kit 现在有点忙，再试一次吧！",
   },
   close: { id: "Tutup", en: "Close", zh: "关闭" },
+
+  // Talent Scout — image source + description (Explore)
+  scoutDescribe: {
+    id: "Ceritakan tentang gambarmu (boleh dikosongkan)",
+    en: "Tell Kit about your drawing (optional)",
+    zh: "和 Kit 说说你的作品（可不填）",
+  },
+  scoutTakePhoto: { id: "Ambil foto", en: "Take a photo", zh: "拍照" },
+  scoutFromGallery: { id: "Pilih dari galeri", en: "Choose from gallery", zh: "从相册选择" },
+
+  // Settings + data sharing
+  settingsTitle: { id: "Pengaturan", en: "Settings", zh: "设置" },
+  settingsSubtitle: {
+    id: "Kelola dan bagikan datamu",
+    en: "Manage and share your data",
+    zh: "管理并分享你的数据",
+  },
+  shareData: { id: "Bagikan data", en: "Share data", zh: "分享数据" },
+  shareDataHint: {
+    id: "Semua tersimpan di perangkat ini. Bagikan sebagai berkas zip ke chat seperti Discord.",
+    en: "Everything stays on this device. Share it as a zip file to a chat like Discord.",
+    zh: "所有数据都保存在本机。可导出为 zip 文件分享到 Discord 等聊天工具。",
+  },
+  shareIncludes: {
+    id: "Termasuk profil, kemajuan, lencana, dan karya galeri.",
+    en: "Includes profiles, progress, badges, and gallery creations.",
+    zh: "包含档案、进度、徽章和作品集。",
+  },
+  sharePreparing: { id: "Menyiapkan…", en: "Preparing…", zh: "正在准备……" },
+  shareDone: { id: "Berhasil dibagikan!", en: "Shared!", zh: "已分享！" },
+  shareEmpty: { id: "Belum ada data untuk dibagikan.", en: "No data to share yet.", zh: "暂无可分享的数据。" },
+  shareError: {
+    id: "Gagal membagikan. Coba lagi ya.",
+    en: "Couldn't share. Please try again.",
+    zh: "分享失败，请重试。",
+  },
 } satisfies Record<string, LocalizedText>;

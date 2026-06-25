@@ -2,13 +2,13 @@ import { awardBadge, listGallery, listProgress } from "./store";
 
 /**
  * Offline badge rules. Maps purely local activity (missions done, quests
- * finished, gallery items, mentor use) onto the shared badge slugs in
+ * finished, gallery items, talent-scout use) onto the shared badge slugs in
  * src/lib/badges/definitions. Idempotent: returns only the slugs newly earned
  * by this evaluation so the caller can celebrate them.
  */
 export async function evaluateAwards(
   profileId: string,
-  ctx: { mentorUsed?: boolean } = {},
+  ctx: { usedScout?: boolean } = {},
 ): Promise<string[]> {
   const [progress, gallery] = await Promise.all([
     listProgress(profileId),
@@ -26,7 +26,7 @@ export async function evaluateAwards(
     { slug: "persistent_explorer", earned: questsDone >= 2 },
     { slug: "storyteller", earned: gallery.length >= 1 },
     { slug: "creative_adapter", earned: gallery.length >= 3 },
-    { slug: "trailblazer", earned: Boolean(ctx.mentorUsed) },
+    { slug: "trailblazer", earned: Boolean(ctx.usedScout) },
   ];
 
   const newlyEarned: string[] = [];

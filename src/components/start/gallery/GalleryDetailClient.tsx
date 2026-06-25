@@ -8,6 +8,10 @@ interface GalleryDetailEntry {
   id: string;
   imageUrl: string;
   talentCategory: string;
+  talentConfidence: number | null;
+  detectedTalents: Array<{ name: string; confidence: number }> | null;
+  talentTags: Array<{ name: string; confidence: number; category: string }> | null;
+  artworkStory: string | null;
   country: string | null;
   coordinates: { lat: number; lng: number } | null;
   questContext: {
@@ -16,6 +20,11 @@ interface GalleryDetailEntry {
     localContext?: string;
     missionSummaries?: string[];
   } | null;
+  journey: {
+    missionCount: number | null;
+    proofPhotoCount: number | null;
+    questDurationDays: number | null;
+  };
   createdAt: string;
 }
 
@@ -144,6 +153,112 @@ export function GalleryDetailClient({ entry }: GalleryDetailClientProps) {
                 {m.gallery_detail_countryLabel()}
               </h3>
               <p className="mt-0.5 text-sm">{entry.country}</p>
+            </div>
+          )}
+
+          {/* Artist's note — the child's own words about their work */}
+          {entry.artworkStory && (
+            <div>
+              <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                {m.gallery_detail_storyLabel()}
+              </h3>
+              <p className="mt-1 text-sm italic text-foreground">
+                &ldquo;{entry.artworkStory}&rdquo;
+              </p>
+            </div>
+          )}
+
+          {/* Talent tags */}
+          {entry.talentTags && entry.talentTags.length > 0 && (
+            <div>
+              <h3 className="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                {m.gallery_detail_talentTagsLabel()}
+              </h3>
+              <div className="flex flex-wrap gap-1.5">
+                {entry.talentTags.map((tag, index) => (
+                  <span
+                    key={`${tag.name}-${index}`}
+                    className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-foreground"
+                  >
+                    {tag.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Talents sparked — detected talents with confidence */}
+          {entry.detectedTalents && entry.detectedTalents.length > 0 && (
+            <div>
+              <h3 className="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                {m.gallery_detail_talentsLabel()}
+              </h3>
+              <ul className="space-y-1.5">
+                {entry.detectedTalents.map((talent, index) => {
+                  const percent = Math.round((talent.confidence ?? 0) * 100);
+                  return (
+                    <li key={`${talent.name}-${index}`} className="text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-foreground">
+                          {talent.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {percent}%
+                        </span>
+                      </div>
+                      <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${percent}%`,
+                            backgroundColor: getTalentCategoryColor(
+                              entry.talentCategory,
+                            ),
+                          }}
+                        />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+          {/* Journey stats — effort + persistence behind the work */}
+          {(entry.journey.missionCount != null ||
+            entry.journey.proofPhotoCount != null ||
+            entry.journey.questDurationDays != null) && (
+            <div className="grid grid-cols-3 gap-2">
+              {entry.journey.missionCount != null && (
+                <div className="rounded-lg border bg-muted/30 p-2 text-center">
+                  <p className="text-lg font-bold text-foreground">
+                    {entry.journey.missionCount}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {m.gallery_detail_missionsDone()}
+                  </p>
+                </div>
+              )}
+              {entry.journey.proofPhotoCount != null && (
+                <div className="rounded-lg border bg-muted/30 p-2 text-center">
+                  <p className="text-lg font-bold text-foreground">
+                    {entry.journey.proofPhotoCount}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {m.gallery_detail_photosShared()}
+                  </p>
+                </div>
+              )}
+              {entry.journey.questDurationDays != null && (
+                <div className="rounded-lg border bg-muted/30 p-2 text-center">
+                  <p className="text-lg font-bold text-foreground">
+                    {entry.journey.questDurationDays}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {m.gallery_detail_daysSpent()}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 

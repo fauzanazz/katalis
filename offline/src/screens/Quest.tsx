@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import { Check, ChevronLeft, Image as ImageIcon, MessageCircle, PartyPopper, Sparkles } from "lucide-react";
+import { Check, ChevronLeft, Image as ImageIcon, PartyPopper, Sparkles } from "lucide-react";
 import { getBadgeDef } from "@/lib/badges/definitions";
 import { Button } from "@/components/ui/button";
 import { m } from "@/paraglide/messages";
@@ -125,9 +125,6 @@ export function Quest() {
           <div className="flex gap-2">
             <Button size="sm" variant="secondary" onClick={() => navigate({ to: "/gallery" })}>
               <ImageIcon className="size-4" /> {t(STR.addWork, locale)}
-            </Button>
-            <Button size="sm" variant="secondary" onClick={() => navigate({ to: "/mentor" })}>
-              <MessageCircle className="size-4" /> {m.mentor_chatTitle()}
             </Button>
           </div>
         </div>

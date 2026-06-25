@@ -8,42 +8,36 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { useEffect, type FC } from "react";
-import { Award, Compass, House, Image, MessageCircle } from "lucide-react";
+import { Award, Compass, House, Image, Settings as SettingsIcon } from "lucide-react";
+import type { Locale } from "@/paraglide/runtime";
 import { m } from "@/paraglide/messages";
 import { useApp } from "./context";
+import { t } from "../data/types";
+import { STR } from "../strings";
 import { Home } from "../screens/Home";
 import { Profiles } from "../screens/Profiles";
 import { Discover } from "../screens/Discover";
 import { Quest } from "../screens/Quest";
 import { Badges } from "../screens/Badges";
 import { Gallery } from "../screens/Gallery";
-import { Mentor } from "../screens/Mentor";
+import { Settings } from "../screens/Settings";
 
-const NAV = [
-  { to: "/", icon: House, labelKey: "nav_home" },
-  { to: "/discover", icon: Compass, labelKey: "nav_discover" },
-  { to: "/badges", icon: Award, labelKey: "badges_title" },
-  { to: "/gallery", icon: Image, labelKey: "nav_gallery" },
-  { to: "/mentor", icon: MessageCircle, labelKey: "mentor_chatTitle" },
-] as const;
+type NavPath = "/" | "/discover" | "/badges" | "/gallery" | "/settings";
 
-function navLabel(key: (typeof NAV)[number]["labelKey"]): string {
-  switch (key) {
-    case "nav_home":
-      return m.nav_home();
-    case "nav_discover":
-      return m.nav_discover();
-    case "badges_title":
-      return m.badges_title();
-    case "nav_gallery":
-      return m.nav_gallery();
-    case "mentor_chatTitle":
-      return m.mentor_chatTitle();
-  }
-}
+const NAV: ReadonlyArray<{
+  to: NavPath;
+  icon: typeof House;
+  label: (locale: Locale) => string;
+}> = [
+  { to: "/", icon: House, label: () => m.nav_home() },
+  { to: "/discover", icon: Compass, label: () => m.nav_discover() },
+  { to: "/badges", icon: Award, label: () => m.badges_title() },
+  { to: "/gallery", icon: Image, label: () => m.nav_gallery() },
+  { to: "/settings", icon: SettingsIcon, label: (locale) => t(STR.settingsTitle, locale) },
+];
 
 function AppShell() {
-  const { profile, loading } = useApp();
+  const { profile, loading, locale } = useApp();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
@@ -63,7 +57,7 @@ function AppShell() {
       </main>
       {showNav ? (
         <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto flex max-w-md items-stretch justify-around border-t border-border bg-plain-surface/95 backdrop-blur">
-          {NAV.map(({ to, icon: Icon, labelKey }) => {
+          {NAV.map(({ to, icon: Icon, label }) => {
             const active = to === "/" ? pathname === "/" : pathname.startsWith(to);
             return (
               <button
@@ -76,7 +70,7 @@ function AppShell() {
                 aria-current={active ? "page" : undefined}
               >
                 <Icon className="size-6" aria-hidden />
-                {navLabel(labelKey)}
+                {label(locale)}
               </button>
             );
           })}
@@ -98,7 +92,7 @@ const routeTree = rootRoute.addChildren([
   createRoute({ getParentRoute: () => rootRoute, path: "/quest/$questId", component: Quest }),
   makeRoute("/badges", Badges),
   makeRoute("/gallery", Gallery),
-  makeRoute("/mentor", Mentor),
+  makeRoute("/settings", Settings),
 ]);
 
 export const router = createRouter({

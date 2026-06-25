@@ -18,7 +18,7 @@ import { sanitizeInput } from "@/lib/sanitize";
 import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 import { QuestGenerationInputSchema } from "@/lib/ai/quest-schemas";
 import { generateQuest } from "@/lib/ai/client";
-import { moderateContent } from "@/lib/moderation";
+import { moderateContent, moderateImageContent } from "@/lib/moderation";
 import { mapQuestToInterestSignals, mapMissionCompletionToInterestSignals } from "@/lib/interests/quest-mapper";
 import { ingestInterestSignals } from "@/lib/interests/ingest-service";
 import { getZpdScore, recordZpdEvent } from "@/lib/zpd";
@@ -38,7 +38,8 @@ import {
   assessMissionEngagement,
   type MissionEngagementMetrics,
 } from "@/lib/interests/mission-reassessment";
-import { geocodeLocationText } from "@/lib/geocoding";
+import { classifyTags } from "@/lib/ai/tag-classifier";
+import { buildGalleryAnalytics } from "@/lib/server/gallery-analytics";
 import { stripLocalContext } from "@/lib/privacy/quest-context";
 
 // ---------------------------------------------------------------------------
@@ -60,6 +61,7 @@ export const QuestCompleteSchema = z.union([
     id: z.string(),
     selectedPhotoUrl: z.string().url(),
     skipGallery: z.literal(false).optional(),
+    artworkStory: z.string().max(1000).optional(),
   }),
   z.object({
     id: z.string(),
@@ -845,14 +847,38 @@ export const completeQuestFn = createServerFn({ method: "POST" })
         return err("duplicate_entry", "A gallery entry already exists for this quest.");
       }
 
-      const sortedTalents = [...detectedTalents].sort(
-        (a, b) => (b.confidence ?? 0) - (a.confidence ?? 0),
-      );
-      const talentCategory = sortedTalents[0]?.name ?? "Creative";
+      // Moderate the photo before it is published to the public gallery + world map.
+      const imageModeration = await moderateImageContent({
+        imageUrl: selectedPhotoUrl!,
+        sourceType: "gallery",
+        sourceId: questId,
+        childId: session.childId,
+      });
+      if (!imageModeration.allowed) {
+        return err(
+          "content_blocked",
+          imageModeration.redirectMessage ??
+            "This image cannot be displayed publicly. Try a different photo!",
+        );
+      }
 
-      const geoResult = geocodeLocationText(quest.localContext);
-      const country = geoResult?.country ?? null;
-      const coordinates = geoResult?.coordinates ? JSON.stringify(geoResult.coordinates) : null;
+      // Provenance + talent-development analytics snapshot for "talent sparking" analysis.
+      const child = await db.query.children.findFirst({
+        where: eq(children.id, session.childId),
+      });
+
+      const analytics = buildGalleryAnalytics({
+        detectedTalents,
+        localContext: quest.localContext,
+        missions: quest.missions,
+        questCreatedAt: quest.createdAt,
+        childDateOfBirth: child?.dateOfBirth ?? null,
+      });
+
+      const artworkStory =
+        "artworkStory" in data && data.artworkStory
+          ? sanitizeInput(data.artworkStory)
+          : null;
 
       const questContext = JSON.stringify({
         questTitle: quest.dream,
@@ -866,10 +892,21 @@ export const completeQuestFn = createServerFn({ method: "POST" })
           .values({
             childId: session.childId,
             questId,
+            discoveryId: quest.discoveryId ?? null,
             imageUrl: selectedPhotoUrl!,
-            talentCategory,
-            country,
-            coordinates,
+            talentCategory: analytics.talentCategory,
+            talentConfidence: analytics.talentConfidence,
+            detectedTalents: JSON.stringify(analytics.detectedTalents),
+            country: analytics.country,
+            coordinates: analytics.coordinates
+              ? JSON.stringify(analytics.coordinates)
+              : null,
+            ageBand: analytics.ageBand,
+            ageYears: analytics.ageYears,
+            missionCount: analytics.missionCount,
+            proofPhotoCount: analytics.proofPhotoCount,
+            questDurationDays: analytics.questDurationDays,
+            artworkStory,
             questContext,
           })
           .returning();
@@ -878,6 +915,26 @@ export const completeQuestFn = createServerFn({ method: "POST" })
 
         return entry;
       });
+
+      // Classify semantic talent tags (non-blocking — powers gallery tag filtering).
+      let classifiedTags:
+        | Array<{ name: string; confidence: number; category: string }>
+        | null = null;
+      try {
+        const tagResult = await classifyTags(
+          analytics.talentCategory,
+          quest.discovery?.detectedTalents ?? undefined,
+        );
+        if (tagResult.tags.length > 0) {
+          classifiedTags = tagResult.tags;
+          await db
+            .update(galleryEntries)
+            .set({ talentTags: JSON.stringify(tagResult.tags) })
+            .where(eq(galleryEntries.id, galleryEntry.id));
+        }
+      } catch (tagError) {
+        console.warn("Tag classification failed (non-blocking):", tagError);
+      }
 
       // Ingest quest-completed interest signals (fire-and-forget)
       await runQuestCompletedSignals({
@@ -898,7 +955,9 @@ export const completeQuestFn = createServerFn({ method: "POST" })
         galleryEntry.questContext,
         null,
       );
-      const strippedQuestContext = stripLocalContext(parsedQuestContext) as QuestContextShape | null;
+      const strippedQuestContext = stripLocalContext(
+        parsedQuestContext,
+      ) as QuestContextShape | null;
 
       return ok({
         success: true as const,
@@ -906,11 +965,20 @@ export const completeQuestFn = createServerFn({ method: "POST" })
           id: galleryEntry.id,
           imageUrl: galleryEntry.imageUrl,
           talentCategory: galleryEntry.talentCategory,
+          talentConfidence: galleryEntry.talentConfidence,
+          detectedTalents: analytics.detectedTalents,
+          talentTags: classifiedTags,
           country: galleryEntry.country,
           coordinates: safeParseJSON<{ lat: number; lng: number } | null>(
             galleryEntry.coordinates,
             null,
           ),
+          artworkStory: galleryEntry.artworkStory,
+          journey: {
+            missionCount: galleryEntry.missionCount,
+            proofPhotoCount: galleryEntry.proofPhotoCount,
+            questDurationDays: galleryEntry.questDurationDays,
+          },
           questContext: strippedQuestContext,
         },
       });

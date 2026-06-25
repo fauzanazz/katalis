@@ -84,6 +84,7 @@ function QuestCompletePage() {
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [artworkStory, setArtworkStory] = useState("");
 
   const handleSelectPhoto = useCallback((photoUrl: string, day: number) => {
     setSelectedPhotoUrl(photoUrl);
@@ -98,10 +99,18 @@ function QuestCompletePage() {
     setSubmitError(null);
     try {
       const result = await completeQuestFn({
-        data: { id: questId, selectedPhotoUrl },
+        data: {
+          id: questId,
+          selectedPhotoUrl,
+          artworkStory: artworkStory.trim() || undefined,
+        },
       });
       if (!result.ok) {
-        setSubmitError(m.quest_complete_submitError());
+        setSubmitError(
+          result.error === "content_blocked"
+            ? m.quest_complete_contentBlocked()
+            : m.quest_complete_submitError(),
+        );
         return;
       }
       setPageState("submitted");
@@ -110,7 +119,7 @@ function QuestCompletePage() {
     } finally {
       setSubmitting(false);
     }
-  }, [questId, selectedPhotoUrl]);
+  }, [questId, selectedPhotoUrl, artworkStory]);
 
   const handleSkipGallery = useCallback(async () => {
     setSubmitting(true);
@@ -399,6 +408,25 @@ function QuestCompletePage() {
                 <span className="text-muted-foreground">{quest.localContext}</span>
               </div>
             </div>
+          </div>
+
+          {/* Optional artist's note — captures the child's own voice about their work */}
+          <div className="mt-4">
+            <label
+              htmlFor="artwork-story"
+              className="mb-1.5 block text-sm font-medium text-foreground"
+            >
+              {m.quest_complete_storyLabel()}
+            </label>
+            <textarea
+              id="artwork-story"
+              value={artworkStory}
+              onChange={(event) => setArtworkStory(event.target.value)}
+              maxLength={1000}
+              rows={3}
+              placeholder={m.quest_complete_storyPlaceholder()}
+              className="w-full resize-none rounded-lg border border-border bg-background p-3 text-sm shadow-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-200"
+            />
           </div>
         </section>
       )}

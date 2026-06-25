@@ -156,6 +156,17 @@ export const galleryEntries = sqliteTable("gallery_entries", {
   questContext: text("quest_context"),
   clusterGroup: text("cluster_group"),
   talentTags: text("talent_tags"),
+  // ─ Provenance: links the published work back to the spark + journey that produced it
+  discoveryId: text("discovery_id"),
+  artworkStory: text("artwork_story"),
+  // ─ Talent-development analytics (snapshot at completion, for "talent sparking" success analysis)
+  detectedTalents: text("detected_talents"),
+  talentConfidence: real("talent_confidence"),
+  ageBand: text("age_band"),
+  ageYears: integer("age_years"),
+  missionCount: integer("mission_count"),
+  proofPhotoCount: integer("proof_photo_count"),
+  questDurationDays: integer("quest_duration_days"),
   createdAt: ts("created_at")
     .notNull()
     .$defaultFn(() => new Date()),

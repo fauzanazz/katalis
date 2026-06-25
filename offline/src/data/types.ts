@@ -88,9 +88,3 @@ export interface GalleryItem {
   caption: string;
   createdAt: number;
 }
-
-/** A single mentor chat turn. */
-export interface MentorMessage {
-  role: "user" | "assistant";
-  content: string;
-}

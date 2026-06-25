@@ -1,22 +1,37 @@
 "use client";
 
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect, notFound } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { LocaleLink } from "@/i18n/start-navigation";
 import { useStepUp } from "@/components/start/auth/use-step-up";
-import { changeParentPasswordFn } from "@/lib/server/parent";
+import { changeParentPasswordFn, exportChildDataFn } from "@/lib/server/parent-reports";
+import { listParentChildrenFn } from "@/lib/server/parent-children";
 import { m } from "@/paraglide/messages";
 
 export const Route = createFileRoute("/$locale/parent/settings/")({
+  loader: async ({ params }) => {
+    const res = await listParentChildrenFn();
+    if (!res.ok) {
+      if (res.error === "unauthorized") {
+        throw redirect({ href: `/${params.locale}/login` });
+      }
+      throw notFound();
+    }
+    return { children: res.children };
+  },
   component: ParentSettingsPage,
 });
 
 function ParentSettingsPage() {
+  const { children } = Route.useLoaderData();
   const { withStepUp, stepUpDialog } = useStepUp();
   const [newPassword, setNewPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const [selectedChildId, setSelectedChildId] = useState(children[0]?.id ?? "");
+  const [exporting, setExporting] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -40,6 +55,30 @@ function ParentSettingsPage() {
       }
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleExport() {
+    if (!selectedChildId) return;
+    setExporting(true);
+    try {
+      const res = await withStepUp(() =>
+        exportChildDataFn({ data: { childId: selectedChildId } }),
+      );
+      if (!res.ok) {
+        toast.error(res.message ?? m.parent_settings_exportError());
+        return;
+      }
+      const blob = new Blob([res.data], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = res.filename;
+      anchor.click();
+      URL.revokeObjectURL(url);
+      toast.success(m.parent_settings_exportSuccess());
+    } finally {
+      setExporting(false);
     }
   }
 
@@ -101,6 +140,48 @@ function ParentSettingsPage() {
             </button>
           </div>
         </form>
+      </section>
+
+      <section className="mt-6 rounded-lg border bg-card p-5">
+        <h2 className="text-lg font-semibold">{m.parent_settings_exportTitle()}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{m.parent_settings_exportHint()}</p>
+
+        {children.length === 0 ? (
+          <p className="mt-4 text-sm text-muted-foreground">{m.parent_settings_exportNoChildren()}</p>
+        ) : (
+          <div className="mt-4 space-y-4">
+            {children.length > 1 && (
+              <div>
+                <label htmlFor="export-child" className="block text-sm font-medium">
+                  {m.parent_settings_exportChildLabel()}
+                </label>
+                <select
+                  id="export-child"
+                  value={selectedChildId}
+                  onChange={(e) => setSelectedChildId(e.target.value)}
+                  disabled={exporting}
+                  className="mt-1 block w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  {children.map((child) => (
+                    <option key={child.id} value={child.id}>
+                      {child.name ?? m.parent_settings_exportUnnamedChild()}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={handleExport}
+                disabled={exporting || !selectedChildId}
+                className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {exporting ? m.parent_settings_exporting() : m.parent_settings_exportButton()}
+              </button>
+            </div>
+          </div>
+        )}
       </section>
 
       {stepUpDialog}

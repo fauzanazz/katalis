@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Sparkles, Trash2, X } from "lucide-react";
+import { Camera, Images, Sparkles, Trash2, X } from "lucide-react";
 import { m } from "@/paraglide/messages";
 import { Button } from "@/components/ui/button";
 import { useApp } from "../app/context";
@@ -16,7 +16,8 @@ const L = {
 
 export function Gallery() {
   const { profile, locale } = useApp();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [pendingDataUrl, setPendingDataUrl] = useState<string | null>(null);
@@ -48,8 +49,12 @@ export function Gallery() {
     });
   }
 
-  function handleAddClick() {
-    fileInputRef.current?.click();
+  function openCamera() {
+    cameraInputRef.current?.click();
+  }
+
+  function openGallery() {
+    galleryInputRef.current?.click();
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -134,24 +139,37 @@ export function Gallery() {
         <p className="text-muted-foreground">{m.gallery_subtitle()}</p>
       </header>
 
-      {/* Hidden file input */}
+      {/* Hidden file inputs — camera + gallery */}
       <input
-        ref={fileInputRef}
+        ref={cameraInputRef}
         type="file"
         accept="image/*"
         capture="environment"
         hidden
         onChange={handleFileChange}
       />
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={handleFileChange}
+      />
 
-      {/* Add work button */}
+      {/* Add work — camera or gallery */}
       {!pendingDataUrl && (
-        <Button
-          onClick={handleAddClick}
-          className="w-full active:scale-[0.98]"
-        >
-          {t(STR.addWork, locale)}
-        </Button>
+        <div className="flex gap-2">
+          <Button className="flex-1 active:scale-[0.98]" onClick={openCamera}>
+            <Camera className="size-4" /> {t(STR.scoutTakePhoto, locale)}
+          </Button>
+          <Button
+            variant="secondary"
+            className="flex-1 active:scale-[0.98]"
+            onClick={openGallery}
+          >
+            <Images className="size-4" /> {t(STR.scoutFromGallery, locale)}
+          </Button>
+        </div>
       )}
 
       {/* Inline caption form after image selected */}

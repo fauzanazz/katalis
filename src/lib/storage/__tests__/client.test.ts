@@ -11,18 +11,44 @@ describe("getStorageClient", () => {
     vi.unstubAllEnvs();
   });
 
-  it("returns mock client when USE_MOCK_AI=true", () => {
+  it("returns mock client when USE_MOCK_AI=true (USE_MOCK_STORAGE unset)", () => {
     vi.stubEnv("USE_MOCK_AI", "true");
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3100");
+    // Ensure USE_MOCK_STORAGE cannot bleed in from CI environment
+    delete process.env.USE_MOCK_STORAGE;
 
     const client = getStorageClient();
-    // The mock client generates local URLs
     const url = client.getPublicUrl("test/file.jpg");
     expect(url).toContain("localhost:3100/uploads/");
   });
 
+  it("USE_MOCK_STORAGE=true takes precedence over USE_MOCK_AI=false", () => {
+    vi.stubEnv("USE_MOCK_STORAGE", "true");
+    vi.stubEnv("USE_MOCK_AI", "false");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3100");
+
+    const client = getStorageClient();
+    const url = client.getPublicUrl("test/file.jpg");
+    expect(url).toContain("localhost:3100/uploads/");
+  });
+
+  it("USE_MOCK_STORAGE=false overrides USE_MOCK_AI=true → R2 client", () => {
+    vi.stubEnv("USE_MOCK_STORAGE", "false");
+    vi.stubEnv("USE_MOCK_AI", "true");
+    vi.stubEnv("R2_ACCOUNT_ID", "test-account");
+    vi.stubEnv("R2_ACCESS_KEY_ID", "test-key");
+    vi.stubEnv("R2_SECRET_ACCESS_KEY", "test-secret");
+    vi.stubEnv("R2_BUCKET_NAME", "test-bucket");
+    vi.stubEnv("R2_PUBLIC_URL", "https://cdn.example.com");
+
+    const client = getStorageClient();
+    const url = client.getPublicUrl("test/file.jpg");
+    expect(url).toBe("https://cdn.example.com/test/file.jpg");
+  });
+
   it("returns R2 client when USE_MOCK_AI is not 'true'", () => {
     vi.stubEnv("USE_MOCK_AI", "false");
+    delete process.env.USE_MOCK_STORAGE;
     vi.stubEnv("R2_ACCOUNT_ID", "test-account");
     vi.stubEnv("R2_ACCESS_KEY_ID", "test-key");
     vi.stubEnv("R2_SECRET_ACCESS_KEY", "test-secret");
@@ -35,7 +61,7 @@ describe("getStorageClient", () => {
   });
 
   it("caches the client across multiple calls (singleton)", () => {
-    vi.stubEnv("USE_MOCK_AI", "true");
+    vi.stubEnv("USE_MOCK_STORAGE", "true");
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3100");
 
     const client1 = getStorageClient();
@@ -44,7 +70,7 @@ describe("getStorageClient", () => {
   });
 
   it("creates a new client after reset", () => {
-    vi.stubEnv("USE_MOCK_AI", "true");
+    vi.stubEnv("USE_MOCK_STORAGE", "true");
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3100");
 
     const client1 = getStorageClient();
@@ -54,8 +80,8 @@ describe("getStorageClient", () => {
   });
 
   it("throws when R2 env vars are missing in non-mock mode", () => {
+    vi.stubEnv("USE_MOCK_STORAGE", "false");
     vi.stubEnv("USE_MOCK_AI", "false");
-    // Don't set any R2 env vars
     delete process.env.R2_ACCOUNT_ID;
     delete process.env.R2_ACCESS_KEY_ID;
     delete process.env.R2_SECRET_ACCESS_KEY;

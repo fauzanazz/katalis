@@ -9,14 +9,17 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "pretypecheck": "bun scripts/compile-paraglide.ts",
     "typecheck": "tsc --noEmit",
+    "prelint": "bun scripts/compile-paraglide.ts",
     "lint": "eslint",
     "db:migrate": "drizzle-kit migrate",
     "db:migrate:prod": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "bun scripts/seed.ts"
+    "db:seed": "bun scripts/seed.ts",
+    "paraglide:compile": "bun scripts/compile-paraglide.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.81.0",

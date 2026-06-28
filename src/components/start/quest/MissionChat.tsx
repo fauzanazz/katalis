@@ -7,18 +7,22 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp,
+  Camera,
+  X,
 } from "lucide-react";
 import {
   getMentorSessionFn,
   sendMentorMessageFn,
   adjustMentorFn,
 } from "@/lib/server/mentor";
+import { getPresignedUploadUrlFn, completeUploadFn } from "@/lib/server/storage";
 
 interface MissionChatProps {
   questId: string;
   missionId: string;
   missionDay: number;
   missionTitle: string;
+  defaultExpanded?: boolean;
 }
 
 interface ChatMessage {
@@ -27,20 +31,23 @@ interface ChatMessage {
   content: string;
   suggestions?: string[];
   offerAdjustment?: boolean;
+  imageUrl?: string;
 }
 
-export function MissionChat({ missionId }: MissionChatProps) {
-  const [expanded, setExpanded] = useState(false);
+export function MissionChat({ missionId, defaultExpanded = false }: MissionChatProps) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
-  const [adjustmentMessageId, setAdjustmentMessageId] = useState<
-    string | null
-  >(null);
+  const [chatError, setChatError] = useState(false);
+  const [adjustmentMessageId, setAdjustmentMessageId] = useState<string | null>(null);
+  const [pendingImageUrl, setPendingImageUrl] = useState<string | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
 
   const threadRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const initialized = useRef(false);
 
   const scrollToBottom = useCallback(() => {
@@ -62,18 +69,21 @@ export function MissionChat({ missionId }: MissionChatProps) {
   }, [missionId]);
 
   const sendMessage = useCallback(
-    async (content: string) => {
+    async (content: string, imgUrl?: string) => {
       if (!sessionId) return;
       setLoading(true);
       try {
         const res = await sendMentorMessageFn({
-          data: { sessionId, content },
+          data: { sessionId, content, imageUrl: imgUrl },
         });
         if (res.ok) {
+          setChatError(false);
           setMessages((prev) => [...prev, res.message]);
+        } else {
+          setChatError(true);
         }
       } catch {
-        // Silently fail — mentor unavailable
+        setChatError(true);
       } finally {
         setLoading(false);
       }
@@ -90,38 +100,92 @@ export function MissionChat({ missionId }: MissionChatProps) {
       try {
         const session = await fetchSession();
         setSessionId(session.sessionId);
-        setMessages(session.messages as ChatMessage[]);
+        setMessages(
+          session.messages.map((msg) => ({
+            id: msg.id,
+            role: msg.role as "child" | "mentor",
+            content: msg.content,
+            suggestions: (msg.meta as { suggestions?: string[] } | null)?.suggestions,
+            offerAdjustment: (msg.meta as { offerAdjustment?: boolean } | null)?.offerAdjustment,
+            imageUrl: (msg.meta as { imageUrl?: string } | null)?.imageUrl,
+          })),
+        );
 
         if (session.messages.length === 0) {
-          // Send empty greeting to get initial mentor message
           setLoading(true);
-          const res = await sendMentorMessageFn({
-            data: { sessionId: session.sessionId, content: "" },
-          });
-          if (res.ok) {
-            setMessages([res.message]);
+          try {
+            const res = await sendMentorMessageFn({
+              data: { sessionId: session.sessionId, content: "" },
+            });
+            if (res.ok) {
+              setMessages([res.message]);
+            } else {
+              setChatError(true);
+            }
+          } catch {
+            setChatError(true);
+          } finally {
+            setLoading(false);
           }
-          setLoading(false);
         }
       } catch {
-        // Session init failed — chat unavailable
+        setChatError(true);
       }
     })();
   }, [expanded, fetchSession, sendMessage]);
 
+  const handleImageSelect = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      // Reset input so the same file can be re-selected
+      e.target.value = "";
+
+      setImageUploading(true);
+      try {
+        const presignedRes = await getPresignedUploadUrlFn({
+          data: { filename: file.name, contentType: file.type },
+        });
+        if (!presignedRes.ok) throw new Error("Presign failed");
+
+        const { url: uploadUrl, key, category } = presignedRes;
+        const putRes = await fetch(uploadUrl, {
+          method: "PUT",
+          body: file,
+          headers: { "Content-Type": file.type },
+        });
+        if (!putRes.ok) throw new Error("Upload failed");
+
+        const completeRes = await completeUploadFn({ data: { key, category } });
+        if (!completeRes.ok) throw new Error("Complete failed");
+
+        setPendingImageUrl(completeRes.url);
+      } catch {
+        // Upload failed silently — child can try again
+      } finally {
+        setImageUploading(false);
+      }
+    },
+    [],
+  );
+
   const handleSend = useCallback(() => {
     const trimmed = inputValue.trim();
-    if (!trimmed || loading) return;
+    if ((!trimmed && !pendingImageUrl) || loading) return;
     setInputValue("");
+    const imgUrl = pendingImageUrl ?? undefined;
+    setPendingImageUrl(null);
 
+    const content = trimmed || "📷";
     const childMessage: ChatMessage = {
       id: `child-${Date.now()}`,
       role: "child",
-      content: trimmed,
+      content,
+      imageUrl: imgUrl,
     };
     setMessages((prev) => [...prev, childMessage]);
-    sendMessage(trimmed);
-  }, [inputValue, loading, sendMessage]);
+    sendMessage(content, imgUrl);
+  }, [inputValue, loading, pendingImageUrl, sendMessage]);
 
   const handleQuickReply = useCallback(
     (suggestion: string) => {
@@ -158,9 +222,17 @@ export function MissionChat({ missionId }: MissionChatProps) {
 
       setAdjustmentMessageId(acceptedId);
 
-      // Refetch session to get updated instructions
       const session = await fetchSession();
-      setMessages(session.messages as ChatMessage[]);
+      setMessages(
+        session.messages.map((msg) => ({
+          id: msg.id,
+          role: msg.role as "child" | "mentor",
+          content: msg.content,
+          suggestions: (msg.meta as { suggestions?: string[] } | null)?.suggestions,
+          offerAdjustment: (msg.meta as { offerAdjustment?: boolean } | null)?.offerAdjustment,
+          imageUrl: (msg.meta as { imageUrl?: string } | null)?.imageUrl,
+        })),
+      );
 
       const confirmMsg: ChatMessage = {
         id: `adjust-${Date.now()}`,
@@ -228,7 +300,7 @@ export function MissionChat({ missionId }: MissionChatProps) {
       {/* Message thread */}
       <div
         ref={threadRef}
-        className="flex max-h-80 flex-col gap-3 overflow-y-auto p-4"
+        className="flex max-h-[480px] flex-col gap-3 overflow-y-auto p-4"
         role="log"
         aria-label="Chat messages"
       >
@@ -241,7 +313,14 @@ export function MissionChat({ missionId }: MissionChatProps) {
                   : "bg-gray-50 text-gray-900 border-gray-200"
               }`}
             >
-              {message.content}
+              {message.imageUrl && (
+                <img
+                  src={message.imageUrl}
+                  alt="Shared progress photo"
+                  className="mb-1.5 max-h-40 w-full rounded-lg object-cover"
+                />
+              )}
+              {message.content !== "📷" && message.content}
             </div>
 
             {/* Quick reply suggestions below mentor messages */}
@@ -272,14 +351,18 @@ export function MissionChat({ missionId }: MissionChatProps) {
           </div>
         )}
 
+        {/* Error state */}
+        {chatError && !loading && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
+            Quest Buddy sedang tidak tersedia. Coba lagi sebentar ya!
+          </div>
+        )}
+
         {/* Adjustment card */}
         {adjustmentPending && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
             <div className="flex items-center gap-2">
-              <Sparkles
-                className="size-4 text-amber-600"
-                aria-hidden="true"
-              />
+              <Sparkles className="size-4 text-amber-600" aria-hidden="true" />
               <h4 className="text-sm font-semibold text-amber-800">
                 {m.mentor_adjustment_title()}
               </h4>
@@ -307,8 +390,47 @@ export function MissionChat({ missionId }: MissionChatProps) {
         )}
       </div>
 
+      {/* Pending image preview */}
+      {pendingImageUrl && (
+        <div className="relative mx-3 mb-1 w-fit">
+          <img
+            src={pendingImageUrl}
+            alt="Photo to send"
+            className="h-16 w-16 rounded-lg border border-blue-200 object-cover"
+          />
+          <button
+            onClick={() => setPendingImageUrl(null)}
+            aria-label={m.mentor_removePhoto()}
+            className="absolute -right-1.5 -top-1.5 flex size-5 items-center justify-center rounded-full bg-gray-700 text-white hover:bg-gray-900"
+          >
+            <X className="size-3" />
+          </button>
+        </div>
+      )}
+
       {/* Input area */}
       <div className="flex items-center gap-2 border-t border-blue-100 bg-gray-50 px-3 py-2">
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleImageSelect}
+        />
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={loading || imageUploading}
+          aria-label={m.mentor_uploadPhoto()}
+          className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-100 disabled:opacity-50"
+        >
+          {imageUploading ? (
+            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+          ) : (
+            <Camera className="size-4" aria-hidden="true" />
+          )}
+        </button>
+
         <input
           ref={inputRef}
           type="text"
@@ -326,7 +448,7 @@ export function MissionChat({ missionId }: MissionChatProps) {
         />
         <button
           onClick={handleSend}
-          disabled={loading || !inputValue.trim()}
+          disabled={loading || (!inputValue.trim() && !pendingImageUrl)}
           className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
           aria-label={m.mentor_send()}
         >

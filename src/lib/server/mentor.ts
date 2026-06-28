@@ -12,6 +12,7 @@ import {
   children,
   quests,
   reflectionEntries,
+  childBadges,
 } from "@/lib/schema";
 import { sanitizeInput } from "@/lib/sanitize";
 import { isAllowedStorageUrl } from "@/lib/url-allowlist";
@@ -68,8 +69,8 @@ export const getMentorSessionFn = createServerFn({ method: "GET" })
         return err("not_found", "Mission not found");
       }
 
-      if (mission.status !== "in_progress") {
-        return err("invalid_state", "Mission must be in progress to start mentor chat");
+      if (mission.status === "locked") {
+        return err("invalid_state", "Mission is locked");
       }
 
       await db.insert(mentorSessions).values({
@@ -165,18 +166,24 @@ export const createMentorSessionFn = createServerFn({ method: "POST" })
 
 export const sendMentorMessageFn = createServerFn({ method: "POST" })
   .validator((d: unknown) => {
-    // Allow empty content for greeting requests (mirrors the route's pre-parse patch)
     const raw = d as Record<string, unknown>;
-    if (raw.content === null || raw.content === undefined) raw.content = "";
-    return SendMessageInputSchema.parse(raw);
+    // Empty string = greeting request — allowed in handler via isGreeting check.
+    // Override content validation to accept "" (SendMessageInputSchema has min(1)).
+    return {
+      ...SendMessageInputSchema.omit({ content: true }).parse(raw),
+      content: z.string().max(1000).parse(raw.content ?? ""),
+    };
   })
   .handler(async ({ data }) => {
     const session = await getChildSession();
     if (!session) return err("unauthorized", "Authentication required");
 
-    const { sessionId, content, behavioralSignals } = data;
+    const { sessionId, content, behavioralSignals, imageUrl } = data;
     const isGreeting = content === "";
     const sanitizedContent = isGreeting ? "" : sanitizeInput(content);
+
+    const validatedImageUrl =
+      imageUrl && isAllowedStorageUrl(imageUrl) ? imageUrl : undefined;
 
     const mentorSession = await db.query.mentorSessions.findFirst({
       where: eq(mentorSessions.id, sessionId),
@@ -213,6 +220,7 @@ export const sendMentorMessageFn = createServerFn({ method: "POST" })
         sessionId,
         role: "child",
         content: sanitizedContent,
+        meta: validatedImageUrl ? JSON.stringify({ imageUrl: validatedImageUrl }) : null,
       });
     }
 
@@ -272,7 +280,12 @@ export const sendMentorMessageFn = createServerFn({ method: "POST" })
         chatHistory,
         isGreeting,
         ageGroup,
+        validatedImageUrl,
       );
+    } catch (mentorErr) {
+      clearTimeout(timeoutId);
+      console.error("[mentor] mentorChat failed:", mentorErr);
+      throw mentorErr;
     } finally {
       clearTimeout(timeoutId);
     }
@@ -311,7 +324,7 @@ export const sendMentorMessageFn = createServerFn({ method: "POST" })
           role: "mentor",
           content: mentorResponse.message,
           meta: JSON.stringify({
-            suggestions: mentorResponse.suggestions,
+            suggestions: mentorResponse.suggestions?.slice(0, 3),
             frustrationLevel: mentorResponse.frustrationLevel ?? frustrationLevel,
             offerAdjustment: mentorResponse.offerAdjustment,
           }),
@@ -337,7 +350,7 @@ export const sendMentorMessageFn = createServerFn({ method: "POST" })
         id: savedMentorMessage.id,
         role: "mentor" as const,
         content: mentorResponse.message,
-        suggestions: mentorResponse.suggestions,
+        suggestions: mentorResponse.suggestions?.slice(0, 3),
         frustrationLevel: mentorResponse.frustrationLevel ?? frustrationLevel,
         offerAdjustment: mentorResponse.offerAdjustment,
         createdAt: savedMentorMessage.createdAt.toISOString(),
@@ -550,4 +563,40 @@ export const submitReflectionFn = createServerFn({ method: "POST" })
       aiSummary,
       newBadges: newBadges.length > 0 ? newBadges : undefined,
     });
+  });
+
+// ---------------------------------------------------------------------------
+// signalOriginalIdeaFn
+// POST /api/mentor/original-idea — child declares they're doing it their own way
+// ---------------------------------------------------------------------------
+
+export const signalOriginalIdeaFn = createServerFn({ method: "POST" })
+  .validator((d: unknown) => z.object({ questId: z.string().cuid2() }).parse(d))
+  .handler(async ({ data }) => {
+    const session = await getChildSession();
+    if (!session) return err("unauthorized", "Authentication required");
+
+    const { questId } = data;
+
+    const quest = await db.query.quests.findFirst({
+      where: and(eq(quests.id, questId), eq(quests.childId, session.childId)),
+    });
+    if (!quest) return err("not_found", "Quest not found");
+
+    const alreadyEarned = await db.query.childBadges.findFirst({
+      where: and(
+        eq(childBadges.childId, session.childId),
+        eq(childBadges.badgeSlug, "inventor"),
+      ),
+    });
+    if (alreadyEarned) return ok({ newBadges: [] });
+
+    const newBadges = await awardBadges({
+      childId: session.childId,
+      newlyEarnedSlugs: ["inventor"],
+      trigger: "original_idea",
+      questId,
+    });
+
+    return ok({ newBadges });
   });

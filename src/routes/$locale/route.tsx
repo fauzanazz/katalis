@@ -12,6 +12,9 @@ export const Route = createFileRoute("/$locale")({
     if (!isLocale(params.locale)) throw notFound();
   },
   loader: () => getAuthFlags(),
+  // Auth flags change only on login/logout — those calls router.refresh()
+  // explicitly, so Infinity here won't cause stale header state.
+  staleTime: Infinity,
   component: LocaleLayout,
 });
 

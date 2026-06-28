@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   Link,
   useLocation,
@@ -53,13 +54,16 @@ export function useLocalePathname(): string {
 export function useLocaleRouter() {
   const navigate = useNavigate();
   const router = useRouter();
-  return {
-    push: (href: string) =>
-      navigate({
-        to: buildTo(href) as never,
-        params: { locale: getLocale() } as never,
-      }),
-    back: () => router.history.back(),
-    refresh: () => router.invalidate(),
-  };
+  return useMemo(
+    () => ({
+      push: (href: string) =>
+        navigate({
+          to: buildTo(href) as never,
+          params: { locale: getLocale() } as never,
+        }),
+      back: () => router.history.back(),
+      refresh: () => router.invalidate(),
+    }),
+    [navigate, router],
+  );
 }

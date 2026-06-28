@@ -678,7 +678,23 @@
       "success": "Reflection saved! Great job thinking about your learning!",
       "alreadyExists": "You already shared a reflection for this day",
       "encouragement": "Every great creator takes time to think about what they learned!"
-    }
+    },
+    "learningCycle": {
+      "title": "Talk With Your Quest Buddy",
+      "step1": "Check Materials",
+      "step2": "Get Started",
+      "step3": "Try It Out",
+      "step4": "Reflect"
+    },
+    "materialsCheck": "Do you have these?",
+    "myOwnIdea": {
+      "button": "I Have My Own Idea!",
+      "description": "Making it your own way earns a special badge!",
+      "success": "Amazing! Your creativity just earned you a special badge!"
+    },
+    "needHint": "Need a Hint?",
+    "uploadPhoto": "Upload photo",
+    "removePhoto": "Remove photo"
   },
   "gallery": {
     "kicker": "Squad gallery",
@@ -1026,6 +1042,10 @@
     "persistent_explorer": {
       "name": "Persistent Explorer",
       "description": "Kept going even when it was tough"
+    },
+    "inventor": {
+      "name": "Inventor",
+      "description": "Made the mission your own with a brilliant original idea!"
     }
   },
   "privacy": {

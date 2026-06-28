@@ -55,7 +55,7 @@ export async function analyzeStory(input: StoryAnalysisInput): Promise<StoryAnal
 
 export async function generateQuest(input: QuestGenerationInput): Promise<QuestGenerationOutput> {
   const raw = isMock()
-    ? await getMockQuestGeneration(input.dream)
+    ? await getMockQuestGeneration(input.dream, input.ageGroup)
     : await getProvider().generateQuest(input);
   return fillPhaseMetadata(raw, input.zpdScore);
 }

@@ -16,8 +16,8 @@ export type SessionStatus = z.infer<typeof SessionStatusSchema>;
 
 /** Creating a mentor session (auto on mission start) */
 export const CreateSessionInputSchema = z.object({
-  questId: z.string().cuid(),
-  missionId: z.string().cuid(),
+  questId: z.string().cuid2(),
+  missionId: z.string().cuid2(),
 });
 export type CreateSessionInput = z.infer<typeof CreateSessionInputSchema>;
 
@@ -53,19 +53,20 @@ export type BehavioralSignals = z.infer<typeof BehavioralSignalsSchema>;
 
 /** Sending a message to the mentor */
 export const SendMessageInputSchema = z.object({
-  sessionId: z.string().cuid(),
+  sessionId: z.string().cuid2(),
   content: z
     .string()
     .min(1, "Message cannot be empty")
     .max(1000, "Message is too long"),
   behavioralSignals: BehavioralSignalsSchema.optional(),
+  imageUrl: z.string().url().optional(),
 });
 export type SendMessageInput = z.infer<typeof SendMessageInputSchema>;
 
 /** Mentor AI response */
 export const MentorResponseSchema = z.object({
   message: z.string(),
-  suggestions: z.array(z.string()).max(3).optional(),
+  suggestions: z.array(z.string()).max(5).optional(),
   frustrationLevel: FrustrationLevelSchema.optional(),
   offerAdjustment: z.boolean().optional(),
 });
@@ -73,7 +74,7 @@ export type MentorResponse = z.infer<typeof MentorResponseSchema>;
 
 /** Mission adjustment request */
 export const AdjustmentInputSchema = z.object({
-  sessionId: z.string().cuid(),
+  sessionId: z.string().cuid2(),
   reason: z.enum(["frustration_detected", "child_requested", "time_based"]),
 });
 export type AdjustmentInput = z.infer<typeof AdjustmentInputSchema>;
@@ -87,7 +88,7 @@ export type SimplifiedMission = z.infer<typeof SimplifiedMissionSchema>;
 
 /** Daily reflection input */
 export const ReflectionInputSchema = z.object({
-  questId: z.string().cuid(),
+  questId: z.string().cuid2(),
   missionDay: z.number().int().min(1).max(7),
   type: z.enum(["text", "voice"]),
   content: z

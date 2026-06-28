@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Menu } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -52,10 +52,12 @@ export function Header({ isAuthenticated, isAdmin, isParent }: HeaderProps) {
   const isChild = isAuthenticated && !isParent && !isAdmin;
   const logoHref = isParent ? "/parent" : isChild ? "/home" : "/";
 
-  const gooeyItems = NAV_LINKS.map((link) => ({
-    label: NAV_LABEL[link.labelKey](),
-    href: link.href,
-  }));
+  const gooeyItems = useMemo(
+    () => NAV_LINKS.map((link) => ({ label: NAV_LABEL[link.labelKey](), href: link.href })),
+    // NAV_LINKS is a module-level constant; locale changes trigger a full re-render anyway
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   // Child "logout" exits to the parent dashboard (no password); parent logout
   // tears down the whole session.

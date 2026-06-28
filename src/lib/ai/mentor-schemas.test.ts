@@ -64,7 +64,7 @@ describe("BehavioralSignalsSchema", () => {
 });
 
 describe("SendMessageInputSchema — behavioralSignals (backward compat)", () => {
-  const base = { sessionId: "clxxxxxxxxxxxxxxxxxxxxxxxx", content: "hello" };
+  const base = { sessionId: "vqkn5tp9dcw16ccmlm8gicv6", content: "hello" };
 
   it("accepts payload without behavioralSignals (backward compatible)", () => {
     expect(SendMessageInputSchema.safeParse(base).success).toBe(true);

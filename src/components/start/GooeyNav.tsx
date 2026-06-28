@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 
 import { LocaleLink, useLocalePathname } from "@/i18n/start-navigation";
 import "@/components/layout/GooeyNav.css";
@@ -62,17 +62,16 @@ export function GooeyNav({
   const filterRef = useRef<HTMLSpanElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
 
-  const computeActive = () => {
+  const computeActive = useCallback(() => {
     const idx = items.findIndex((item) => pathname.startsWith(item.href));
     return idx >= 0 ? idx : 0;
-  };
+  }, [pathname, items]);
 
   const [activeIndex, setActiveIndex] = useState(computeActive);
 
   useEffect(() => {
     setActiveIndex(computeActive());
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
+  }, [computeActive]);
 
   const makeParticles = (element: HTMLSpanElement) => {
     const bubbleTime = animationTime * 2 + timeVariance;

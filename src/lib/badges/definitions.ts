@@ -80,6 +80,14 @@ export const BADGE_DEFINITIONS: readonly BadgeDef[] = [
     nameKey: "badges.persistent_explorer.name",
     descriptionKey: "badges.persistent_explorer.description",
   },
+  {
+    slug: "inventor",
+    category: "creativity",
+    tier: "gold",
+    icon: "💡",
+    nameKey: "badges.inventor.name",
+    descriptionKey: "badges.inventor.description",
+  },
 ] as const;
 
 /** Lookup map by slug */

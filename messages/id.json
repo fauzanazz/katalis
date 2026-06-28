@@ -678,7 +678,23 @@
       "success": "Refleksi tersimpan! Hebat sekali sudah memikirkan pembelajaranmu!",
       "alreadyExists": "Kamu sudah berbagi refleksi untuk hari ini",
       "encouragement": "Setiap kreator hebat meluangkan waktu untuk memikirkan apa yang mereka pelajari!"
-    }
+    },
+    "learningCycle": {
+      "title": "Ngobrol Sama Quest Buddy",
+      "step1": "Cek Bahan",
+      "step2": "Mulai",
+      "step3": "Coba!",
+      "step4": "Renungkan"
+    },
+    "materialsCheck": "Apakah kamu punya ini?",
+    "myOwnIdea": {
+      "button": "Aku Punya Ide Sendiri!",
+      "description": "Melakukannya dengan caramu sendiri mendapatkan lencana istimewa!",
+      "success": "Luar biasa! Kreativitasmu baru saja mendapatkan lencana istimewa!"
+    },
+    "needHint": "Butuh Petunjuk?",
+    "uploadPhoto": "Unggah foto",
+    "removePhoto": "Hapus foto"
   },
   "gallery": {
     "kicker": "Galeri squad",
@@ -1026,6 +1042,10 @@
     "persistent_explorer": {
       "name": "Penjelajah Tangguh",
       "description": "Terus maju meskipun sulit"
+    },
+    "inventor": {
+      "name": "Penemu",
+      "description": "Menjadikan misi sebagai milikmu sendiri dengan ide orisinal yang brilian!"
     }
   },
   "privacy": {

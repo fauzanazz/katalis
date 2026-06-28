@@ -68,8 +68,8 @@ const HIGH_RESPONSES: MentorResponse[] = [
 ];
 
 const GREETING_RESPONSE: MentorResponse = {
-  message: "Hi there! 🎉 I'm your Quest Buddy for today! I'm here to help you think through this mission, but I won't just give you answers — I'll ask questions to help YOU figure it out. That's how real creators learn! Ready to start?",
-  suggestions: ["Yes, let's go!", "Can you explain the mission?", "I'm not sure what to do first"],
+  message: "Welcome to today's mission! 🌟 Today you'll be creating something really cool with your hands — this is going to be fun! Before we start, let's make sure you've got everything ready. You'll need: paper, crayons, and a textured object like a rock or leaf. Do you have all of these, or is anything missing?",
+  suggestions: ["I have everything ready!", "I'm missing something", "What can I use instead of a rock?"],
   frustrationLevel: "none",
 };
 

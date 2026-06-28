@@ -34,6 +34,27 @@ export default defineConfig(({ mode }) => {
   define,
   server: {
     port: 3101,
+    warmup: {
+      // Pre-transform these on dev-server start so the first browser request
+      // doesn't trigger a cold-compile stall. Add any route you open first.
+      clientFiles: [
+        "./src/routes/__root.tsx",
+        "./src/routes/$locale/route.tsx",
+        "./src/routes/$locale/login/parent/index.tsx",
+        "./src/routes/$locale/home/index.tsx",
+        "./src/components/start/LocaleShell.tsx",
+        "./src/components/start/Header.tsx",
+        "./src/components/start/GooeyNav.tsx",
+        "./src/components/start/LanguageSwitcher.tsx",
+      ],
+      ssrFiles: [
+        "./src/lib/auth-flags.ts",
+        "./src/lib/auth-start.ts",
+        "./src/lib/auth-core.ts",
+        "./src/lib/db.ts",
+        "./src/lib/server/auth.ts",
+      ],
+    },
   },
   resolve: {
     tsconfigPaths: true,

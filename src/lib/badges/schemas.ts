@@ -17,6 +17,7 @@ export const BadgeTriggerSchema = z.enum([
   "reflection",
   "mentor_message",
   "adjustment",
+  "original_idea",
 ]);
 
 /** A badge definition — lives in code, not the database */
@@ -29,8 +30,8 @@ export const BadgeDefinitionSchema = z.object({
 
 /** Context passed to the badge evaluation engine */
 export const BadgeContextSchema = z.object({
-  childId: z.string().cuid(),
-  questId: z.string().cuid().optional(),
+  childId: z.string().cuid2(),
+  questId: z.string().cuid2().optional(),
   completedMissionCount: z.number().int().min(0),
   totalMissionCount: z.number().int().min(0),
   reflectionCount: z.number().int().min(0),

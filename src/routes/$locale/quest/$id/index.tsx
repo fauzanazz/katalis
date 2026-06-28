@@ -381,7 +381,7 @@ function QuestOverviewPage() {
         <div className="min-w-0 flex-1">
           <h2 className="sr-only">{m.quest_overview_missionDetail()}</h2>
           {selectedMission ? (
-            <div className="overflow-y-auto rounded-2xl border-2 border-black bg-white p-5 shadow-[4px_4px_0_#000] sm:p-7">
+            <div className="min-h-[700px] overflow-y-auto rounded-2xl border-2 border-black bg-white p-5 shadow-[4px_4px_0_#000] sm:p-7">
               <MissionDetail
                 mission={selectedMission}
                 questId={questId}

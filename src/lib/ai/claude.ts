@@ -134,7 +134,7 @@ export async function generateQuest(
   input: QuestGenerationInput,
 ): Promise<QuestGenerationOutput> {
   if (process.env.USE_MOCK_AI === "true") {
-    return getMockQuestGeneration(input.dream);
+    return getMockQuestGeneration(input.dream, input.ageGroup);
   }
 
   return callClaudeForQuest(input);

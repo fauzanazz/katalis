@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { eq, desc, asc, count } from "drizzle-orm";
+import { eq, desc, asc, count, and, isNull } from "drizzle-orm";
 
 import { getChildSession } from "@/lib/auth-start";
 import { db } from "@/lib/db";
@@ -38,7 +38,7 @@ import {
   assessMissionEngagement,
   type MissionEngagementMetrics,
 } from "@/lib/interests/mission-reassessment";
-import { geocodeLocationText } from "@/lib/geocoding";
+import { geocodeLocationText, snapToNearestPlace } from "@/lib/geocoding";
 import { stripLocalContext } from "@/lib/privacy/quest-context";
 
 // ---------------------------------------------------------------------------
@@ -53,6 +53,9 @@ export const MissionUpdateSchema = z.object({
   missionId: z.string(),
   action: z.enum(["start", "complete"]),
   proofPhotoUrl: z.string().url().optional(),
+  caption: z.string().max(280).optional(),
+  shareToGallery: z.boolean().optional(),
+  userCoordinates: z.object({ lat: z.number(), lng: z.number() }).optional(),
 });
 
 export const QuestCompleteSchema = z.union([
@@ -570,7 +573,7 @@ export const updateMissionFn = createServerFn({ method: "POST" })
 
       const quest = await db.query.quests.findFirst({
         where: eq(quests.id, questId),
-        with: { missions: { orderBy: asc(missions.day) } },
+        with: { missions: { orderBy: asc(missions.day) }, discovery: true },
       });
 
       if (!quest) {
@@ -734,6 +737,48 @@ export const updateMissionFn = createServerFn({ method: "POST" })
         );
       }
 
+      // Create gallery entry if user opted in
+      let galleryEntryId: string | null = null;
+      if (data.shareToGallery && proofPhotoUrl) {
+        try {
+          const detectedTalents = quest.discovery?.detectedTalents
+            ? (() => {
+                try { return JSON.parse(quest.discovery!.detectedTalents!) as Array<{ name: string; confidence: number }>; } catch { return []; }
+              })()
+            : [];
+          const talentCategory = [...detectedTalents].sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]?.name ?? "Creative";
+          const geoResult = geocodeLocationText(quest.localContext);
+          const questContext = JSON.stringify({
+            questTitle: quest.dream,
+            dream: quest.dream,
+            missionSummaries: quest.missions.map((m) => m.title),
+          });
+          const snapped = data.userCoordinates
+            ? snapToNearestPlace(data.userCoordinates.lat, data.userCoordinates.lng)
+            : null;
+          const resolvedCoordinates = snapped
+            ? JSON.stringify(snapped.coordinates)
+            : geoResult?.coordinates ? JSON.stringify(geoResult.coordinates) : null;
+          const [entry] = await db
+            .insert(galleryEntries)
+            .values({
+              childId: session.childId,
+              questId,
+              missionId,
+              caption: data.caption ? sanitizeInput(data.caption) : null,
+              imageUrl: proofPhotoUrl,
+              talentCategory,
+              country: geoResult?.country ?? null,
+              coordinates: resolvedCoordinates,
+              questContext,
+            })
+            .returning();
+          galleryEntryId = entry.id;
+        } catch (galleryError) {
+          console.error("Gallery entry creation failed (non-blocking):", galleryError);
+        }
+      }
+
       return ok({
         success: true as const,
         mission: {
@@ -745,6 +790,7 @@ export const updateMissionFn = createServerFn({ method: "POST" })
         nextDayUnlocked: txResult.nextDayUnlocked,
         questCompleted: txResult.questCompleted,
         newBadges: newBadges.length > 0 ? newBadges : undefined,
+        galleryEntryId,
       });
     } catch (error) {
       console.error("Mission update error:", error);
@@ -836,9 +882,9 @@ export const completeQuestFn = createServerFn({ method: "POST" })
         }
       }
 
-      // Check for duplicate gallery entry
+      // Check for duplicate quest-level gallery entry (mission-level shares don't block this)
       const existingEntry = await db.query.galleryEntries.findFirst({
-        where: eq(galleryEntries.questId, questId),
+        where: and(eq(galleryEntries.questId, questId), isNull(galleryEntries.missionId)),
       });
 
       if (existingEntry) {

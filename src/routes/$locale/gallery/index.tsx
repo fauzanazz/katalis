@@ -4,9 +4,10 @@ import { TalentCategoryFilter } from "@/components/start/gallery/TalentCategoryF
 import { ClusterBrowseView } from "@/components/start/gallery/ClusterBrowseView";
 import { SquadBrowseView } from "@/components/start/gallery/SquadBrowseView";
 import { KidPageShell } from "@/components/layout/KidPageShell";
+import { LocaleLink } from "@/i18n/start-navigation";
 import { cn } from "@/lib/utils";
 import { m } from "@/paraglide/messages";
-import { getGalleryGeoJsonFn } from "@/lib/server/gallery";
+import { getGalleryGeoJsonFn, listGalleryEntriesFn } from "@/lib/server/gallery";
 import type { GalleryEntryFeatureCollection } from "@/types/gallery";
 
 // CLIENT-ONLY: React.lazy + mounted guard + Suspense (replaces next/dynamic ssr:false)
@@ -165,6 +166,22 @@ function GalleryPage() {
     },
     [updateSearch],
   );
+
+  const [recentWorks, setRecentWorks] = useState<Array<{
+    id: string;
+    imageUrl: string;
+    talentCategory: string;
+    country: string | null;
+    createdAt: Date | string;
+  }>>([]);
+
+  useEffect(() => {
+    listGalleryEntriesFn({ data: { page: 1, pageSize: 20 } })
+      .then((res) => {
+        if (res.ok) setRecentWorks(res.entries);
+      })
+      .catch(() => {});
+  }, []);
 
   const viewTabs: {
     id: ViewMode;
@@ -335,6 +352,43 @@ function GalleryPage() {
           selectedSquadId={selectedSquadId}
           onSquadSelect={handleSquadSelect}
         />
+      )}
+
+      {/* Recent Works grid — all entries regardless of coordinates */}
+      {recentWorks.length > 0 && (
+        <section className="mt-8" aria-labelledby="recent-works-heading">
+          <h2
+            id="recent-works-heading"
+            className="mb-4 text-sm font-black uppercase tracking-wider text-[color:var(--ink)]"
+            style={{ fontFamily: "var(--font-montserrat)" }}
+          >
+            {m.gallery_recentWorks()}
+          </h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {recentWorks.map((entry) => (
+              <LocaleLink
+                key={entry.id}
+                href={`/gallery/${entry.id}`}
+                className="group relative overflow-hidden rounded-xl border-2 border-black shadow-[3px_3px_0_#000] transition-all hover:shadow-[5px_5px_0_#000]"
+              >
+                <div className="aspect-square w-full overflow-hidden bg-muted">
+                  <img
+                    src={entry.imageUrl}
+                    alt={entry.talentCategory}
+                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="bg-white px-2 py-1.5">
+                  <p className="truncate text-xs font-bold text-[color:var(--ink)]">{entry.talentCategory}</p>
+                  {entry.country && (
+                    <p className="truncate text-[10px] text-[color:var(--ink)]/60">{entry.country}</p>
+                  )}
+                </div>
+              </LocaleLink>
+            ))}
+          </div>
+        </section>
       )}
     </KidPageShell>
   );

@@ -178,7 +178,7 @@ export function GalleryMap({ data, isLoading }: GalleryMapProps) {
         if (geometry.type !== "Point") return;
         mapRef.current?.easeTo({
           center: geometry.coordinates as [number, number],
-          zoom: zoom,
+          zoom: Math.min(zoom, 10),
           duration: 500,
         });
       });
@@ -306,6 +306,7 @@ export function GalleryMap({ data, isLoading }: GalleryMapProps) {
         mapStyle={mapStyle}
         onLoad={handleMapLoad}
         onError={handleMapError}
+        maxZoom={10}
         interactiveLayerIds={["clusters", "unclustered-point"]}
         onClick={(e) => {
           const clusterFeature = e.features?.find(
@@ -344,7 +345,7 @@ export function GalleryMap({ data, isLoading }: GalleryMapProps) {
             type="geojson"
             data={data}
             cluster={true}
-            clusterMaxZoom={14}
+            clusterMaxZoom={9}
             clusterRadius={50}
           >
             {/* Cluster circles */}

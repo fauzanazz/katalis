@@ -241,6 +241,31 @@ function getCountryDisplayName(key: string): string {
 }
 
 /**
+ * Snap raw GPS coordinates to the nearest known city/country center.
+ *
+ * Privacy guard: instead of storing precise GPS, we find the nearest entry
+ * in COUNTRY_COORDINATES and return its center. All users within the same
+ * city or region receive an identical pin — individual positions cannot be
+ * reconstructed from the stored data.
+ */
+export function snapToNearestPlace(lat: number, lng: number): { place: string; coordinates: GeoCoordinates } {
+  let bestKey = "indonesia";
+  let bestDist = Infinity;
+
+  for (const [key, coords] of Object.entries(COUNTRY_COORDINATES)) {
+    const dLat = lat - coords.lat;
+    const dLng = lng - coords.lng;
+    const dist = dLat * dLat + dLng * dLng;
+    if (dist < bestDist) {
+      bestDist = dist;
+      bestKey = key;
+    }
+  }
+
+  return { place: getCountryDisplayName(bestKey), coordinates: COUNTRY_COORDINATES[bestKey] };
+}
+
+/**
  * Escape special regex characters in a string.
  */
 function escapeRegExp(str: string): string {

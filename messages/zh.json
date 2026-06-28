@@ -570,8 +570,8 @@
       "readOnlyBanner": "这个任务已经完成了。你可以在下方回顾你的任务。",
       "noMaterials": "无需特殊材料",
       "noTips": "无额外提示",
-      "startMission": "开始任务",
-      "startMissionDesc": "准备好了吗？点击开始这个任务！",
+      "startMission": "上传我的作品",
+      "startMissionDesc": "做完了吗？点击上传你的作品！",
       "completeMission": "完成任务",
       "completeMissionDesc": "完成了？上传你的证明照片来完成任务！",
       "missionInProgress": "任务进行中！完成后即可提交。",
@@ -579,6 +579,10 @@
       "proofPhotoRequired": "上传你的作品照片来完成任务",
       "uploadProof": "上传证明照片",
       "changePhoto": "更换照片",
+      "captionLabel": "添加说明（可选）",
+      "captionPlaceholder": "告诉大家你的作品故事...",
+      "shareToGallery": "分享到全球画廊",
+      "shareToGalleryDesc": "全世界的小朋友都可以看到并喜欢你的作品！",
       "confirmComplete": "你确定吗？",
       "confirmCompleteDesc": "确定要完成这个任务吗？此操作不可撤销。",
       "confirmCompleteButton": "是的，完成任务",
@@ -690,6 +694,7 @@
     "title": "全球画廊",
     "subtitle": "探索世界各地有天赋的孩子们的作品！",
     "retry": "重试",
+    "recentWorks": "最新作品",
     "filter": {
       "label": "按天赋筛选",
       "all": "所有类别",
@@ -766,7 +771,16 @@
       },
       "flagDetailsLabel": "补充详情（可选）",
       "flagSubmit": "提交举报",
-      "flagCancel": "取消"
+      "flagCancel": "取消",
+      "likes": "{count} 个赞",
+      "like": "点赞",
+      "liked": "已点赞",
+      "comments": "评论",
+      "commentPlaceholder": "写一条友好的评论...",
+      "commentSubmit": "发送",
+      "commentEmpty": "来写第一条评论吧！",
+      "commentError": "评论失败，请重试。",
+      "likeError": "点赞失败，请重试。"
     }
   },
   "parent": {

@@ -581,8 +581,8 @@
       "readOnlyBanner": "This quest has been completed. You can review your missions below.",
       "noMaterials": "No special materials needed",
       "noTips": "No additional tips",
-      "startMission": "Start Mission",
-      "startMissionDesc": "Ready to begin? Click to start this mission!",
+      "startMission": "Upload My Work",
+      "startMissionDesc": "All done? Click to upload your creation!",
       "completeMission": "Complete Mission",
       "completeMissionDesc": "Finished? Upload your proof photo to complete!",
       "missionInProgress": "Mission in progress! Complete it when you're done.",
@@ -590,6 +590,10 @@
       "proofPhotoRequired": "Upload a photo of your work to complete this mission",
       "uploadProof": "Upload Proof Photo",
       "changePhoto": "Change Photo",
+      "captionLabel": "Add a caption (optional)",
+      "captionPlaceholder": "Tell everyone about your creation...",
+      "shareToGallery": "Share to Global Gallery",
+      "shareToGalleryDesc": "Other kids around the world can see and like your work!",
       "confirmComplete": "Are you sure?",
       "confirmCompleteDesc": "Are you sure you want to complete this mission? You cannot undo this.",
       "confirmCompleteButton": "Yes, Complete Mission",
@@ -701,6 +705,7 @@
     "title": "Global Gallery",
     "subtitle": "Explore works by talented children around the world!",
     "retry": "Try Again",
+    "recentWorks": "Recent Works",
     "filter": {
       "label": "Filter by Talent",
       "all": "All Categories",
@@ -777,7 +782,16 @@
       },
       "flagDetailsLabel": "Additional details (optional)",
       "flagSubmit": "Submit Report",
-      "flagCancel": "Cancel"
+      "flagCancel": "Cancel",
+      "likes": "{count} likes",
+      "like": "Like",
+      "liked": "Liked",
+      "comments": "Comments",
+      "commentPlaceholder": "Write a kind comment...",
+      "commentSubmit": "Post",
+      "commentEmpty": "Be the first to comment!",
+      "commentError": "Could not post comment. Try again.",
+      "likeError": "Could not update like. Try again."
     }
   },
   "parent": {

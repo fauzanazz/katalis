@@ -581,8 +581,8 @@
       "readOnlyBanner": "Misi ini sudah selesai. Kamu bisa meninjau misi-misimu di bawah ini.",
       "noMaterials": "Tidak perlu bahan khusus",
       "noTips": "Tidak ada tips tambahan",
-      "startMission": "Mulai Misi",
-      "startMissionDesc": "Siap untuk memulai? Klik untuk memulai misi ini!",
+      "startMission": "Unggah Hasilku",
+      "startMissionDesc": "Sudah selesai? Klik untuk mengunggah hasil karyamu!",
       "completeMission": "Selesaikan Misi",
       "completeMissionDesc": "Sudah selesai? Unggah foto buktimu untuk menyelesaikan!",
       "missionInProgress": "Misi sedang berjalan! Selesaikan kalau sudah selesai.",
@@ -590,6 +590,10 @@
       "proofPhotoRequired": "Unggah foto hasil karyamu untuk menyelesaikan misi ini",
       "uploadProof": "Unggah Foto Bukti",
       "changePhoto": "Ganti Foto",
+      "captionLabel": "Tambah keterangan (opsional)",
+      "captionPlaceholder": "Ceritakan tentang karyamu...",
+      "shareToGallery": "Bagikan ke Galeri Global",
+      "shareToGalleryDesc": "Anak-anak di seluruh dunia bisa melihat dan menyukai karyamu!",
       "confirmComplete": "Kamu yakin?",
       "confirmCompleteDesc": "Kamu yakin ingin menyelesaikan misi ini? Ini tidak bisa dibatalkan.",
       "confirmCompleteButton": "Ya, Selesaikan Misi",
@@ -701,6 +705,7 @@
     "title": "Galeri Dunia",
     "subtitle": "Jelajahi karya anak-anak berbakat dari seluruh dunia!",
     "retry": "Coba Lagi",
+    "recentWorks": "Karya Terbaru",
     "filter": {
       "label": "Filter berdasarkan Bakat",
       "all": "Semua Kategori",
@@ -777,7 +782,16 @@
       },
       "flagDetailsLabel": "Detail tambahan (opsional)",
       "flagSubmit": "Kirim Laporan",
-      "flagCancel": "Batal"
+      "flagCancel": "Batal",
+      "likes": "{count} suka",
+      "like": "Suka",
+      "liked": "Disukai",
+      "comments": "Komentar",
+      "commentPlaceholder": "Tulis komentar yang baik...",
+      "commentSubmit": "Kirim",
+      "commentEmpty": "Jadilah yang pertama berkomentar!",
+      "commentError": "Gagal kirim komentar. Coba lagi.",
+      "likeError": "Gagal memperbarui suka. Coba lagi."
     }
   },
   "parent": {

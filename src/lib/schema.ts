@@ -148,7 +148,9 @@ export const galleryEntries = sqliteTable("gallery_entries", {
     .primaryKey()
     .$defaultFn(() => createId()),
   childId: text("child_id").notNull(),
-  questId: text("quest_id").notNull().unique(),
+  questId: text("quest_id").notNull(),
+  missionId: text("mission_id"),
+  caption: text("caption"),
   imageUrl: text("image_url").notNull(),
   talentCategory: text("talent_category").notNull(),
   country: text("country"),
@@ -163,6 +165,37 @@ export const galleryEntries = sqliteTable("gallery_entries", {
     .notNull()
     .$defaultFn(() => new Date())
     .$onUpdateFn(() => new Date()),
+}, (t) => [
+  uniqueIndex("gallery_entries_mission_id_unique").on(t.missionId),
+]);
+
+// ─── Gallery Likes ────────────────────────────────────────────────────────────
+
+export const galleryLikes = sqliteTable("gallery_likes", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  entryId: text("entry_id").notNull(),
+  childId: text("child_id").notNull(),
+  createdAt: ts("created_at")
+    .notNull()
+    .$defaultFn(() => new Date()),
+}, (t) => [
+  uniqueIndex("gallery_likes_entry_child_idx").on(t.entryId, t.childId),
+]);
+
+// ─── Gallery Comments ─────────────────────────────────────────────────────────
+
+export const galleryComments = sqliteTable("gallery_comments", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => createId()),
+  entryId: text("entry_id").notNull(),
+  childId: text("child_id").notNull(),
+  content: text("content").notNull(),
+  createdAt: ts("created_at")
+    .notNull()
+    .$defaultFn(() => new Date()),
 });
 
 // ─── Rate Limits ──────────────────────────────────────────────────────────────
@@ -884,8 +917,32 @@ export const galleryEntriesRelations = relations(
       references: [quests.id],
     }),
     interestSignals: many(interestSignals),
+    likes: many(galleryLikes),
+    comments: many(galleryComments),
   }),
 );
+
+export const galleryLikesRelations = relations(galleryLikes, ({ one }) => ({
+  entry: one(galleryEntries, {
+    fields: [galleryLikes.entryId],
+    references: [galleryEntries.id],
+  }),
+  child: one(children, {
+    fields: [galleryLikes.childId],
+    references: [children.id],
+  }),
+}));
+
+export const galleryCommentsRelations = relations(galleryComments, ({ one }) => ({
+  entry: one(galleryEntries, {
+    fields: [galleryComments.entryId],
+    references: [galleryEntries.id],
+  }),
+  child: one(children, {
+    fields: [galleryComments.childId],
+    references: [children.id],
+  }),
+}));
 
 export const interestSignalsRelations = relations(
   interestSignals,

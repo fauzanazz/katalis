@@ -1,15 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 import { z } from "zod";
-import { eq, desc, asc, count, isNotNull, and } from "drizzle-orm";
+import { eq, desc, asc, count, isNotNull, and, isNull } from "drizzle-orm";
 
 import { getChildSession } from "@/lib/auth-start";
 import { db } from "@/lib/db";
-import { galleryEntries, quests, missions, moderationEvents } from "@/lib/schema";
+import { galleryEntries, galleryLikes, galleryComments, quests, missions, moderationEvents, children } from "@/lib/schema";
 import { ok, err } from "@/lib/server/result";
 import { sanitizeInput } from "@/lib/sanitize";
 import { isAllowedStorageUrl } from "@/lib/url-allowlist";
-import { geocodeLocationText } from "@/lib/geocoding";
+import { geocodeLocationText, snapToNearestPlace } from "@/lib/geocoding";
 import { moderateImageContent } from "@/lib/moderation";
 import { classifyTags } from "@/lib/ai/tag-classifier";
 import { stripLocalContext } from "@/lib/privacy/quest-context";
@@ -58,6 +58,15 @@ export const FlagGalleryEntryInputSchema = z.object({
     message: "Invalid flag reason",
   }),
   details: z.string().max(500).optional(),
+});
+
+export const LikeGalleryEntryInputSchema = z.object({
+  entryId: z.string().min(1),
+});
+
+export const AddGalleryCommentInputSchema = z.object({
+  entryId: z.string().min(1),
+  content: z.string().min(1).max(200),
 });
 
 export const GetSquadInputSchema = z.object({
@@ -240,7 +249,7 @@ export const createGalleryEntryFn = createServerFn({ method: "POST" })
       }
 
       const existingEntry = await db.query.galleryEntries.findFirst({
-        where: eq(galleryEntries.questId, questId),
+        where: and(eq(galleryEntries.questId, questId), isNull(galleryEntries.missionId)),
       });
       if (existingEntry) {
         return err("duplicate_entry", "A gallery entry already exists for this quest.");
@@ -278,7 +287,9 @@ export const createGalleryEntryFn = createServerFn({ method: "POST" })
 
       const geoResult = geocodeLocationText(quest.localContext);
       const country = geoResult?.country ?? null;
-      const coordinates = null;
+      const coordinates = geoResult?.coordinates
+        ? JSON.stringify(snapToNearestPlace(geoResult.coordinates.lat, geoResult.coordinates.lng).coordinates)
+        : null;
 
       const questContext = JSON.stringify({
         questTitle: quest.dream,
@@ -351,12 +362,34 @@ export const getGalleryEntryFn = createServerFn({ method: "GET" })
   .validator((d: unknown) => GetGalleryEntryInputSchema.parse(d))
   .handler(async ({ data }) => {
     try {
+      const session = await getChildSession().catch(() => null);
+
       const entry = await db.query.galleryEntries.findFirst({
         where: eq(galleryEntries.id, data.id),
       });
 
       if (entry == null) {
         return err("not_found", "Gallery entry not found");
+      }
+
+      const [likes, rawComments] = await Promise.all([
+        db.query.galleryLikes.findMany({
+          where: eq(galleryLikes.entryId, data.id),
+        }),
+        db.query.galleryComments.findMany({
+          where: eq(galleryComments.entryId, data.id),
+          orderBy: asc(galleryComments.createdAt),
+        }),
+      ]);
+
+      const childIds = [...new Set(rawComments.map((c) => c.childId))];
+      const childNames: Record<string, string> = {};
+      if (childIds.length > 0) {
+        const childRows = await db.query.children.findMany({
+          where: (c, { inArray }) => inArray(c.id, childIds),
+          columns: { id: true, name: true },
+        });
+        for (const c of childRows) childNames[c.id] = c.name ?? "Explorer";
       }
 
       const coordinates = safeParseJSON<{ lat: number; lng: number } | null>(
@@ -369,14 +402,30 @@ export const getGalleryEntryFn = createServerFn({ method: "GET" })
         missionSummaries?: string[];
       } | null>(entry.questContext, null);
 
+      const likesCount = likes.length;
+      const userHasLiked = session
+        ? likes.some((l) => l.childId === session.childId)
+        : false;
+      const commentList = rawComments.map((c) => ({
+        id: c.id,
+        content: c.content,
+        authorName: childNames[c.childId] ?? "Explorer",
+        createdAt: c.createdAt.toISOString(),
+        isOwn: session ? c.childId === session.childId : false,
+      }));
+
       return ok({
         id: entry.id,
         imageUrl: entry.imageUrl,
+        caption: entry.caption,
         talentCategory: entry.talentCategory,
         country: entry.country,
         coordinates,
         questContext,
         createdAt: entry.createdAt.toISOString(),
+        likesCount,
+        userHasLiked,
+        comments: commentList,
       });
     } catch (error) {
       console.error("Gallery entry fetch error:", error);
@@ -644,4 +693,86 @@ export const getSquadFn = createServerFn({ method: "GET" })
       })),
     };
     return ok({ squad });
+  });
+
+// ---------------------------------------------------------------------------
+// likeGalleryEntryFn — toggle like
+// ---------------------------------------------------------------------------
+
+export const likeGalleryEntryFn = createServerFn({ method: "POST" })
+  .validator((d: unknown) => LikeGalleryEntryInputSchema.parse(d))
+  .handler(async ({ data }) => {
+    try {
+      const session = await getChildSession();
+      if (!session) return err("unauthorized", "Authentication required");
+
+      const { entryId } = data;
+
+      const existing = await db.query.galleryLikes.findFirst({
+        where: and(
+          eq(galleryLikes.entryId, entryId),
+          eq(galleryLikes.childId, session.childId),
+        ),
+      });
+
+      if (existing) {
+        await db.delete(galleryLikes).where(eq(galleryLikes.id, existing.id));
+      } else {
+        await db.insert(galleryLikes).values({ entryId, childId: session.childId });
+      }
+
+      const [{ value: likesCount }] = await db
+        .select({ value: count() })
+        .from(galleryLikes)
+        .where(eq(galleryLikes.entryId, entryId));
+
+      return ok({ liked: !existing, likesCount });
+    } catch (error) {
+      console.error("Gallery like error:", error);
+      return err("server_error", "Failed to toggle like");
+    }
+  });
+
+// ---------------------------------------------------------------------------
+// addGalleryCommentFn
+// ---------------------------------------------------------------------------
+
+export const addGalleryCommentFn = createServerFn({ method: "POST" })
+  .validator((d: unknown) => AddGalleryCommentInputSchema.parse(d))
+  .handler(async ({ data }) => {
+    try {
+      const session = await getChildSession();
+      if (!session) return err("unauthorized", "Authentication required");
+
+      const { entryId, content } = data;
+      const sanitized = sanitizeInput(content);
+      if (!sanitized) return err("invalid", "Comment cannot be empty");
+
+      const entry = await db.query.galleryEntries.findFirst({
+        where: eq(galleryEntries.id, entryId),
+        columns: { id: true },
+      });
+      if (!entry) return err("not_found", "Gallery entry not found");
+
+      const child = await db.query.children.findFirst({
+        where: eq(children.id, session.childId),
+        columns: { name: true },
+      });
+
+      const [comment] = await db
+        .insert(galleryComments)
+        .values({ entryId, childId: session.childId, content: sanitized })
+        .returning();
+
+      return ok({
+        id: comment.id,
+        content: comment.content,
+        authorName: child?.name ?? "Explorer",
+        createdAt: comment.createdAt.toISOString(),
+        isOwn: true,
+      });
+    } catch (error) {
+      console.error("Gallery comment error:", error);
+      return err("server_error", "Failed to add comment");
+    }
   });

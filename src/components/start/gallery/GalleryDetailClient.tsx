@@ -1,12 +1,21 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { m } from "@/paraglide/messages";
 import { LocaleLink } from "@/i18n/start-navigation";
-import { flagGalleryEntryFn } from "@/lib/server/gallery";
+import { flagGalleryEntryFn, likeGalleryEntryFn, addGalleryCommentFn } from "@/lib/server/gallery";
 import { getTalentCategoryColor } from "@/types/gallery";
+
+interface GalleryComment {
+  id: string;
+  content: string;
+  authorName: string;
+  createdAt: string;
+  isOwn: boolean;
+}
 
 interface GalleryDetailEntry {
   id: string;
   imageUrl: string;
+  caption: string | null;
   talentCategory: string;
   country: string | null;
   coordinates: { lat: number; lng: number } | null;
@@ -17,6 +26,9 @@ interface GalleryDetailEntry {
     missionSummaries?: string[];
   } | null;
   createdAt: string;
+  likesCount: number;
+  userHasLiked: boolean;
+  comments: GalleryComment[];
 }
 
 interface GalleryDetailClientProps {
@@ -30,9 +42,49 @@ export function GalleryDetailClient({ entry }: GalleryDetailClientProps) {
   const [flagReason, setFlagReason] = useState<FlagReason>("inappropriate");
   const [flagDetails, setFlagDetails] = useState("");
   const [flagLoading, setFlagLoading] = useState(false);
-  const [flagResult, setFlagResult] = useState<"success" | "error" | null>(
-    null,
-  );
+  const [flagResult, setFlagResult] = useState<"success" | "error" | null>(null);
+
+  const [liked, setLiked] = useState(entry.userHasLiked);
+  const [likesCount, setLikesCount] = useState(entry.likesCount);
+  const [likeLoading, setLikeLoading] = useState(false);
+  const [likeError, setLikeError] = useState(false);
+
+  const [comments, setComments] = useState<GalleryComment[]>(entry.comments);
+  const [commentText, setCommentText] = useState("");
+  const [commentLoading, setCommentLoading] = useState(false);
+  const [commentError, setCommentError] = useState(false);
+
+  const handleLike = useCallback(async () => {
+    if (likeLoading) return;
+    setLikeLoading(true);
+    setLikeError(false);
+    try {
+      const res = await likeGalleryEntryFn({ data: { entryId: entry.id } });
+      if (!res.ok) throw new Error();
+      setLiked(res.liked);
+      setLikesCount(res.likesCount);
+    } catch {
+      setLikeError(true);
+    } finally {
+      setLikeLoading(false);
+    }
+  }, [entry.id, likeLoading]);
+
+  const handleComment = useCallback(async () => {
+    if (!commentText.trim() || commentLoading) return;
+    setCommentLoading(true);
+    setCommentError(false);
+    try {
+      const res = await addGalleryCommentFn({ data: { entryId: entry.id, content: commentText.trim() } });
+      if (!res.ok) throw new Error();
+      setComments((prev) => [...prev, res]);
+      setCommentText("");
+    } catch {
+      setCommentError(true);
+    } finally {
+      setCommentLoading(false);
+    }
+  }, [entry.id, commentText, commentLoading]);
 
   const handleFlagSubmit = async () => {
     setFlagLoading(true);
@@ -98,6 +150,28 @@ export function GalleryDetailClient({ entry }: GalleryDetailClientProps) {
         </div>
 
         <div className="space-y-4 p-4 sm:p-6">
+          {/* Caption */}
+          {entry.caption && (
+            <p className="text-base italic text-foreground">"{entry.caption}"</p>
+          )}
+
+          {/* Like button */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleLike}
+              disabled={likeLoading}
+              className={`flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors ${liked ? "border-pink-400 bg-pink-50 text-pink-600" : "border-muted-foreground/30 bg-muted text-muted-foreground hover:border-pink-400 hover:bg-pink-50 hover:text-pink-600"}`}
+              aria-pressed={liked}
+            >
+              <svg className={`h-4 w-4 ${liked ? "fill-pink-500 stroke-pink-500" : "fill-none stroke-current"}`} viewBox="0 0 24 24" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" />
+              </svg>
+              {liked ? m.gallery_detail_liked() : m.gallery_detail_like()}
+              <span className="ml-0.5 tabular-nums">{likesCount}</span>
+            </button>
+            {likeError && <span className="text-xs text-red-500">{m.gallery_detail_likeError()}</span>}
+          </div>
+
           {/* Talent category */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -204,6 +278,42 @@ export function GalleryDetailClient({ entry }: GalleryDetailClientProps) {
               date: new Date(entry.createdAt).toLocaleDateString(),
             })}
           </p>
+
+          {/* Comments */}
+          <div className="border-t pt-4">
+            <h3 className="mb-3 text-sm font-semibold">{m.gallery_detail_comments()}</h3>
+            {comments.length === 0 ? (
+              <p className="mb-3 text-sm text-muted-foreground">{m.gallery_detail_commentEmpty()}</p>
+            ) : (
+              <ul className="mb-3 space-y-2">
+                {comments.map((c) => (
+                  <li key={c.id} className="flex items-start gap-2 text-sm">
+                    <span className="font-semibold text-foreground shrink-0">{c.authorName}</span>
+                    <span className="text-muted-foreground">{c.content}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") handleComment(); }}
+                placeholder={m.gallery_detail_commentPlaceholder()}
+                maxLength={200}
+                className="flex-1 rounded-md border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <button
+                onClick={handleComment}
+                disabled={commentLoading || !commentText.trim()}
+                className="rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground transition-opacity disabled:opacity-50"
+              >
+                {m.gallery_detail_commentSubmit()}
+              </button>
+            </div>
+            {commentError && <p className="mt-1 text-xs text-red-500">{m.gallery_detail_commentError()}</p>}
+          </div>
         </div>
       </div>
 

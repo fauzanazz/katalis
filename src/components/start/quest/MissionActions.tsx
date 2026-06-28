@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { m } from "@/paraglide/messages";
 import {
   PlayCircle,
@@ -46,9 +46,21 @@ export function MissionActions({
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [uploadedProof, setUploadedProof] = useState<UploadResultData | null>(
-    null,
-  );
+  const [uploadedProof, setUploadedProof] = useState<UploadResultData | null>(null);
+  const [caption, setCaption] = useState("");
+  const [shareToGallery, setShareToGallery] = useState(false);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    if (!shareToGallery || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      },
+      () => setUserCoords(null),
+      { timeout: 5000 },
+    );
+  }, [shareToGallery]);
 
   const uploadStorageKey = `katalis-upload-mission-${questId}-${missionId}`;
 
@@ -86,6 +98,9 @@ export function MissionActions({
           missionId,
           action: "complete",
           proofPhotoUrl: uploadedProof.url,
+          caption: caption.trim() || undefined,
+          shareToGallery,
+          userCoordinates: shareToGallery && userCoords ? userCoords : undefined,
         },
       });
 
@@ -125,7 +140,7 @@ export function MissionActions({
     } finally {
       setLoading(false);
     }
-  }, [questId, missionId, missionDay, uploadedProof, uploadStorageKey, onStatusChange, onBadgesEarned]);
+  }, [questId, missionId, missionDay, uploadedProof, caption, shareToGallery, uploadStorageKey, onStatusChange, onBadgesEarned]);
 
   const handleUploadComplete = useCallback(
     (result: UploadResultData) => {
@@ -280,6 +295,45 @@ export function MissionActions({
               </div>
             )}
           </div>
+
+          {/* Caption + share options (shown after photo uploaded) */}
+          {uploadedProof && (
+            <div className="mb-4 flex flex-col gap-3">
+              <div>
+                <label
+                  htmlFor="proof-caption"
+                  className="mb-1 block text-sm font-semibold text-amber-800"
+                >
+                  {m.quest_overview_captionLabel()}
+                </label>
+                <textarea
+                  id="proof-caption"
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  maxLength={280}
+                  rows={2}
+                  placeholder={m.quest_overview_captionPlaceholder()}
+                  className="w-full rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm text-[color:var(--ink)] placeholder:text-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                />
+              </div>
+              <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-amber-300 bg-white p-3">
+                <input
+                  type="checkbox"
+                  checked={shareToGallery}
+                  onChange={(e) => setShareToGallery(e.target.checked)}
+                  className="mt-0.5 size-4 accent-amber-500"
+                />
+                <div>
+                  <span className="block text-sm font-semibold text-amber-800">
+                    {m.quest_overview_shareToGallery()}
+                  </span>
+                  <span className="block text-xs text-amber-600">
+                    {m.quest_overview_shareToGalleryDesc()}
+                  </span>
+                </div>
+              </label>
+            </div>
+          )}
 
           {/* Complete button */}
           <Button

@@ -10,6 +10,7 @@ import { ok, err } from "@/lib/server/result";
 import { sanitizeInput } from "@/lib/sanitize";
 import { isAllowedStorageUrl } from "@/lib/url-allowlist";
 import { geocodeLocationText, snapToNearestPlace } from "@/lib/geocoding";
+import { autoJoinSquad } from "@/lib/squads/auto-join";
 import { moderateImageContent } from "@/lib/moderation";
 import { classifyTags } from "@/lib/ai/tag-classifier";
 import { stripLocalContext } from "@/lib/privacy/quest-context";
@@ -318,6 +319,8 @@ export const createGalleryEntryFn = createServerFn({ method: "POST" })
 
         return entry;
       });
+
+      await autoJoinSquad(session.childId, talentCategory, galleryEntry.id, country).catch(() => {});
 
       let classifiedTags: Array<{ name: string; confidence: number; category: string }> | null = null;
       try {

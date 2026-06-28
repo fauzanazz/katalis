@@ -40,6 +40,7 @@ import {
 } from "@/lib/interests/mission-reassessment";
 import { geocodeLocationText, snapToNearestPlace } from "@/lib/geocoding";
 import { stripLocalContext } from "@/lib/privacy/quest-context";
+import { autoJoinSquad } from "@/lib/squads/auto-join";
 
 // ---------------------------------------------------------------------------
 // Schemas
@@ -774,6 +775,7 @@ export const updateMissionFn = createServerFn({ method: "POST" })
             })
             .returning();
           galleryEntryId = entry.id;
+          await autoJoinSquad(session.childId, talentCategory, entry.id, geoResult?.country ?? null).catch(() => {});
         } catch (galleryError) {
           console.error("Gallery entry creation failed (non-blocking):", galleryError);
         }
@@ -924,6 +926,8 @@ export const completeQuestFn = createServerFn({ method: "POST" })
 
         return entry;
       });
+
+      await autoJoinSquad(session.childId, talentCategory, galleryEntry.id, country).catch(() => {});
 
       // Ingest quest-completed interest signals (fire-and-forget)
       await runQuestCompletedSignals({

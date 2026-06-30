@@ -27,7 +27,7 @@ const API_TIMEOUT_MS = 20_000;
 const ANTHROPIC_BASE_MODEL = "claude-sonnet-4-20250514";
 const OPENAI_BASE_MODEL = "gpt-4o";
 const VERTEX_BASE_MODEL = process.env.VERTEX_AI_MODEL ?? "gemini-2.5-flash";
-const GOOGLE_AI_MODEL = process.env.GOOGLE_AI_MODEL ?? "gemini-2.0-flash";
+const GOOGLE_AI_MODEL = process.env.GOOGLE_AI_MODEL ?? "gemini-2.5-flash";
 
 /** Context builder — assembles the conversation context for the mentor */
 function buildUserMessage(

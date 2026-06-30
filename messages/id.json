@@ -698,7 +698,9 @@
     },
     "needHint": "Butuh Petunjuk?",
     "uploadPhoto": "Unggah foto",
-    "removePhoto": "Hapus foto"
+    "removePhoto": "Hapus foto",
+    "errorUnavailable": "Quest Buddy sedang tidak tersedia.",
+    "errorRetry": "Coba lagi"
   },
   "gallery": {
     "kicker": "Galeri squad",

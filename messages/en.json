@@ -698,7 +698,9 @@
     },
     "needHint": "Need a Hint?",
     "uploadPhoto": "Upload photo",
-    "removePhoto": "Remove photo"
+    "removePhoto": "Remove photo",
+    "errorUnavailable": "Quest Buddy is unavailable right now.",
+    "errorRetry": "Try again"
   },
   "gallery": {
     "kicker": "Squad gallery",

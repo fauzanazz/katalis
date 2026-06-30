@@ -600,6 +600,8 @@
   "mentor_adjustment_title": "Small Adjustment",
   "mentor_chatSubtitle": "Your thinking companion for this mission",
   "mentor_chatTitle": "Quest Buddy",
+  "mentor_errorRetry": "Try again",
+  "mentor_errorUnavailable": "Quest Buddy is unavailable right now.",
   "mentor_greeting": "Start Chat",
   "mentor_learningCycle_step1": "Check Materials",
   "mentor_learningCycle_step2": "Get Started",

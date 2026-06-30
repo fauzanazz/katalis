@@ -600,6 +600,8 @@
   "mentor_adjustment_title": "Penyesuaian Kecil",
   "mentor_chatSubtitle": "Teman berpikirmu untuk misi ini",
   "mentor_chatTitle": "Quest Buddy",
+  "mentor_errorRetry": "Coba lagi",
+  "mentor_errorUnavailable": "Quest Buddy sedang tidak tersedia.",
   "mentor_greeting": "Mulai Chat",
   "mentor_learningCycle_step1": "Cek Bahan",
   "mentor_learningCycle_step2": "Mulai",

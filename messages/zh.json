@@ -687,7 +687,9 @@
     },
     "needHint": "需要提示吗？",
     "uploadPhoto": "上传照片",
-    "removePhoto": "删除照片"
+    "removePhoto": "删除照片",
+    "errorUnavailable": "Quest Buddy 目前不可用。",
+    "errorRetry": "重试"
   },
   "gallery": {
     "kicker": "Squad 画廊",

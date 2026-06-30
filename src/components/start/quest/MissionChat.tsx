@@ -11,6 +11,7 @@ import {
   X,
   Volume2,
   VolumeX,
+  RefreshCw,
 } from "lucide-react";
 import {
   getMentorSessionFn,
@@ -44,6 +45,7 @@ export function MissionChat({ missionId, defaultExpanded = false }: MissionChatP
   const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [chatError, setChatError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
   const [adjustmentMessageId, setAdjustmentMessageId] = useState<string | null>(null);
   const [pendingImageUrl, setPendingImageUrl] = useState<string | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
@@ -185,7 +187,15 @@ export function MissionChat({ missionId, defaultExpanded = false }: MissionChatP
     [sessionId],
   );
 
-  // Initialize session on first expand
+  const handleRetry = useCallback(() => {
+    setChatError(false);
+    initialized.current = false;
+    setSessionId(null);
+    setMessages([]);
+    setRetryKey((k) => k + 1);
+  }, []);
+
+  // Initialize session on first expand or after retry
   useEffect(() => {
     if (!expanded || initialized.current) return;
     initialized.current = true;
@@ -226,7 +236,7 @@ export function MissionChat({ missionId, defaultExpanded = false }: MissionChatP
         setChatError(true);
       }
     })();
-  }, [expanded, fetchSession, sendMessage]);
+  }, [expanded, retryKey, fetchSession, sendMessage]);
 
   const handleImageSelect = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -483,7 +493,15 @@ export function MissionChat({ missionId, defaultExpanded = false }: MissionChatP
         {/* Error state */}
         {chatError && !loading && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">
-            Quest Buddy sedang tidak tersedia. Coba lagi sebentar ya!
+            <p className="mb-2">{m.mentor_errorUnavailable()}</p>
+            <button
+              type="button"
+              onClick={handleRetry}
+              className="inline-flex items-center gap-1 font-medium text-red-700 underline hover:text-red-800"
+            >
+              <RefreshCw className="size-3" aria-hidden="true" />
+              {m.mentor_errorRetry()}
+            </button>
           </div>
         )}
 

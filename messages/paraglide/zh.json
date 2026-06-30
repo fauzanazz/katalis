@@ -577,6 +577,8 @@
   "mentor_adjustment_title": "小调整",
   "mentor_chatSubtitle": "你在这个任务中的思考伙伴",
   "mentor_chatTitle": "任务伙伴",
+  "mentor_errorRetry": "重试",
+  "mentor_errorUnavailable": "Quest Buddy 目前不可用。",
   "mentor_greeting": "开始聊天",
   "mentor_learningCycle_step1": "检查材料",
   "mentor_learningCycle_step2": "开始吧",

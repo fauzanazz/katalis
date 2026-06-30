@@ -386,6 +386,7 @@
   "gallery_clusters_countriesLabel": "Negara-negara",
   "gallery_clusters_empty": "Belum ada kluster. Diperlukan lebih banyak karya untuk membentuk kelompok!",
   "gallery_clusters_error": "Tidak dapat memuat kluster. Silakan coba lagi.",
+  "gallery_clusters_load": "Muat kluster",
   "gallery_clusters_loading": "Menemukan kluster bakat...",
   "gallery_clusters_subtitle": "Karya dikelompokkan berdasarkan bakat dan wilayah",
   "gallery_clusters_talentLabel": "Tema Bakat",

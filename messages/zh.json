@@ -716,7 +716,8 @@
       "viewCluster": "查看群组",
       "backToClusters": "返回群组",
       "clusterDetail": "群组：{label}",
-      "ariaLabel": "浏览AI生成的天赋群组"
+      "ariaLabel": "浏览AI生成的天赋群组",
+      "load": "加载群组"
     },
     "squads": {
       "loading": "正在发现天赋小队...",

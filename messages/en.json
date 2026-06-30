@@ -727,7 +727,8 @@
       "viewCluster": "View Cluster",
       "backToClusters": "Back to Clusters",
       "clusterDetail": "Cluster: {label}",
-      "ariaLabel": "Browse AI-generated talent clusters"
+      "ariaLabel": "Browse AI-generated talent clusters",
+      "load": "Load clusters"
     },
     "squads": {
       "loading": "Discovering talent squads...",

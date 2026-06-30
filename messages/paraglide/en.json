@@ -386,6 +386,7 @@
   "gallery_clusters_countriesLabel": "Countries",
   "gallery_clusters_empty": "No clusters available yet. More works are needed to form groups!",
   "gallery_clusters_error": "Could not load clusters. Please try again.",
+  "gallery_clusters_load": "Load clusters",
   "gallery_clusters_loading": "Discovering talent clusters...",
   "gallery_clusters_subtitle": "Works grouped by talent and region",
   "gallery_clusters_talentLabel": "Talent Theme",

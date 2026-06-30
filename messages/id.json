@@ -727,7 +727,8 @@
       "viewCluster": "Lihat Kluster",
       "backToClusters": "Kembali ke Kluster",
       "clusterDetail": "Kluster: {label}",
-      "ariaLabel": "Jelajahi kluster bakat yang dihasilkan AI"
+      "ariaLabel": "Jelajahi kluster bakat yang dihasilkan AI",
+      "load": "Muat kluster"
     },
     "squads": {
       "loading": "Menemukan skuad bakat...",

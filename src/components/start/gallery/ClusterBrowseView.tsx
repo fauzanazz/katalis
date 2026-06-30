@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { m } from "@/paraglide/messages";
 import { LocaleLink } from "@/i18n/start-navigation";
 import { getTalentCategoryColor } from "@/types/gallery";
@@ -44,7 +44,7 @@ export function ClusterBrowseView({
   onClusterSelect,
 }: ClusterBrowseViewProps) {
   const [clusters, setClusters] = useState<ClusterData[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchClusters = useCallback(async () => {
@@ -64,22 +64,18 @@ export function ClusterBrowseView({
     }
   }, []);
 
-  useEffect(() => {
-    fetchClusters();
-  }, [fetchClusters]);
 
-  // Loading state
-  if (isLoading) {
+  // Empty state — user triggers load manually to avoid heavy AI clustering on mount
+  if (!isLoading && clusters.length === 0 && !error) {
     return (
-      <div
-        className="flex min-h-[300px] items-center justify-center rounded-lg bg-muted/50"
-        role="status"
-        aria-label={m.gallery_clusters_loading()}
-      >
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-sm text-muted-foreground">{m.gallery_clusters_loading()}</p>
-        </div>
+      <div className="flex min-h-[300px] flex-col items-center justify-center rounded-lg bg-muted/50">
+        <p className="mb-4 text-sm text-muted-foreground">{m.gallery_clusters_empty()}</p>
+        <button
+          onClick={fetchClusters}
+          className="inline-flex items-center gap-2 rounded-full bg-yellow-sun-deep px-4 py-2 text-sm font-medium text-white hover:bg-yellow-sun-deep/90"
+        >
+          {m.gallery_clusters_load()}
+        </button>
       </div>
     );
   }

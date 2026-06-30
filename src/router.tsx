@@ -7,7 +7,7 @@ import { StartNotFound } from "@/components/start/StartNotFound";
 export function getRouter() {
   return createRouter({
     routeTree,
-    defaultPreload: "intent",
+    defaultPreload: false,
     defaultErrorComponent: DefaultCatchBoundary,
     defaultNotFoundComponent: () => <StartNotFound />,
     scrollRestoration: true,

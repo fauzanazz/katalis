@@ -295,6 +295,13 @@ function QuestListPage() {
   }, [session]);
 
   useEffect(() => {
+    // Wait for auth to resolve before deciding
+    if (authState === "loading") return;
+    // Only child sessions can fetch quests; parent/unauthenticated → empty state
+    if (authState !== "child") {
+      setLoading(false);
+      return;
+    }
     async function fetchQuests() {
       try {
         const result = await listQuestsFn();
@@ -312,7 +319,7 @@ function QuestListPage() {
       }
     }
     fetchQuests();
-  }, [router]);
+  }, [router, authState]);
 
   const greeting = getGreeting(childName);
 

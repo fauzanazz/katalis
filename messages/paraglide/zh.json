@@ -377,6 +377,7 @@
   "gallery_clusters_countriesLabel": "国家",
   "gallery_clusters_empty": "暂无群组。需要更多作品才能形成群组！",
   "gallery_clusters_error": "无法加载群组，请重试。",
+  "gallery_clusters_load": "加载群组",
   "gallery_clusters_loading": "正在发现天赋群组...",
   "gallery_clusters_subtitle": "按天赋和地区分组的作品",
   "gallery_clusters_talentLabel": "天赋主题",

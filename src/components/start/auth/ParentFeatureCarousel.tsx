@@ -69,8 +69,8 @@ export function ParentFeatureCarousel() {
           <img
             src={s.image}
             alt=""
-            loading={i === 0 ? "eager" : "lazy"}
-            decoding={i === 0 ? "sync" : "async"}
+            loading="lazy"
+            decoding="async"
             className="absolute inset-0 h-full w-full object-cover"
           />
         </div>

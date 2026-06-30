@@ -124,10 +124,11 @@ function GalleryPage() {
     }
   }, []);
 
-  // Refetch when category changes
+  // Refetch when category changes (only for map view)
   useEffect(() => {
+    if (viewMode !== "map") return;
     fetchGalleryData(selectedCategory);
-  }, [fetchGalleryData, selectedCategory]);
+  }, [fetchGalleryData, selectedCategory, viewMode]);
 
   // Client-only mount guard for GalleryMap
   const [mounted, setMounted] = useState(false);

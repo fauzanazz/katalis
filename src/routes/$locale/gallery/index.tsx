@@ -27,7 +27,7 @@ export const Route = createFileRoute("/$locale/gallery/")({
   validateSearch: (s: Record<string, unknown>) => ({
     category: typeof s.category === "string" ? s.category : undefined,
     cluster: typeof s.cluster === "string" ? s.cluster : undefined,
-    view: isViewMode(s.view) ? s.view : ("map" as ViewMode),
+    view: isViewMode(s.view) ? s.view : ("clusters" as ViewMode),
     squad: typeof s.squad === "string" ? s.squad : undefined,
   }),
   loader: async () => {

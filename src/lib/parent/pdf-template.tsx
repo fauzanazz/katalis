@@ -231,7 +231,7 @@ export function ParentReportPDF({ data }: { data: ReportData }) {
 
         {/* Footer */}
         <Text style={styles.footer}>
-          Generated on {data.generatedAt} • Katalis AI • katalis.app
+          Generated on {data.generatedAt} • Huna AI • katalis.app
         </Text>
       </Page>
     </Document>

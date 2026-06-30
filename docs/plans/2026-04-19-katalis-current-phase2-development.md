@@ -1,4 +1,4 @@
-# Katalis AI — Current State & Phase 2 Development Plan
+# Huna AI — Current State & Phase 2 Development Plan
 
 **Date:** 2026-04-19  
 **Purpose:** Convert the feature draft into an implementation-ready roadmap that is aligned with the current codebase.

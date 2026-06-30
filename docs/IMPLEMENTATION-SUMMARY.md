@@ -321,7 +321,7 @@ npm install
 ```bash
 export PROJECT_ID=your-project-id
 gcloud iam service-accounts create katalis-ai \
-  --display-name="Katalis AI"
+  --display-name="Huna AI"
 
 gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:katalis-ai@${PROJECT_ID}.iam.gserviceaccount.com" \

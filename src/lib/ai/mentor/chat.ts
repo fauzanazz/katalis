@@ -221,7 +221,7 @@ async function callOpenRouter(
   const client = new OpenAI({
     apiKey,
     baseURL: "https://openrouter.ai/api/v1",
-    defaultHeaders: { "X-Title": "Katalis AI" },
+    defaultHeaders: { "X-Title": "Huna AI" },
     timeout: 8_000, // 8s per-request; free models throttle silently after a few calls
   });
 

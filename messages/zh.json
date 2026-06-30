@@ -63,9 +63,9 @@
     }
   },
   "landing": {
-    "brandName": "Katalis AI",
+    "brandName": "Huna AI",
     "openMenu": "打开导航菜单",
-    "navSheetTitle": "探索 Katalis AI",
+    "navSheetTitle": "探索 Huna AI",
     "hero": {
       "safePill": "安全 · 私密 · 无广告",
       "title": "发现孩子<accent>隐藏的天赋</accent>",
@@ -154,7 +154,7 @@
       "freeBadge": "永久免费",
       "title": "准备点亮孩子的天赋了吗？",
       "primaryCta": "立即试用",
-      "footerLine1": "© 2026 Katalis AI",
+      "footerLine1": "© 2026 Huna AI",
       "footerNavLabel": "页脚导航",
       "footerPrivacy": "隐私",
       "footerTerms": "条款",

@@ -63,9 +63,9 @@
     }
   },
   "landing": {
-    "brandName": "Katalis AI",
+    "brandName": "Huna AI",
     "openMenu": "Open navigation menu",
-    "navSheetTitle": "Explore Katalis AI",
+    "navSheetTitle": "Explore Huna AI",
     "hero": {
       "safePill": "Safe · Private · Ad-Free",
       "title": "Discover your child's <accent>hidden talents</accent>",
@@ -154,7 +154,7 @@
       "freeBadge": "Free Forever",
       "title": "Ready to spark your child's talent?",
       "primaryCta": "Try now",
-      "footerLine1": "© 2026 Katalis AI",
+      "footerLine1": "© 2026 Huna AI",
       "footerNavLabel": "Footer navigation",
       "footerPrivacy": "Privacy",
       "footerTerms": "Terms",

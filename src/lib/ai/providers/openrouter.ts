@@ -183,7 +183,7 @@ async function getClient() {
     timeout: API_TIMEOUT_MS,
     defaultHeaders: {
       "HTTP-Referer": process.env.OPENROUTER_REFERER ?? "https://katalis.vercel.app",
-      "X-Title": "Katalis AI",
+      "X-Title": "Huna AI",
     },
   });
 }

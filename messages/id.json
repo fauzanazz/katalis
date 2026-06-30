@@ -63,9 +63,9 @@
     }
   },
   "landing": {
-    "brandName": "Katalis AI",
+    "brandName": "Huna AI",
     "openMenu": "Buka menu navigasi",
-    "navSheetTitle": "Jelajahi Katalis AI",
+    "navSheetTitle": "Jelajahi Huna AI",
     "hero": {
       "safePill": "Aman · Privat · Bebas iklan",
       "title": "Temukan <accent>bakat terpendam</accent> anak Anda",
@@ -154,7 +154,7 @@
       "freeBadge": "Gratis Selamanya",
       "title": "Siap menyalakan bakat anak Anda?",
       "primaryCta": "Coba sekarang",
-      "footerLine1": "© 2026 Katalis AI",
+      "footerLine1": "© 2026 Huna AI",
       "footerNavLabel": "Navigasi footer",
       "footerPrivacy": "Privasi",
       "footerTerms": "Syarat",

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Katalis AI system adalah **production-grade, multi-provider generative AI platform** yang dirancang untuk analisis bakat anak, generasi quest, dan moderasi konten dengan aman. Sistem ini mendukung multiple AI providers dengan switching dinamis dan fallback intelligent.
+Huna AI system adalah **production-grade, multi-provider generative AI platform** yang dirancang untuk analisis bakat anak, generasi quest, dan moderasi konten dengan aman. Sistem ini mendukung multiple AI providers dengan switching dinamis dan fallback intelligent.
 
 ### Providers yang Didukung
 
@@ -90,7 +90,7 @@ gcloud config set project $PROJECT_ID
 
 # Create service account
 gcloud iam service-accounts create katalis-ai \
-  --display-name="Katalis AI Service Account"
+  --display-name="Huna AI Service Account"
 
 # Grant Vertex AI permissions
 gcloud projects add-iam-policy-binding $PROJECT_ID \
@@ -478,4 +478,4 @@ const response = await callProviderForJSON(systemPrompt, userMessage, maxTokens)
 
 **Last Updated**: May 2026  
 **Status**: Production-ready with multi-provider support  
-**Maintainer**: Katalis AI Team
+**Maintainer**: Huna AI Team

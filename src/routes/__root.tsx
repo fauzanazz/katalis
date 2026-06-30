@@ -14,6 +14,8 @@ import { getLocale } from "@/paraglide/runtime";
 import { m } from "@/paraglide/messages";
 import appCss from "@/styles/app.css?url";
 
+// TanStackRouterDevtools renders a null component in production already.
+
 export const Route = createRootRoute({
   head: () => ({
     meta: [

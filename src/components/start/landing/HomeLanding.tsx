@@ -428,6 +428,8 @@ export function HomeLanding() {
                 <img
                   src={JOURNEY_IMAGES[i] ?? ""}
                   alt=""
+                  loading="lazy"
+                  decoding="async"
                   className="absolute inset-0 h-full w-full object-cover"
                   aria-hidden
                 />

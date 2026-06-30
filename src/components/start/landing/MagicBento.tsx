@@ -502,6 +502,8 @@ export default function MagicBento({
               <img
                 src={item.image}
                 alt={item.imageAlt}
+                loading="lazy"
+                decoding="async"
                 className="magic-bento-card__image absolute inset-0 h-full w-full object-cover"
               />
               <div aria-hidden className="magic-bento-card__shade" />

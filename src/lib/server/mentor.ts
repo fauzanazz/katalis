@@ -600,3 +600,96 @@ export const signalOriginalIdeaFn = createServerFn({ method: "POST" })
 
     return ok({ newBadges });
   });
+
+// ---------------------------------------------------------------------------
+// getMentorAudioFn
+// POST — converts a mentor message to speech via Gemini 2.5 Flash TTS.
+// Uses the existing GOOGLE_AI_API_KEY — no extra credentials needed.
+// Voice: Aoede (bright, warm female — good for child-friendly mentor).
+// ---------------------------------------------------------------------------
+
+const GetMentorAudioInputSchema = z.object({ text: z.string().min(1).max(1000) });
+
+const GEMINI_TTS_MODEL = "gemini-3.1-flash-tts-preview";
+const GEMINI_TTS_VOICE = "Aoede";
+
+// Wraps raw L16 PCM (what Gemini TTS returns) into a WAV container so browsers can play it.
+function l16ToWav(pcmBase64: string, sampleRate = 24000, channels = 1): string {
+  const pcm = Buffer.from(pcmBase64, "base64");
+  const bitsPerSample = 16;
+  const byteRate = (sampleRate * channels * bitsPerSample) / 8;
+  const blockAlign = (channels * bitsPerSample) / 8;
+
+  const header = Buffer.alloc(44);
+  header.write("RIFF", 0);
+  header.writeUInt32LE(36 + pcm.length, 4);
+  header.write("WAVE", 8);
+  header.write("fmt ", 12);
+  header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(1, 20);
+  header.writeUInt16LE(channels, 22);
+  header.writeUInt32LE(sampleRate, 24);
+  header.writeUInt32LE(byteRate, 28);
+  header.writeUInt16LE(blockAlign, 32);
+  header.writeUInt16LE(bitsPerSample, 34);
+  header.write("data", 36);
+  header.writeUInt32LE(pcm.length, 40);
+
+  return Buffer.concat([header, pcm]).toString("base64");
+}
+
+export const getMentorAudioFn = createServerFn({ method: "POST" })
+  .validator((d: unknown) => GetMentorAudioInputSchema.parse(d))
+  .handler(async ({ data }) => {
+    const session = await getChildSession();
+    if (!session) return err("unauthorized", "Authentication required");
+
+    const apiKey = process.env.GOOGLE_AI_API_KEY;
+    if (!apiKey) return err("server_error", "TTS not configured");
+
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_TTS_MODEL}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: data.text }] }],
+            generationConfig: {
+              responseModalities: ["AUDIO"],
+              speechConfig: {
+                voiceConfig: {
+                  prebuiltVoiceConfig: { voiceName: GEMINI_TTS_VOICE },
+                },
+              },
+            },
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const msg = await response.text().catch(() => response.statusText);
+        console.error("Gemini TTS error:", response.status, msg);
+        return err("server_error", "Audio generation failed");
+      }
+
+      const json = await response.json() as {
+        candidates?: Array<{
+          content?: { parts?: Array<{ inlineData?: { mimeType: string; data: string } }> };
+        }>;
+      };
+
+      const inlineData = json.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+      if (!inlineData?.data) {
+        console.error("Gemini TTS: no audio in response", JSON.stringify(json).slice(0, 200));
+        return err("server_error", "No audio in response");
+      }
+
+      // Gemini returns audio/l16 raw PCM — convert to WAV so browsers can play it
+      const wavBase64 = l16ToWav(inlineData.data);
+      return ok({ audioDataUrl: `data:audio/wav;base64,${wavBase64}` });
+    } catch (error) {
+      console.error("TTS error:", error);
+      return err("server_error", "Audio generation failed");
+    }
+  });

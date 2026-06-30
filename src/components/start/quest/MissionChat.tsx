@@ -9,11 +9,14 @@ import {
   ChevronUp,
   Camera,
   X,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import {
   getMentorSessionFn,
   sendMentorMessageFn,
   adjustMentorFn,
+  getMentorAudioFn,
 } from "@/lib/server/mentor";
 import { getPresignedUploadUrlFn, completeUploadFn } from "@/lib/server/storage";
 
@@ -44,6 +47,20 @@ export function MissionChat({ missionId, defaultExpanded = false }: MissionChatP
   const [adjustmentMessageId, setAdjustmentMessageId] = useState<string | null>(null);
   const [pendingImageUrl, setPendingImageUrl] = useState<string | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const [loadingAudioId, setLoadingAudioId] = useState<string | null>(null);
+  const [hasPlayedAudio, setHasPlayedAudio] = useState(false);
+  const audioCacheRef = useRef<Map<string, string>>(new Map());
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
+
+  // Voices load asynchronously — populate once ready (used as fallback)
+  useEffect(() => {
+    const load = () => { voicesRef.current = window.speechSynthesis.getVoices(); };
+    load();
+    window.speechSynthesis.addEventListener("voiceschanged", load);
+    return () => window.speechSynthesis.removeEventListener("voiceschanged", load);
+  }, []);
 
   const threadRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -61,6 +78,83 @@ export function MissionChat({ missionId, defaultExpanded = false }: MissionChatP
   useEffect(() => {
     scrollToBottom();
   }, [messages, adjustmentMessageId, scrollToBottom]);
+
+  const speakFallback = useCallback((messageId: string, text: string) => {
+    if (!window.speechSynthesis) return;
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = 0.9;
+    utter.pitch = 1.1;
+    const voices = voicesRef.current;
+    const voice =
+      voices.find((v) => v.name === "Microsoft Zira - English (United States)") ??
+      voices.find((v) => v.lang.startsWith("en") && !v.name.includes("Online")) ??
+      voices.find((v) => v.lang.startsWith("en")) ??
+      null;
+    if (voice) utter.voice = voice;
+    let keepAlive: ReturnType<typeof setInterval> | null = null;
+    utter.onstart = () => {
+      setPlayingId(messageId);
+      keepAlive = setInterval(() => {
+        if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+      }, 150);
+    };
+    utter.onend = () => { if (keepAlive) clearInterval(keepAlive); setPlayingId(null); };
+    utter.onerror = () => { if (keepAlive) clearInterval(keepAlive); setPlayingId(null); };
+    if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+      window.speechSynthesis.cancel();
+      setTimeout(() => window.speechSynthesis.speak(utter), 100);
+    } else {
+      window.speechSynthesis.speak(utter);
+    }
+  }, []);
+
+  const playAudio = useCallback(async (messageId: string, text: string) => {
+    // Toggle off
+    if (playingId === messageId) {
+      audioRef.current?.pause();
+      audioRef.current = null;
+      window.speechSynthesis?.cancel();
+      setPlayingId(null);
+      return;
+    }
+
+    audioRef.current?.pause();
+    audioRef.current = null;
+    window.speechSynthesis?.cancel();
+    setPlayingId(null);
+    setLoadingAudioId(messageId);
+
+    try {
+      // Try ElevenLabs first
+      let dataUrl = audioCacheRef.current.get(messageId);
+      if (!dataUrl) {
+        const res = await getMentorAudioFn({ data: { text } });
+        if (res.ok) {
+          dataUrl = res.audioDataUrl;
+          audioCacheRef.current.set(messageId, dataUrl);
+        }
+      }
+
+      if (dataUrl) {
+        const audio = new Audio(dataUrl);
+        audioRef.current = audio;
+        audio.onended = () => { setPlayingId(null); audioRef.current = null; };
+        audio.onerror = () => { setPlayingId(null); audioRef.current = null; };
+        setPlayingId(messageId);
+        setHasPlayedAudio(true);
+        await audio.play();
+      } else {
+        // Fallback to Web Speech API if TTS key not configured
+        setHasPlayedAudio(true);
+        speakFallback(messageId, text);
+      }
+    } catch {
+      setHasPlayedAudio(true);
+      speakFallback(messageId, text);
+    } finally {
+      setLoadingAudioId(null);
+    }
+  }, [playingId, speakFallback]);
 
   const fetchSession = useCallback(async () => {
     const res = await getMentorSessionFn({ data: { missionId } });
@@ -255,7 +349,12 @@ export function MissionChat({ missionId, defaultExpanded = false }: MissionChatP
 
   const handleToggle = useCallback(() => {
     setExpanded((prev) => !prev);
-    if (!expanded) {
+    if (expanded) {
+      audioRef.current?.pause();
+      audioRef.current = null;
+      window.speechSynthesis?.cancel();
+      setPlayingId(null);
+    } else {
       setTimeout(() => inputRef.current?.focus(), 300);
     }
   }, [expanded]);
@@ -304,23 +403,52 @@ export function MissionChat({ missionId, defaultExpanded = false }: MissionChatP
         role="log"
         aria-label="Chat messages"
       >
-        {messages.map((message) => (
+        {messages.map((message) => {
+          const showAudioHint = message.role === "mentor" && !hasPlayedAudio;
+
+          return (
           <div key={message.id}>
-            <div
-              className={`max-w-[85%] rounded-xl border px-3 py-2 text-sm leading-relaxed ${
-                message.role === "child"
-                  ? "ml-auto bg-blue-50 text-blue-900 border-blue-200"
-                  : "bg-gray-50 text-gray-900 border-gray-200"
-              }`}
-            >
-              {message.imageUrl && (
-                <img
-                  src={message.imageUrl}
-                  alt="Shared progress photo"
-                  className="mb-1.5 max-h-40 w-full rounded-lg object-cover"
-                />
+            <div className={`flex items-end gap-1.5 ${message.role === "child" ? "justify-end" : "justify-start"}`}>
+              <div
+                className={`max-w-[85%] rounded-xl border px-3 py-2 text-sm leading-relaxed ${
+                  message.role === "child"
+                    ? "bg-blue-50 text-blue-900 border-blue-200"
+                    : "bg-gray-50 text-gray-900 border-gray-200"
+                }`}
+              >
+                {message.imageUrl && (
+                  <img
+                    src={message.imageUrl}
+                    alt="Shared progress photo"
+                    className="mb-1.5 max-h-40 w-full rounded-lg object-cover"
+                  />
+                )}
+                {message.content !== "📷" && message.content}
+              </div>
+
+              {message.role === "mentor" && message.content !== "" && (
+                <div className="relative mb-0.5 flex shrink-0 flex-col items-center">
+                  <button
+                    onClick={() => { void playAudio(message.id, message.content); }}
+                    disabled={loadingAudioId === message.id}
+                    aria-label={playingId === message.id ? "Stop audio" : "Play audio"}
+                    className={`flex size-7 items-center justify-center rounded-full bg-blue-100 text-blue-600 transition-colors hover:bg-blue-200 disabled:opacity-50 ${showAudioHint ? "ring-2 ring-blue-400 ring-offset-1 animate-pulse" : ""}`}
+                  >
+                    {loadingAudioId === message.id ? (
+                      <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+                    ) : playingId === message.id ? (
+                      <VolumeX className="size-3.5" aria-hidden="true" />
+                    ) : (
+                      <Volume2 className="size-3.5" aria-hidden="true" />
+                    )}
+                  </button>
+                  {showAudioHint && (
+                    <span className="absolute top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-blue-500 px-2 py-0.5 text-[10px] font-medium text-white shadow-sm animate-bounce">
+                      Tap! 🔊
+                    </span>
+                  )}
+                </div>
               )}
-              {message.content !== "📷" && message.content}
             </div>
 
             {/* Quick reply suggestions below mentor messages */}
@@ -341,7 +469,8 @@ export function MissionChat({ missionId, defaultExpanded = false }: MissionChatP
                 </div>
               )}
           </div>
-        ))}
+          );
+        })}
 
         {/* Thinking indicator */}
         {loading && (

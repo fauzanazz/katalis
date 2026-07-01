@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/paraglide/messages", () => ({
   m: {
@@ -32,6 +32,10 @@ vi.mock("@/lib/server/parent-reports", () => ({
 }));
 
 import { ReportView } from "./ReportView";
+afterEach(() => {
+  cleanup();
+});
+
 
 describe("ReportView", () => {
   it("skips legacy engagement payloads instead of crashing", () => {
@@ -71,4 +75,28 @@ describe("ReportView", () => {
     expect(screen.getByText("Summary")).not.toBeNull();
     expect(screen.queryByText("Mission Progress")).toBeNull();
   });
+  it("treats missing legacy arrays as empty sections", () => {
+    const report = JSON.parse(`{
+      "id": "report-2",
+      "childId": "child-1",
+      "type": "weekly",
+      "period": {
+        "start": "2026-07-01T00:00:00.000Z",
+        "end": "2026-07-08T00:00:00.000Z"
+      },
+      "summary": "Another warm summary.",
+      "createdAt": "2026-07-08T00:00:00.000Z",
+      "strengths": null,
+      "growthAreas": null,
+      "tips": null,
+      "badgeHighlights": null
+    }`);
+
+    render(<ReportView report={report} />);
+
+    expect(screen.getByText("Summary")).not.toBeNull();
+    expect(screen.queryByText("Strengths")).toBeNull();
+    expect(screen.queryByText("Tips")).toBeNull();
+  });
+
 });

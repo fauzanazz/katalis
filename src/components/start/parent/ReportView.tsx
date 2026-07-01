@@ -47,12 +47,45 @@ function isEngagementData(value: ReportData["engagement"]): value is EngagementD
       Array.isArray(value.creativityBadges),
   );
 }
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string");
+}
+
+function isReportTip(
+  value: unknown,
+): value is { title: string; description: string; materials: string[]; category: string } {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      "title" in value &&
+      typeof value.title === "string" &&
+      "description" in value &&
+      typeof value.description === "string" &&
+      "materials" in value &&
+      Array.isArray(value.materials) &&
+      "category" in value &&
+      typeof value.category === "string",
+  );
+}
+
+function asTips(value: unknown): ReportData["tips"] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter(isReportTip)
+    .map((tip) => ({ ...tip, materials: asStringArray(tip.materials) }));
+}
+
 
 
 export function ReportView({ report }: ReportViewProps) {
   const locale = getLocale();
   const [downloading, setDownloading] = useState(false);
   const { withStepUp, stepUpDialog } = useStepUp();
+  const strengths = asStringArray(report.strengths);
+  const growthAreas = asStringArray(report.growthAreas);
+  const tips = asTips(report.tips);
+  const badgeHighlights = asStringArray(report.badgeHighlights);
   const engagement = isEngagementData(report.engagement) ? report.engagement : null;
 
   const periodLabel =
@@ -118,13 +151,13 @@ export function ReportView({ report }: ReportViewProps) {
         <p className="text-sm leading-relaxed text-foreground">{report.summary}</p>
       </div>
 
-      {report.strengths.length > 0 && (
+      {strengths.length > 0 && (
         <div>
           <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-green-leaf-deep">
             {m.parent_report_strengthsLabel()}
           </h3>
           <ul className="space-y-2">
-            {report.strengths.map((strength, i) => (
+            {strengths.map((strength, i) => (
               <li
                 key={i}
                 className="flex items-center gap-3 rounded-xl border border-green-leaf/40 bg-green-leaf-light/20 px-4 py-3"
@@ -142,13 +175,13 @@ export function ReportView({ report }: ReportViewProps) {
         </div>
       )}
 
-      {report.growthAreas.length > 0 && (
+      {growthAreas.length > 0 && (
         <div>
           <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-yellow-sun-deep">
             {m.parent_report_growthLabel()}
           </h3>
           <ul className="space-y-2">
-            {report.growthAreas.map((area, i) => (
+            {growthAreas.map((area, i) => (
               <li
                 key={i}
                 className="flex items-center gap-3 rounded-xl border border-yellow-sun/30 bg-yellow-sun-light/15 px-4 py-3"
@@ -166,13 +199,13 @@ export function ReportView({ report }: ReportViewProps) {
         </div>
       )}
 
-      {report.tips.length > 0 && (
+      {tips.length > 0 && (
         <div>
           <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-primary">
             {m.parent_report_tipsLabel()}
           </h3>
           <div className="grid gap-3 sm:grid-cols-2">
-            {report.tips.map((tip) => (
+            {tips.map((tip) => (
               <div
                 key={tip.title}
                 className="rounded-xl border border-blue-ocean-light/30 bg-blue-ocean-light/8 p-4"
@@ -197,13 +230,13 @@ export function ReportView({ report }: ReportViewProps) {
         </div>
       )}
 
-      {report.badgeHighlights.length > 0 && (
+      {badgeHighlights.length > 0 && (
         <div>
           <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-lavender-mist">
             {m.parent_report_badgesLabel()}
           </h3>
           <div className="flex flex-wrap gap-2">
-            {report.badgeHighlights.map((badge) => (
+            {badgeHighlights.map((badge) => (
               <span
                 key={badge}
                 className="inline-flex items-center rounded-full bg-lavender-mist/15 px-3 py-1 text-xs font-medium text-lavender-mist"

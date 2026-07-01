@@ -12,14 +12,20 @@ import {
   Volume2,
   VolumeX,
   RefreshCw,
+  Mic,
+  MicOff,
+  Star,
 } from "lucide-react";
 import {
   getMentorSessionFn,
   sendMentorMessageFn,
   adjustMentorFn,
   getMentorAudioFn,
+  signalOriginalIdeaFn,
 } from "@/lib/server/mentor";
 import { getPresignedUploadUrlFn, completeUploadFn } from "@/lib/server/storage";
+import { transcribeAudioFn } from "@/lib/server/discovery";
+import type { BehavioralSignals } from "@/lib/ai/mentor-schemas";
 
 interface MissionChatProps {
   questId: string;
@@ -38,7 +44,7 @@ interface ChatMessage {
   imageUrl?: string;
 }
 
-export function MissionChat({ missionId, defaultExpanded = false }: MissionChatProps) {
+export function MissionChat({ questId, missionId, defaultExpanded = false }: MissionChatProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -52,9 +58,17 @@ export function MissionChat({ missionId, defaultExpanded = false }: MissionChatP
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [loadingAudioId, setLoadingAudioId] = useState<string | null>(null);
   const [hasPlayedAudio, setHasPlayedAudio] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [voiceUploading, setVoiceUploading] = useState(false);
+  const [inventorClaimed, setInventorClaimed] = useState(false);
+  const [inventorClaiming, setInventorClaiming] = useState(false);
   const audioCacheRef = useRef<Map<string, string>>(new Map());
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingStartRef = useRef<number>(0);
 
   // Voices load asynchronously — populate once ready (used as fallback)
   useEffect(() => {
@@ -80,6 +94,12 @@ export function MissionChat({ missionId, defaultExpanded = false }: MissionChatP
   useEffect(() => {
     scrollToBottom();
   }, [messages, adjustmentMessageId, scrollToBottom]);
+
+  useEffect(() => {
+    if (!isRecording) { setRecordingSeconds(0); return; }
+    const interval = setInterval(() => setRecordingSeconds((s) => s + 1), 1000);
+    return () => clearInterval(interval);
+  }, [isRecording]);
 
   const speakFallback = useCallback((messageId: string, text: string) => {
     if (!window.speechSynthesis) return;
@@ -165,12 +185,12 @@ export function MissionChat({ missionId, defaultExpanded = false }: MissionChatP
   }, [missionId]);
 
   const sendMessage = useCallback(
-    async (content: string, imgUrl?: string) => {
+    async (content: string, imgUrl?: string, behavioralSignals?: BehavioralSignals) => {
       if (!sessionId) return;
       setLoading(true);
       try {
         const res = await sendMentorMessageFn({
-          data: { sessionId, content, imageUrl: imgUrl },
+          data: { sessionId, content, imageUrl: imgUrl, behavioralSignals },
         });
         if (res.ok) {
           setChatError(false);
@@ -272,6 +292,116 @@ export function MissionChat({ missionId, defaultExpanded = false }: MissionChatP
     },
     [],
   );
+
+  const handleVoiceToggle = useCallback(async () => {
+    if (isRecording) {
+      mediaRecorderRef.current?.stop();
+      return;
+    }
+
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      return;
+    }
+
+    const mimeType = (
+      MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" :
+      MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" :
+      "audio/ogg"
+    );
+    const recorder = new MediaRecorder(stream, { mimeType });
+    audioChunksRef.current = [];
+    recordingStartRef.current = Date.now();
+    mediaRecorderRef.current = recorder;
+
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) audioChunksRef.current.push(e.data);
+    };
+
+    recorder.onstop = async () => {
+      stream.getTracks().forEach((t) => t.stop());
+      setIsRecording(false);
+      setVoiceUploading(true);
+
+      const durationSeconds = (Date.now() - recordingStartRef.current) / 1000;
+      const blob = new Blob(audioChunksRef.current, { type: mimeType });
+      const ext = mimeType === "audio/webm" ? "webm" : "mp4";
+
+      try {
+        const presignedRes = await getPresignedUploadUrlFn({
+          data: { filename: `voice-${Date.now()}.${ext}`, contentType: mimeType },
+        });
+        if (!presignedRes.ok) throw new Error("Presign failed");
+
+        const putRes = await fetch(presignedRes.url, {
+          method: "PUT",
+          body: blob,
+          headers: { "Content-Type": mimeType },
+        });
+        if (!putRes.ok) throw new Error("Upload failed");
+
+        const completeRes = await completeUploadFn({
+          data: { key: presignedRes.key, category: presignedRes.category },
+        });
+        if (!completeRes.ok) throw new Error("Complete failed");
+
+        const transcribeRes = await transcribeAudioFn({
+          data: { audioUrl: completeRes.url },
+        });
+        if (!transcribeRes.ok) throw new Error("Transcription failed");
+
+        const transcript = transcribeRes.transcript;
+        if (!transcript?.trim()) throw new Error("Empty transcript");
+
+        const wordCount = transcript.trim().split(/\s+/).filter(Boolean).length;
+        const speechRateWpm = durationSeconds > 2
+          ? Math.round((wordCount / durationSeconds) * 60)
+          : undefined;
+
+        const childMessage: ChatMessage = {
+          id: `child-${Date.now()}`,
+          role: "child",
+          content: transcript,
+        };
+        setMessages((prev) => [...prev, childMessage]);
+
+        const signals: BehavioralSignals | undefined = speechRateWpm !== undefined
+          ? { voiceProsody: { speechRateWpm } }
+          : undefined;
+        await sendMessage(transcript, undefined, signals);
+      } catch {
+        // Voice send failed — child can type instead
+      } finally {
+        setVoiceUploading(false);
+      }
+    };
+
+    recorder.start();
+    setIsRecording(true);
+  }, [isRecording, sendMessage]);
+
+  const handleOriginalIdea = useCallback(async () => {
+    if (inventorClaiming || inventorClaimed) return;
+    setInventorClaiming(true);
+    try {
+      const res = await signalOriginalIdeaFn({ data: { questId } });
+      if (res.ok) {
+        setInventorClaimed(true);
+        const successMsg: ChatMessage = {
+          id: `inventor-${Date.now()}`,
+          role: "mentor",
+          content: m.mentor_myOwnIdea_success(),
+        };
+        setMessages((prev) => [...prev, successMsg]);
+      }
+    } catch {
+      // Failed silently
+    } finally {
+      setInventorClaiming(false);
+    }
+  }, [inventorClaiming, inventorClaimed, questId]);
 
   const handleSend = useCallback(() => {
     const trimmed = inputValue.trim();
@@ -555,6 +685,27 @@ export function MissionChat({ missionId, defaultExpanded = false }: MissionChatP
         </div>
       )}
 
+      {/* Inventor badge prompt — shows after a few exchanges */}
+      {messages.length >= 4 && !inventorClaimed && (
+        <div className="mx-3 mb-1 flex items-center gap-2 rounded-xl border border-yellow-200 bg-yellow-50 px-3 py-2">
+          <Star className="size-4 shrink-0 text-yellow-500" aria-hidden="true" />
+          <p className="min-w-0 flex-1 text-xs text-yellow-800">
+            {m.mentor_myOwnIdea_description()}
+          </p>
+          <button
+            onClick={() => { void handleOriginalIdea(); }}
+            disabled={inventorClaiming}
+            className="shrink-0 rounded-lg bg-yellow-400 px-2.5 py-1 text-xs font-medium text-yellow-900 transition-colors hover:bg-yellow-500 disabled:opacity-50"
+          >
+            {inventorClaiming ? (
+              <Loader2 className="size-3 animate-spin" aria-hidden="true" />
+            ) : (
+              m.mentor_myOwnIdea_button()
+            )}
+          </button>
+        </div>
+      )}
+
       {/* Input area */}
       <div className="flex items-center gap-2 border-t border-blue-100 bg-gray-50 px-3 py-2">
         {/* Hidden file input */}
@@ -567,7 +718,7 @@ export function MissionChat({ missionId, defaultExpanded = false }: MissionChatP
         />
         <button
           onClick={() => fileInputRef.current?.click()}
-          disabled={loading || imageUploading}
+          disabled={loading || imageUploading || isRecording}
           aria-label={m.mentor_uploadPhoto()}
           className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition-colors hover:bg-gray-100 disabled:opacity-50"
         >
@@ -578,11 +729,33 @@ export function MissionChat({ missionId, defaultExpanded = false }: MissionChatP
           )}
         </button>
 
+        <button
+          onClick={() => { void handleVoiceToggle(); }}
+          disabled={loading || voiceUploading || imageUploading}
+          aria-label={isRecording ? m.mentor_voice_stop() : m.mentor_voice_record()}
+          className={`flex size-9 shrink-0 items-center justify-center rounded-lg border transition-colors disabled:opacity-50 ${
+            isRecording
+              ? "border-red-300 bg-red-100 text-red-600 hover:bg-red-200 animate-pulse"
+              : "border-gray-200 bg-white text-gray-500 hover:bg-gray-100"
+          }`}
+        >
+          {voiceUploading ? (
+            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+          ) : isRecording ? (
+            <MicOff className="size-4" aria-hidden="true" />
+          ) : (
+            <Mic className="size-4" aria-hidden="true" />
+          )}
+        </button>
+
         <input
           ref={inputRef}
           type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
+          value={isRecording
+            ? `${Math.floor(recordingSeconds / 60)}:${String(recordingSeconds % 60).padStart(2, "0")}`
+            : voiceUploading ? m.mentor_voice_sending() : inputValue
+          }
+          onChange={(e) => { if (!isRecording && !voiceUploading) setInputValue(e.target.value); }}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
@@ -590,12 +763,13 @@ export function MissionChat({ missionId, defaultExpanded = false }: MissionChatP
             }
           }}
           placeholder={m.mentor_placeholder()}
-          disabled={loading}
+          disabled={loading || isRecording || voiceUploading}
+          readOnly={isRecording || voiceUploading}
           className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100 disabled:opacity-50"
         />
         <button
           onClick={handleSend}
-          disabled={loading || (!inputValue.trim() && !pendingImageUrl)}
+          disabled={loading || isRecording || voiceUploading || (!inputValue.trim() && !pendingImageUrl)}
           className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
           aria-label={m.mentor_send()}
         >

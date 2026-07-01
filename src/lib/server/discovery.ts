@@ -247,18 +247,50 @@ export const transcribeAudioFn = createServerFn({ method: "POST" })
     }
 
     const arrayBuffer = await audioRes.arrayBuffer();
-    const contentType = audioRes.headers.get("content-type") ?? "audio/webm";
-    const audioFile = new File([arrayBuffer], "story.webm", { type: contentType });
+    const rawContentType = audioRes.headers.get("content-type") ?? "audio/webm";
+    // Strip codec params and normalize: Vite serves .webm as video/webm; force audio/* for Gemini
+    const baseContentType = rawContentType.split(";")[0].trim();
+    const contentType = baseContentType === "video/webm" ? "audio/webm"
+      : baseContentType === "video/mp4" ? "audio/mp4"
+      : baseContentType;
 
-    const { default: OpenAI } = await import("openai");
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    if (process.env.OPENAI_API_KEY) {
+      const audioFile = new File([arrayBuffer], "audio.webm", { type: contentType });
+      const { default: OpenAI } = await import("openai");
+      const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      const transcription = await openai.audio.transcriptions.create({
+        model: "whisper-1",
+        file: audioFile,
+      });
+      return ok({ transcript: transcription.text });
+    }
 
-    const transcription = await openai.audio.transcriptions.create({
-      model: "whisper-1",
-      file: audioFile,
-    });
+    if (process.env.GOOGLE_AI_API_KEY) {
+      const base64Audio = Buffer.from(arrayBuffer).toString("base64");
+      const model = process.env.GOOGLE_AI_MODEL ?? "gemini-2.5-flash";
+      const geminiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { inlineData: { mimeType: contentType, data: base64Audio } },
+                { text: "Transcribe what is said in this audio exactly as spoken. Return only the transcription text with no commentary or labels." },
+              ],
+            }],
+            generationConfig: { temperature: 0 },
+          }),
+        },
+      );
+      if (!geminiRes.ok) return err("ai_failure", "Transcription failed");
+      const geminiJson = await geminiRes.json() as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+      const transcript = geminiJson.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+      return ok({ transcript: transcript.trim() });
+    }
 
-    return ok({ transcript: transcription.text });
+    return err("no_provider", "No transcription provider configured");
   });
 
 // ---------------------------------------------------------------------------

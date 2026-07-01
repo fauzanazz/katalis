@@ -694,7 +694,12 @@
     "myOwnIdea": {
       "button": "I Have My Own Idea!",
       "description": "Making it your own way earns a special badge!",
-      "success": "Amazing! Your creativity just earned you a special badge!"
+      "success": "Amazing! Your creativity just earned you a special badge! ⭐ Now tell me, what's your own idea? I'd love to hear it!"
+    },
+    "voice": {
+      "record": "Record voice",
+      "stop": "Stop recording",
+      "sending": "Sending voice..."
     },
     "needHint": "Need a Hint?",
     "uploadPhoto": "Upload photo",

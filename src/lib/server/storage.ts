@@ -30,7 +30,7 @@ export const getPresignedUploadUrlFn = createServerFn({ method: "POST" })
     if (!category) {
       return err(
         "invalid_type",
-        "Unsupported file type. Accepted: JPEG, PNG, WebP (images) or MP3, WAV, M4A (audio)",
+        "Unsupported file type. Accepted: JPEG, PNG, WebP (images) or MP3, WAV, M4A, WebM, OGG (audio)",
       );
     }
 

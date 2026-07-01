@@ -23,13 +23,15 @@ export const ACCEPTED_AUDIO_TYPES = [
   "audio/mpeg", // .mp3
   "audio/wav",
   "audio/x-wav",
-  "audio/mp4", // .m4a
+  "audio/mp4", // .m4a / Safari MediaRecorder
   "audio/x-m4a",
+  "audio/webm", // Chrome / Firefox MediaRecorder
+  "audio/ogg",  // Firefox fallback
 ] as const;
 
 /** Human-readable labels for file format error messages. */
 export const IMAGE_FORMAT_LABEL = "JPEG, PNG, WebP";
-export const AUDIO_FORMAT_LABEL = "MP3, WAV, M4A";
+export const AUDIO_FORMAT_LABEL = "MP3, WAV, M4A, WebM, OGG";
 
 /** Maximum file sizes in bytes. */
 export const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB

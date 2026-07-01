@@ -694,7 +694,12 @@
     "myOwnIdea": {
       "button": "Aku Punya Ide Sendiri!",
       "description": "Melakukannya dengan caramu sendiri mendapatkan lencana istimewa!",
-      "success": "Luar biasa! Kreativitasmu baru saja mendapatkan lencana istimewa!"
+      "success": "Luar biasa! Kreativitasmu baru saja mendapatkan lencana istimewa! ⭐ Sekarang ceritakan, apa ide mu? Aku ingin mendengarnya!"
+    },
+    "voice": {
+      "record": "Rekam suara",
+      "stop": "Berhenti merekam",
+      "sending": "Mengirim suara..."
     },
     "needHint": "Butuh Petunjuk?",
     "uploadPhoto": "Unggah foto",

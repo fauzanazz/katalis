@@ -74,6 +74,161 @@ const ReportOutputSchema = z.object({
   summary: z.string().min(1),
   badgeHighlights: z.array(z.string()),
 });
+const STRICT_JSON_REMINDER = `Return ONLY valid JSON.
+- No markdown fences
+- No comments
+- No trailing commas
+- Escape any quotes inside string values
+- Keep every string on one JSON line`;
+
+export function parseParentReportResponse(response: string): ReportOutput {
+  const json = extractFirstJsonObject(
+    response.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim(),
+  );
+  const escaped = escapeControlCharsInStrings(json);
+
+  try {
+    return ReportOutputSchema.parse(JSON.parse(escaped));
+  } catch (error) {
+    if (!(error instanceof SyntaxError)) throw error;
+    return ReportOutputSchema.parse(JSON.parse(stripTrailingCommas(escaped)));
+  }
+}
+
+function extractFirstJsonObject(response: string): string {
+  const start = response.indexOf("{");
+  if (start === -1) throw new Error("No JSON found in AI response");
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < response.length; i += 1) {
+    const char = response[i];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (char === "\\") {
+        escaped = true;
+        continue;
+      }
+      if (char === "\"") {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === "\"") {
+      inString = true;
+      continue;
+    }
+    if (char === "{") {
+      depth += 1;
+      continue;
+    }
+    if (char === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        return response.slice(start, i + 1);
+      }
+    }
+  }
+
+  throw new Error("Incomplete JSON in AI response");
+}
+
+function escapeControlCharsInStrings(json: string): string {
+  let out = "";
+  let inString = false;
+  let escaped = false;
+
+  for (const char of json) {
+    if (inString) {
+      if (escaped) {
+        out += char;
+        escaped = false;
+        continue;
+      }
+      if (char === "\\") {
+        out += char;
+        escaped = true;
+        continue;
+      }
+      if (char === "\"") {
+        out += char;
+        inString = false;
+        continue;
+      }
+      if (char === "\n") {
+        out += "\\n";
+        continue;
+      }
+      if (char === "\r") {
+        out += "\\r";
+        continue;
+      }
+      if (char === "\t") {
+        out += "\\t";
+        continue;
+      }
+      out += char;
+      continue;
+    }
+
+    if (char === "\"") {
+      inString = true;
+    }
+    out += char;
+  }
+
+  return out;
+}
+
+function stripTrailingCommas(json: string): string {
+  let out = "";
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < json.length; i += 1) {
+    const char = json[i];
+
+    if (inString) {
+      out += char;
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (char === "\\") {
+        escaped = true;
+        continue;
+      }
+      if (char === "\"") {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === "\"") {
+      inString = true;
+      out += char;
+      continue;
+    }
+
+    if (char === ",") {
+      let j = i + 1;
+      while (j < json.length && /\s/.test(json[j])) j += 1;
+      if (json[j] === "}" || json[j] === "]") continue;
+    }
+
+    out += char;
+  }
+
+  return out;
+}
+
 
 export async function generateAIReport(input: ReportInput): Promise<ReportOutput> {
   if (process.env.USE_MOCK_AI === "true") {
@@ -84,7 +239,7 @@ export async function generateAIReport(input: ReportInput): Promise<ReportOutput
     });
   }
 
-  const userMessage = `Child profile:
+  const baseUserMessage = `Child profile:
 - Detected talents: ${input.childTalents.join(", ")}
 - Completed quests: ${input.completedQuests}
 - Completed missions: ${input.completedMissions}
@@ -96,11 +251,19 @@ ${input.localContext ? `- Local context: ${input.localContext}` : ""}
 
 Generate a parent progress report for this period.`;
 
-  const response = await callProviderForReport(userMessage);
-  const jsonMatch = response.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error("No JSON found in AI response");
-  const parsed = JSON.parse(jsonMatch[0]);
-  return ReportOutputSchema.parse(parsed);
+  const attempts = [baseUserMessage, `${baseUserMessage}\n\n${STRICT_JSON_REMINDER}`];
+  let lastError: unknown;
+
+  for (const userMessage of attempts) {
+    const response = await callProviderForReport(userMessage);
+    try {
+      return parseParentReportResponse(response);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Failed to parse parent report JSON");
 }
 
 async function callProviderForReport(userMessage: string): Promise<string> {
@@ -135,12 +298,15 @@ async function callProviderForReport(userMessage: string): Promise<string> {
       timeout: API_TIMEOUT_MS,
     });
 
+    const response_format = { type: "json_object" as const };
+
     const response = await client.chat.completions.create({
       model: process.env.GOOGLE_AI_MODEL ?? "gemini-2.5-flash",
       messages: [
         { role: "system", content: REPORT_SYSTEM_PROMPT },
         { role: "user", content: userMessage },
       ],
+      response_format,
       max_tokens: 1500,
       temperature: 0.7,
     });

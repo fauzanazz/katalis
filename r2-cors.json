@@ -6,10 +6,12 @@
           "http://localhost:3000",
           "http://localhost:3100",
           "http://localhost:3101",
+          "https://huna.asia",
+          "https://www.huna.asia",
           "https://katalis.vercel.app"
         ],
         "methods": ["PUT", "GET", "HEAD"],
-        "headers": ["content-type", "x-amz-*"]
+        "headers": ["*"]
       },
       "exposeHeaders": ["ETag"],
       "maxAgeSeconds": 3600

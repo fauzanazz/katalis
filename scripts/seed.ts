@@ -203,7 +203,7 @@ async function main() {
     {
       childId: child1.id,
       questId: quest1.id,
-      imageUrl: "/api/storage/images/proof-robot.jpg",
+      imageUrl: "/api/storage/images/proof-robot.png",
       talentCategory: "Engineering",
       country: "Indonesia",
       coordinates: JSON.stringify({ lat: -6.21, lng: 106.85 }),
@@ -216,7 +216,7 @@ async function main() {
     {
       childId: child2.id,
       questId: quest2.id,
-      imageUrl: "/api/storage/images/proof-story.jpg",
+      imageUrl: "/api/storage/images/proof-story.png",
       talentCategory: "Narrative",
       country: "Japan",
       coordinates: JSON.stringify({ lat: 36.2, lng: 138.3 }),
@@ -229,7 +229,7 @@ async function main() {
     {
       childId: child1.id,
       questId: quest3.id,
-      imageUrl: "/api/storage/images/proof-art.jpg",
+      imageUrl: "/api/storage/images/proof-art.png",
       talentCategory: "Art",
       country: "Indonesia",
       coordinates: JSON.stringify({ lat: -8.34, lng: 115.09 }),

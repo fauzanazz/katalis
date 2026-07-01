@@ -1,10 +1,10 @@
 {
   "metadata": {
-    "title": "Katalis - Temukan, Bertindak, Terhubung",
+    "title": "Huna AI - Temukan, Bertindak, Terhubung",
     "description": "Platform penemuan dan pengembangan bakat untuk anak-anak"
   },
   "common": {
-    "appName": "Katalis",
+    "appName": "Huna AI",
     "loading": "Memuat...",
     "error": "Terjadi kesalahan",
     "retry": "Coba Lagi",
@@ -230,7 +230,7 @@
       "noCodeDialog": {
         "title": "Cara mendapatkan kode",
         "step1Title": "Minta orang tua masuk",
-        "step1Desc": "Orang tua atau wali harus masuk ke akun Katalis mereka terlebih dahulu.",
+        "step1Desc": "Orang tua atau wali harus masuk ke akun Huna AI mereka terlebih dahulu.",
         "step2Title": "Orang tua membuat akunmu",
         "step2Desc": "Di dasbor orang tua, mereka ketuk \"Tambah Anak\" dan buat profilmu.",
         "step3Title": "Dapatkan kode rahasiamu",
@@ -273,7 +273,7 @@
   },
   "footer": {
     "tagline": "Memberdayakan anak-anak untuk menemukan, bertindak, dan terhubung.",
-    "copyright": "© {year} Katalis. Hak cipta dilindungi."
+    "copyright": "© {year} Huna AI. Hak cipta dilindungi."
   },
   "language": {
     "en": "English",
@@ -1004,11 +1004,11 @@
   "legal": {
     "privacy": {
       "title": "Kebijakan Privasi",
-      "stub": "Privasi Anda penting bagi kami. Katalis dirancang dengan mempertimbangkan keamanan anak-anak. Kami mengumpulkan data minimal, tidak pernah menjual informasi pribadi, dan mematuhi peraturan perlindungan anak. Orang tua dapat meminta penghapusan data kapan saja."
+      "stub": "Privasi Anda penting bagi kami. Huna AI dirancang dengan mempertimbangkan keamanan anak-anak. Kami mengumpulkan data minimal, tidak pernah menjual informasi pribadi, dan mematuhi peraturan perlindungan anak. Orang tua dapat meminta penghapusan data kapan saja."
     },
     "terms": {
       "title": "Ketentuan Layanan",
-      "stub": "Dengan menggunakan Katalis, Anda setuju untuk menggunakan platform secara bertanggung jawab. Konten harus sesuai untuk anak usia 6-12 tahun. Kami berhak memoderasi dan menghapus konten yang melanggar pedoman komunitas kami."
+      "stub": "Dengan menggunakan Huna AI, Anda setuju untuk menggunakan platform secara bertanggung jawab. Konten harus sesuai untuk anak usia 6-12 tahun. Kami berhak memoderasi dan menghapus konten yang melanggar pedoman komunitas kami."
     },
     "contact": {
       "title": "Hubungi Kami",
@@ -1074,7 +1074,7 @@
     "title": "Kebijakan Privasi",
     "subtitle": "Cara kami melindungi data anak Anda",
     "lastUpdated": "Terakhir diperbarui: Mei 2026",
-    "intro": "Katalis berkomitmen untuk melindungi privasi dan keamanan anak-anak. Halaman ini menjelaskan cara kami mengumpulkan, menggunakan, dan melindungi data sesuai dengan COPPA dan standar privasi anak internasional.",
+    "intro": "Huna AI berkomitmen untuk melindungi privasi dan keamanan anak-anak. Halaman ini menjelaskan cara kami mengumpulkan, menggunakan, dan melindungi data sesuai dengan COPPA dan standar privasi anak internasional.",
     "dataRetention": {
       "title": "Retensi Data",
       "mentorChat": "Pesan obrolan mentor disimpan hingga 6 bulan.",
@@ -1097,7 +1097,7 @@
     "coppa": "Platform ini dirancang untuk anak-anak usia 3–12 tahun dan mematuhi COPPA (Children's Online Privacy Protection Act).",
     "cookies": {
       "title": "Cookie",
-      "intro": "Katalis hanya menggunakan cookie yang benar-benar diperlukan agar layanan dapat berfungsi. Tidak ada cookie iklan, analitik, atau pelacakan — tidak diperlukan banner persetujuan cookie.",
+      "intro": "Huna AI hanya menggunakan cookie yang benar-benar diperlukan agar layanan dapat berfungsi. Tidak ada cookie iklan, analitik, atau pelacakan — tidak diperlukan banner persetujuan cookie.",
       "tableHeaderName": "Cookie",
       "tableHeaderPurpose": "Tujuan",
       "tableHeaderDuration": "Durasi",

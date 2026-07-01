@@ -1,10 +1,10 @@
 {
   "metadata": {
-    "title": "Katalis - Discover, Act, Connect",
+    "title": "Huna AI - Discover, Act, Connect",
     "description": "A talent discovery and development platform for children"
   },
   "common": {
-    "appName": "Katalis",
+    "appName": "Huna AI",
     "loading": "Loading...",
     "error": "Something went wrong",
     "retry": "Try Again",
@@ -230,7 +230,7 @@
       "noCodeDialog": {
         "title": "How to get a code",
         "step1Title": "Ask a parent to log in",
-        "step1Desc": "A parent or guardian needs to sign in to their Katalis account first.",
+        "step1Desc": "A parent or guardian needs to sign in to their Huna AI account first.",
         "step2Title": "Parent creates your account",
         "step2Desc": "In the parent dashboard, they tap \"Add Child\" and set up your profile.",
         "step3Title": "Get your secret code",
@@ -273,7 +273,7 @@
   },
   "footer": {
     "tagline": "Empowering children to discover, act, and connect.",
-    "copyright": "© {year} Katalis. All rights reserved."
+    "copyright": "© {year} Huna AI. All rights reserved."
   },
   "language": {
     "en": "English",
@@ -1004,11 +1004,11 @@
   "legal": {
     "privacy": {
       "title": "Privacy Policy",
-      "stub": "Your privacy is important to us. Katalis is designed with children's safety in mind. We collect minimal data, never sell personal information, and comply with COPPA regulations. Parents can request data deletion at any time."
+      "stub": "Your privacy is important to us. Huna AI is designed with children's safety in mind. We collect minimal data, never sell personal information, and comply with COPPA regulations. Parents can request data deletion at any time."
     },
     "terms": {
       "title": "Terms of Service",
-      "stub": "By using Katalis, you agree to use the platform responsibly. Content must be appropriate for children ages 6-12. We reserve the right to moderate and remove content that violates our community guidelines."
+      "stub": "By using Huna AI, you agree to use the platform responsibly. Content must be appropriate for children ages 6-12. We reserve the right to moderate and remove content that violates our community guidelines."
     },
     "contact": {
       "title": "Contact Us",
@@ -1074,7 +1074,7 @@
     "title": "Privacy Policy",
     "subtitle": "How we protect your child's data",
     "lastUpdated": "Last updated: May 2026",
-    "intro": "Katalis is committed to protecting the privacy and safety of children. This page explains how we collect, use, and protect data in compliance with COPPA and international child privacy standards.",
+    "intro": "Huna AI is committed to protecting the privacy and safety of children. This page explains how we collect, use, and protect data in compliance with COPPA and international child privacy standards.",
     "dataRetention": {
       "title": "Data Retention",
       "mentorChat": "Mentor chat messages are kept for up to 6 months.",
@@ -1097,7 +1097,7 @@
     "coppa": "This platform is designed for children aged 3–12 and complies with COPPA (Children's Online Privacy Protection Act).",
     "cookies": {
       "title": "Cookies",
-      "intro": "Katalis uses only strictly necessary cookies required for the service to function. No advertising, analytics, or tracking cookies are used — no cookie consent banner is required.",
+      "intro": "Huna AI uses only strictly necessary cookies required for the service to function. No advertising, analytics, or tracking cookies are used — no cookie consent banner is required.",
       "tableHeaderName": "Cookie",
       "tableHeaderPurpose": "Purpose",
       "tableHeaderDuration": "Duration",

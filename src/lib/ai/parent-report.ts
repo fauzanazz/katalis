@@ -41,6 +41,7 @@ GROWTH MINDSET (Dweck): praise effort and process, not innate ability. Say
 "is a natural".`;
 
 const API_TIMEOUT_MS = 20000;
+const REPORT_MAX_TOKENS = 2500;
 
 interface ReportInput {
   childTalents: string[];
@@ -79,7 +80,9 @@ const STRICT_JSON_REMINDER = `Return ONLY valid JSON.
 - No comments
 - No trailing commas
 - Escape any quotes inside string values
-- Keep every string on one JSON line`;
+- Keep every string on one JSON line
+- If space is tight, shorten the wording but finish the full JSON object
+- Do not leave any array or object unfinished`;
 
 export function parseParentReportResponse(response: string): ReportOutput {
   const json = extractFirstJsonObject(
@@ -278,7 +281,7 @@ async function callProviderForReport(userMessage: string): Promise<string> {
 
     const response = await client.messages.create({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 1500,
+      max_tokens: REPORT_MAX_TOKENS,
       system: REPORT_SYSTEM_PROMPT,
       messages: [{ role: "user", content: userMessage }],
     });
@@ -298,17 +301,16 @@ async function callProviderForReport(userMessage: string): Promise<string> {
       timeout: API_TIMEOUT_MS,
     });
 
-    const response_format = { type: "json_object" as const };
-
     const response = await client.chat.completions.create({
       model: process.env.GOOGLE_AI_MODEL ?? "gemini-2.5-flash",
       messages: [
         { role: "system", content: REPORT_SYSTEM_PROMPT },
         { role: "user", content: userMessage },
       ],
-      response_format,
-      max_tokens: 1500,
-      temperature: 0.7,
+      response_format: { type: "json_object" },
+      max_tokens: REPORT_MAX_TOKENS,
+      temperature: 0.3,
+      reasoning_effort: "none",
     });
 
     const content = response.choices[0]?.message?.content;
@@ -330,8 +332,8 @@ async function callProviderForReport(userMessage: string): Promise<string> {
       { role: "user", content: userMessage },
     ],
     response_format: { type: "json_object" },
-    max_tokens: 1500,
-    temperature: 0.7,
+    max_tokens: REPORT_MAX_TOKENS,
+    temperature: 0.3,
   });
 
   const content = response.choices[0]?.message?.content;

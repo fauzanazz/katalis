@@ -38,11 +38,22 @@ interface ReportData {
 interface ReportViewProps {
   report: ReportData;
 }
+function isEngagementData(value: ReportData["engagement"]): value is EngagementData {
+  return Boolean(
+    value &&
+      typeof value.completionRate === "number" &&
+      typeof value.totalMissions === "number" &&
+      typeof value.completedMissions === "number" &&
+      Array.isArray(value.creativityBadges),
+  );
+}
+
 
 export function ReportView({ report }: ReportViewProps) {
   const locale = getLocale();
   const [downloading, setDownloading] = useState(false);
   const { withStepUp, stepUpDialog } = useStepUp();
+  const engagement = isEngagementData(report.engagement) ? report.engagement : null;
 
   const periodLabel =
     report.type === "weekly"
@@ -214,7 +225,7 @@ export function ReportView({ report }: ReportViewProps) {
         <GrowthTimeline snapshots={report.growthSnapshots} />
       )}
 
-      {report.engagement && <MissionEngagement engagement={report.engagement} />}
+      {engagement && <MissionEngagement engagement={engagement} />}
 
       {report.suggestions && report.suggestions.length > 0 && (
         <ActionableSuggestions suggestions={report.suggestions} />
